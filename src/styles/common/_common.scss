@@ -1,4 +1,9 @@
-@import "responsive";
+/* 노트북 */
+@mixin notebook{
+    @media (max-width: 1280px){ 
+        @content;
+    }
+}
 
 /* 폰트 */
 $pretendard: 'Pretendard';
@@ -102,7 +107,7 @@ $red50: #FFE5E5;
         -webkit-line-clamp: $num;
     }
 }
-
+d
 *, *::before, *::after {box-sizing: border-box;}
 
 html {
@@ -145,7 +150,7 @@ body {
 .d-pc{display: block;}
 .d-mb{display: none;}
 
-@include tablet{
+@include notebook{
     .d-pc{display: none;}
     .d-mb{display: block;}
 }
@@ -240,6 +245,11 @@ button {
                 background: $gray700;
             }
         }
+        &:disabled {
+            color: $gray200;
+            background: rgba(239, 242, 243, 0.70);
+            cursor: default;
+        }
     }
     &.type07 {
         width: 10.4rem;
@@ -250,11 +260,20 @@ button {
         &:hover {
             background: rgba(239, 242, 243, 0.50);
         }
+        &:disabled {
+            color: $gray200;
+            background: rgba(239, 242, 243, 0.70);
+            cursor: default;
+        }
         &.black {
             color: $gray0;
             background: $gray950;
             &:hover {
                 background: $gray700;
+            }
+            &:disabled {
+                background: $gray200;
+                cursor: default;
             }
         }
     }
@@ -277,13 +296,50 @@ button {
         }
     }
     &.type09 {
-        width: 15.3rem;
+        // width: 15.3rem;
+        padding: 0 2rem;
         height: 5.2rem;
         color: $gray0;
         background: $secondary500;
         transition: background .25s;
         &:hover {
             background: $secondary300;
+        }
+    }
+    &.type10 {
+        width: 100%;
+        height: 5.2rem;
+        color: $gray0;
+        background: $gray950;
+        transition: background .25s;
+        &:disabled {
+            background: $gray200;
+            cursor: default;
+            &:hover {
+                background: $gray200;
+            }
+        }
+        &:hover {
+            background: $gray700;
+        }
+    }
+    &.type11 {
+        padding: 0 3.8rem 0 1.4rem;
+        color: $gray0;
+        background: url(../../assets/images/icon/plus_wt.svg) no-repeat center right 1.2rem/2.4rem $gray950;
+        transition: background .25s;
+        &:hover {
+            background-color: $gray700;
+        }
+    }
+    &.type12 {
+        padding: 0 4rem 0 1.4rem;
+        color: $gray800;
+        border: 1px solid $gray200;
+        background: url(../../assets/images/icon/arrow_right_bk.svg) no-repeat center right 1.2rem/24px $gray0;
+        transition: border .25s;
+        &:hover {
+            border: 1px solid $gray400;
         }
     }
 }
@@ -333,7 +389,7 @@ button {
             width: 2.4rem;
             height: 2.4rem;
             border: none;
-            background: url(../../../assets/images/icon/search.svg) no-repeat center/contain;
+            background: url(../../assets/images/icon/search.svg) no-repeat center/contain;
         }
         &.word-move {
             input[type="text"], input[type="password"] {
@@ -359,11 +415,11 @@ button {
                         border: 1px solid $gray200;
                         &.up-btn {
                             border-radius: .4rem 0 0 .4rem;
-                            background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
+                            background: url(../../assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
                         }
                         &.down-btn {
                             border-radius: 0 .4rem .4rem 0;
-                            background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
+                            background: url(../../assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
                             border-left: 0;
                         }
                     }
@@ -449,7 +505,7 @@ button {
                     height: 2rem;
                     border-radius: 3px;
                     opacity: 0;
-                    background: url(../../../assets/images/icon/check.svg) no-repeat center/1.7rem $secondary500;
+                    background: url(../../assets/images/icon/check.svg) no-repeat center/1.7rem $secondary500;
                 }
             }
             &:checked{
@@ -573,7 +629,7 @@ span {
                 right: 1.4rem;
                 top: 50%;
                 transform: translateY(-50%);
-                background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center;
+                background: url(../../assets/images/icon/arrow_down.svg) no-repeat center;
                 transition: all .25s;
             }
             &.on{
@@ -804,11 +860,9 @@ span {
         display: inline-block;
         width: 1.2rem;
         height: 1.2rem;
-        background: url(../../../assets/images/icon/arrow_right.svg) no-repeat center/contain;
+        background: url(../../assets/images/icon/arrow_right.svg) no-repeat center/contain;
     }
 }
-
-
 
 /*토스트 메시지*/
 .toast-pop {
@@ -830,9 +884,76 @@ span {
     backdrop-filter: blur(7px);
     transition: all 0.5s;
     z-index: 999;
+    &.active {
+        opacity: 100%;
+        bottom: 6rem;
+    }
 }
-/*토스트 메시지 활성화 되었을 때*/
-.toast-pop.active {
-    opacity: 100%;
+
+/* 페이지네이션 */
+/* pagenation */
+.pagination{
+    padding: 4rem 0 2rem;
+    &-inner{
+        @include flexbox(row, center, center);
+        > div{
+            @include flexbox(row, flex-start, center);
+            a{
+                width: 3.6rem;
+                height: 3.6rem;
+                font-size: 1.8rem;
+                font-weight: 500;
+                border-radius: 1rem;
+                background: transparent;
+                @include flexbox(row, center, center);
+                transition: all .25s;
+            }
+            span {
+                display: inline-block;
+                text-align: center;
+                width: 3.6rem;
+                font-size: 1.8rem;
+                font-weight: 500;
+            }
+            &.page-links {
+                a {
+                    &.on {
+                        background: $gray0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 우측 하단 플로팅 버튼 */
+.floating-btn {
+    position: fixed;
+    right: 6rem;
     bottom: 6rem;
+    width: 8rem;
+    height: 8rem;
+    border-radius: 50%;
+    background: url(../../assets/images/common/ixi_btn.svg) no-repeat center/contain;
+    box-shadow: 0px 4px 12px 0px rgba(185, 122, 255, 0.60);
+    z-index: 10;
+    cursor: pointer;
+}
+
+/* 불릿 */
+.bullet-line {
+    position: relative;
+    padding-left: 1.2rem;
+    font-weight: 500;
+    color: $gray800;
+    line-height: 1.8;
+    &::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray800;
+    }
 }

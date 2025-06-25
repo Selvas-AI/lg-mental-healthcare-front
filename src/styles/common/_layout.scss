@@ -1,4 +1,11 @@
-@import "responsive";
+/* 로그인, 회원가입을 제외한 모든 페이지 공통 레이아웃 */
+
+/* 노트북 */
+@mixin notebook{
+    @media (max-width: 1280px){ 
+        @content;
+    }
+}
 
 /* 전체 레이아웃 */
 .wrapper {
@@ -49,6 +56,21 @@
             background: #EEF4F4;
         }
     }
+    main {
+        position: relative;
+        width: calc(100% - 18rem);
+        min-height: calc(100vh - 8rem);
+        margin-top: 8rem;
+        margin-left: 18rem;
+        transition: all .3s;
+        > .inner {
+            position: relative;
+            width: calc(100% - 4rem);
+            max-width: 1110px;
+            margin: 0 auto;
+            z-index: 1;
+        }
+    }
 }
 
 /* header 레이아웃 */
@@ -82,7 +104,7 @@ header {
                 height: 4.4rem;
                 border-radius: 50%;
                 border: 1px solid $gray50;
-                background: url(../../../assets/images/icon/back.svg) no-repeat center $gray0;
+                background: url(../../assets/images/icon/back.svg) no-repeat center $gray0;
                 box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
             }
             .page-title {
@@ -110,16 +132,47 @@ header {
                     border: 1px solid $gray50;
                     box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
                     &.search-btn {
-                        background: url(../../../assets/images/icon/search.svg) no-repeat center $gray0;
+                        background: url(../../assets/images/icon/search.svg) no-repeat center $gray0;
                     }
                     &.alarm-btn {
-                        background: url(../../../assets/images/icon/alarm.svg) no-repeat center $gray0;
+                        background: url(../../assets/images/icon/alarm.svg) no-repeat center $gray0;
                     }
                     &.mypage-btn {
-                        background: url(../../../assets/images/icon/mypage.svg) no-repeat center $gray0;
+                        background: url(../../assets/images/icon/mypage.svg) no-repeat center $gray0;
                     }
                 }
             }
+        }
+    }
+}
+
+/* 콘텐츠 -> header 이동 영역 */
+.move-up {
+    @include flexbox(row, space-between, center);
+    margin-bottom: 1.6rem;
+    .page-title {
+        font-size: 3.6rem;
+        font-weight: 700;
+    }
+}
+
+/* footer 레이아웃 */
+footer {
+    width: calc(100% - 18rem);
+    margin-left: 18rem;
+    padding-top: 10rem;
+    padding-bottom: 4rem;
+    transition: all .3s;
+    &.on {
+        width: calc(100% - 7.6rem);
+        margin-left: 7.6rem;
+        transition: all .3s;
+    }
+    .inner {
+        @include flexbox(row, center, center);
+        .copyright {
+            font-weight: 500;
+            color: $gray400;
         }
     }
 }
@@ -153,7 +206,7 @@ header {
             .menu-btn {
                 width: 2rem;
                 height: 2rem;
-                background: url(../../../assets/images/icon/menu.svg) no-repeat center;
+                background: url(../../assets/images/icon/menu.svg) no-repeat center;
             }
         }
         .menu {
@@ -181,32 +234,32 @@ header {
                             }
                             &.home {
                                 &::before {
-                                    background: url(../../../assets/images/icon/home_bk.svg) no-repeat center/contain;
+                                    background: url(../../assets/images/icon/home_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.schedule {
                                 &::before {
-                                    background: url(../../../assets/images/icon/calendar_bk.svg) no-repeat center/contain;
+                                    background: url(../../assets/images/icon/calendar_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.clients {
                                 &::before {
-                                    background: url(../../../assets/images/icon/clients_bk.svg) no-repeat center/contain;
+                                    background: url(../../assets/images/icon/clients_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.document {
                                 &::before {
-                                    background: url(../../../assets/images/icon/document_bk.svg) no-repeat center/contain;
+                                    background: url(../../assets/images/icon/document_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.mypage {
                                 &::before {
-                                    background: url(../../../assets/images/icon/mypage_bk.svg) no-repeat center/contain;
+                                    background: url(../../assets/images/icon/mypage_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.support {
                                 &::before {
-                                    background: url(../../../assets/images/icon/info_bk.svg) no-repeat center/contain;
+                                    background: url(../../assets/images/icon/info_bk.svg) no-repeat center/contain;
                                 }
                             }
                         }
@@ -236,32 +289,32 @@ header {
                         }
                         &.home {
                             &::before {
-                                background: url(../../../assets/images/icon/home.svg) no-repeat center/contain;
+                                background: url(../../assets/images/icon/home.svg) no-repeat center/contain;
                             }
                         }
                         &.schedule {
                             &::before {
-                                background: url(../../../assets/images/icon/calendar.svg) no-repeat center/contain;
+                                background: url(../../assets/images/icon/calendar.svg) no-repeat center/contain;
                             }
                         }
                         &.clients {
                             &::before {
-                                background: url(../../../assets/images/icon/clients.svg) no-repeat center/contain;
+                                background: url(../../assets/images/icon/clients.svg) no-repeat center/contain;
                             }
                         }
                         &.document {
                             &::before {
-                                background: url(../../../assets/images/icon/document.svg) no-repeat center/contain;
+                                background: url(../../assets/images/icon/document.svg) no-repeat center/contain;
                             }
                         }
                         &.mypage {
                             &::before {
-                                background: url(../../../assets/images/icon/mypage.svg) no-repeat center/contain;
+                                background: url(../../assets/images/icon/mypage.svg) no-repeat center/contain;
                             }
                         }
                         &.support {
                             &::before {
-                                background: url(../../../assets/images/icon/info.svg) no-repeat center/contain;
+                                background: url(../../assets/images/icon/info.svg) no-repeat center/contain;
                             }
                         }
                     }
@@ -289,7 +342,7 @@ header {
     }
 }
 
-/* 우측 서포트 패널 */
+/* 우측 서포트 패널 레이아웃 */
 .support-panel {
     position: fixed;
     top: 8rem;
@@ -312,7 +365,7 @@ header {
     }
 }
 
-/* 모달(팝업) */
+/* 모달(팝업) 공통 레이아웃 */
 .modal {
     position: fixed;
     top: 0;
@@ -344,1268 +397,7 @@ header {
                 width: 3.2rem;
                 height: 3.2rem;
                 border: none;
-                background: url(../../../assets/images/icon/close.svg) no-repeat center/contain;
-            }
-        }
-        /* 녹음 파일 업로드 */
-        .dropzone {
-            width: 100%;
-            height: 33.6rem;
-            border: 1px dashed $gray200;
-            border-radius: .8rem;
-            transition: all .25s;
-            @include flexbox(column, center, center);
-            gap: 2.4rem;
-            &.dragover {
-                border-color: $secondary500;
-                background: $secondary50;
-            }
-            .file-input {
-                display: none;
-            }
-            .fake-upload-btn {
-                display: inline-block;
-                width: 13.9rem;
-                height: 4.8rem;
-                padding: 0 1.2rem 0 1.4rem;
-                font-size: 1.6rem;
-                font-weight: 700;
-                color: $gray800;
-                border-radius: .8rem;
-                border: 1px solid $gray200;
-                background: url(../../../assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/2.4rem $gray0;
-                @include flexbox(row, flex-start, center);
-                cursor: pointer;
-                transition: border 0.25s;
-                &:hover {
-                    border: 1px solid #7A8A93;
-                }
-            }
-            p {
-                font-size: 2.2rem;
-                font-weight: 700;
-                color: $gray800;
-            }
-        }
-    }
-}
-
-/* 우측 하단 플로팅 버튼 */
-.floating-btn {
-    position: fixed;
-    right: 6rem;
-    bottom: 6rem;
-    width: 8rem;
-    height: 8rem;
-    border-radius: 50%;
-    background: url(../../../assets/images/common/ixi_btn.svg) no-repeat center/contain;
-    box-shadow: 0px 4px 12px 0px rgba(185, 122, 255, 0.60);
-    z-index: 10;
-    cursor: pointer;
-}
-
-/* footer 레이아웃 */
-footer {
-    width: calc(100% - 18rem);
-    margin-left: 18rem;
-    padding-top: 10rem;
-    padding-bottom: 4rem;
-    transition: all .3s;
-    &.on {
-        width: calc(100% - 7.6rem);
-        margin-left: 7.6rem;
-        transition: all .3s;
-    }
-    .inner {
-        @include flexbox(row, center, center);
-        .copyright {
-            font-weight: 500;
-            color: $gray400;
-        }
-    }
-}
-
-/* 콘텐츠 영역 레이아웃 */
-main {
-    position: relative;
-    width: calc(100% - 18rem);
-    min-height: calc(100vh - 8rem);
-    margin-top: 8rem;
-    margin-left: 18rem;
-    // padding-bottom: 6.4rem;
-    transition: all .3s;
-    > .inner {
-        position: relative;
-        width: calc(100% - 4rem);
-        max-width: 1110px;
-        margin: 0 auto;
-        z-index: 1;
-    }
-}
-
-/* 콘텐츠 -> header 이동 영역 */
-.move-up {
-    @include flexbox(row, space-between, center);
-    margin-bottom: 1.6rem;
-    .page-title {
-        font-size: 3.6rem;
-        font-weight: 700;
-    }
-}
-
-/* 내담자 프로필 */
-.client-profile {
-    width: 100%;
-    padding: 3rem 2.6rem;
-    border-radius: 1.6rem;
-    border: 1px solid $gray50;
-    background: $gray0;
-    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-    margin-bottom: 7rem;
-    .name-wrap {
-        width: 100%;
-        @include flexbox(row, space-between, center);
-        .left {
-            @include flexbox(row, flex-start, center);
-            gap: 1rem;
-            strong {
-                font-size: 2.2rem;
-                font-weight: 700;
-            }
-        }
-        .toggle-btn {
-            width: 2rem;
-            height: 2rem;
-            background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center;
-            transition: all .25s;
-            &.on {
-                transform: rotate(180deg);
-                transition: all .25s;
-            }
-        }
-    }
-    .info-wrap {
-        width: 100%;
-        padding-top: 2rem;
-        display: none;
-        table {
-            table-layout: fixed;
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: .8rem .4rem;
-            tr {
-                width: 100%;
-                th {
-                    width: 5rem;
-                    font-size: 1.4rem;
-                    font-weight: 700;
-                    color: $gray800;
-                    text-align: left;
-                    white-space: nowrap;
-                    vertical-align: top;
-                }
-                td {
-                    width: calc(50% - 5rem);
-                    font-size: 1.4rem;
-                    font-weight: 500;
-                    color: $gray600;
-                    vertical-align: top;
-                    .memo-wrap {
-                        width: 100%;
-                        @include flexbox(row, flex-start, center);
-                        .memo {
-                            max-width: calc(100% - 40px);
-                            @include ellipsis(1);
-                        }
-                        .edit-btn {
-                            white-space: nowrap;
-                            margin-left: .8rem;
-                            font-size: 1.4rem;
-                            color: $gray600;
-                            text-decoration: underline;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/* 탭 메뉴 */
-.tab-menu {
-    position: relative;
-    width: 100%;
-    &::before {
-        content: '';
-        position: absolute;
-        top: 4.2rem;
-        left: 0;
-        width: 100%;
-        height: 1px;
-        background: $gray100;
-    }
-    .tab-list-wrap {
-        position: relative;
-        .tab-list {
-            width: 100%;
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 2.4rem;
-            li {
-                position: relative;
-                &.on {
-                    a {
-                        font-size: 2.2rem;
-                        color: $gray950;
-                        font-weight: 700;
-                        transition: all 0.25s;
-                    }
-                }
-                a {
-                    display: inline-block;
-                    width: 100%;
-                    padding-bottom: .7rem;
-                    font-size: 2.2rem;
-                    color: $gray400;
-                    font-weight: 500;
-                    transition: all 0.25s;
-                    text-align: center;
-                }
-            }
-        }
-        .tab-indicator {
-            position: relative;
-            width: 7.5rem;
-            height: 3px;
-            background: $gray950;
-            left: 0px;
-            transition: all 0.25s ease-in-out;
-        }
-    }
-    .tab-cont {
-        padding-top: 2rem;
-        > div {
-            width: 100%;
-            height: 100%;
-            display: none;
-            &.on {
-                display: block;
-            }
-        }
-    }
-}
-
-/* 가로(발화빈도) 막대 그래프 */
-.bar-wrap {
-    width: 100%;
-    .legend {
-        margin-bottom: 2rem;
-        font-weight: 500;
-        color: $gray500;
-        @include flexbox(row, flex-start, center);
-        span {
-            position: relative;
-            @include flexbox(row, center, center);
-            gap: .6rem;
-            &.counselor, &.client {
-                &::before {
-                    content: '';
-                    display: inline-block;
-                    width: 1.4rem;
-                    height: 1.4rem;
-                    border-radius: 50%;
-                }
-            }
-            &.counselor {
-                padding-right: 1.4rem;
-                &::before {
-                    background: #A0C9FF;
-                }
-            }
-            &.client {
-                &::before {
-                    background: #7ACB93;
-                }
-            }
-        }
-    }
-    .bar-labels {
-        margin-bottom: 1.2rem;
-        @include flexbox(row, space-between, center);
-        > div {
-            &:last-of-type {
-                text-align: right;
-            }
-            span {
-                font-weight: 700;
-                color: $gray600;
-                line-height: 2rem;
-            }
-            .value {
-                font-size: 2.8rem;
-                font-weight: 500;
-                line-height: 3rem;
-            }
-        }
-    }
-    .bar-container {
-        display: flex;
-        height: 2.6rem;
-        border-radius: 8px;
-        overflow: hidden;
-        .bar-counselor {
-            background: #A0C9FF;
-            height: 100%;
-            margin-right: 5px;
-        }
-        .bar-client {
-            background: #7ACB93;
-            height: 100%;
-        }
-    }
-}
-
-/* 대시보드 */
-.dashboard {
-    .box, .txt-box {
-        position: relative;
-        width: calc(50% - 0.6rem);
-        border-radius: 2rem;
-        border: 1px solid $gray50;
-        background: $gray0;
-        box-shadow: 0px 2px 6px 0px rgba(195, 195, 195, 0.25);
-        &.before-create {
-            background: url(../../../assets/images/common/create_board_bg.svg) no-repeat center/cover, linear-gradient(0deg, rgba(255, 225, 255, 0.40) 0%, rgba(255, 241, 255, 0.00) 41.05%) $gray0;
-            .create-wrap {
-                margin-top: 1.2rem;
-                @include flexbox(column, center, center);
-                gap: 1.2rem;
-                p {
-                    text-align: center;
-                    font-weight: 500;
-                    color: $gray400;
-                }
-            }
-        }
-    }
-    .box-tit {
-        @include flexbox(row, space-between, center);
-        strong {
-            font-size: 2rem;
-            font-weight: 700;
-            color: $gray900;
-        }
-        .edit-btn {
-            font-size: 1.6rem;
-            font-weight: 500;
-            color: $gray400;
-        }
-    }
-    .box {
-        padding: 3rem;
-        &.keyword, &.frequency {
-            min-height: 24.2rem;
-            > .con-wrap {
-                width: 100%;
-                height: 100%;
-                margin-top: 1.6rem;
-                @include flexbox(column, center, center);
-            }
-            &.before-create {
-                .create-wrap {
-                    height: 14rem;
-                }
-            }
-        }
-        &.stress {
-            min-height: 25.6rem;
-            >.con-wrap {
-                margin-top: 1.6rem;
-            }
-            &.before-create {
-                .create-wrap {
-                    height: 15rem;
-                }
-            }
-        }
-    }
-    .txt-box {
-        min-height: 21.3rem;
-        padding: 3rem 3rem 1.6rem;
-        .box-explain {
-            margin: 1.2rem 0;
-            min-height: 8.7rem;
-            max-height: 8.7rem;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            &.clamped {
-                display: -webkit-box;
-                text-overflow: ellipsis;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 3;
-                line-clamp: 3;
-                overflow: hidden;
-            }
-            &.empty {
-                @include flexbox(row, center, center);
-                p {
-                    font-weight: 500;
-                    color: $gray300;
-                }
-            }
-            .save-txt {
-                position: relative;
-                font-weight: 500;
-                line-height: 1.8;
-                color: $gray600;
-            }
-        }
-        > button {
-            width: 100%;
-            height: 1.4rem;
-            background: url(../../../assets/images/icon/arrow_down_box.svg) no-repeat center/contain;
-            transition: transform .3s;
-            &.rotate {
-                transform: rotate(180deg);
-            }
-        }
-    }
-    > .con-wrap {
-        @include flexbox(row, center, center);
-        padding-top: 1.6rem;
-    }
-}
-
-/* 대시보드 empty */
-.empty-board {
-    width: 100%;
-    padding: 3.6rem 3rem;
-    border-radius: 2rem;
-    border: 1px solid $gray50;
-    background: $white;
-    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-    @include flexbox(column, center, center);
-    p {
-        &.empty-tit {
-            padding: 2rem 0 .6rem;
-            font-weight: 700;
-            color: $gray600;
-        }
-        &.empty-info {
-            font-weight: 500;
-            color: $gray400;
-        }
-    }
-}
-
-/* 대시보드 생성중 */
-.create-board {
-    position: relative;
-    width: 100%;
-    height: 27rem;
-    border-radius: 2rem;
-    border: 1px solid $gray50;
-    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-    background: url(../../../assets/images/common/create_board_bg.svg) no-repeat center/cover, linear-gradient(0deg, rgba(255, 225, 255, 0.40) 0%, rgba(255, 241, 255, 0.00) 41.05%) $gray0;
-    @include flexbox(column, center, center);
-    &::before {
-        content: "";
-        position: absolute;
-        right: 11.4rem;
-        bottom: 4rem;
-        width: 13.7rem;
-        height: 12.6rem;
-        background: url(../../../assets/images/common/character.svg) no-repeat center/contain;
-    }
-    strong {
-        font-size: 2rem;
-        font-weight: 700;
-        color: $gray900;
-    }
-    ul {
-        padding: 2.6rem 0 2rem;
-        @include flexbox(row, center, center);
-        gap: 3.6rem;
-        li {
-            font-weight: 700;
-            color: $gray600;
-        }
-    }
-}
-
-/* 불릿 */
-.bullet-line {
-    position: relative;
-    padding-left: 1.2rem;
-    font-weight: 500;
-    color: $gray800;
-    line-height: 1.8;
-    &::before {
-        content: '•';
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-size: 1.6rem;
-        font-weight: 500;
-        color: $gray800;
-    }
-}
-
-/* 상담관리 */
-main {
-    &.consults {
-        .tab-panel {
-            &.counsel {
-                .select-wrap {
-                    margin-bottom: 4rem;
-                }
-                .tit-wrap {
-                    @include flexbox(row, space-between, center);
-                    margin-bottom: 2rem;
-                    strong {
-                        font-size: 3rem;
-                        font-weight: 700;
-                    }
-                    .btn-wrap {
-                        @include flexbox(row, flex-end, center);
-                        gap: .8rem;
-                    }
-                }
-                .transcript {
-                    margin-bottom: 18rem;
-                    .dashboard {
-                        width: 100%;
-                        @include flexbox(row, flex-start, flex-start);
-                        gap: 1.2rem;
-                        flex-wrap: wrap;
-                        .stress { 
-                            width: 100%;
-                            padding: 3rem 3rem 0;
-                        }
-                    }
-                }
-                .counsel-log {
-                    .dashboard {
-                        width: 100%;
-                        @include flexbox(row, flex-start, flex-start);
-                        gap: 1.2rem;
-                        flex-wrap: wrap;
-                        .urgency {
-                            width: 100%;
-                            padding: 3rem;
-                            border-radius: 2rem;
-                            box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-                            .con-wrap {
-                                width: 100%;
-                                height: 13.8rem;
-                                margin-top: 3.2rem;
-                                @include flexbox(row, flex-start, center);
-                                gap: .6rem;
-                                > div {
-                                    height: 100%;
-                                    padding: 1.6rem;
-                                    border-radius: 1.6rem;
-                                    background: $gray0;
-                                    &.risk-scale {
-                                        width: 34.2rem;
-                                        padding: 2.4rem;
-                                        ul {
-                                            width: 100%;
-                                            @include flexbox(row, space-around, center);
-                                            li {
-                                                @include flexbox(column, center, center);
-                                                gap: .9rem;
-                                                > span {
-                                                    font-size: 1.4rem;
-                                                    font-weight: 700;
-                                                    color: $gray600;
-                                                }
-                                                div {
-                                                    width: 6rem;
-                                                    height: 6rem;
-                                                    border-radius: 50%;
-                                                    @include flexbox(row, center, center);
-                                                    span {
-                                                        font-size: 2.4rem;
-                                                        font-weight: 500;
-                                                        color: $gray700;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    &:not(.risk-scale) {
-                                        > span {
-                                            font-weight: 700;
-                                            color: $gray900;
-                                        }
-                                        > p {
-                                            font-weight: 500;
-                                            color: $gray600;
-                                        }
-                                    }
-                                    &.current-risk, &.past-risk {
-                                        width: 16.9rem;
-                                    }
-                                    &.risk-factor {
-                                        width: 34.2rem;
-                                    }
-                                }
-                            }
-                            &.safe {
-                                background: $blue100;
-                                .con-wrap {
-                                    > div {
-                                        &.risk-scale {
-                                            ul {
-                                                li {
-                                                    div {
-                                                        background: $blue50;
-                                                    }
-                                                    &:nth-of-type(1) {
-                                                        div {
-                                                            background: url(/assets/images/common/safe_face.svg) no-repeat center;
-                                                            span {
-                                                                display: none;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            &.caution {
-                                background: $yellow100;
-                                .con-wrap {
-                                    > div {
-                                        &.risk-scale {
-                                            ul {
-                                                li {
-                                                    div {
-                                                        background: $yellow50;
-                                                    }
-                                                    &:nth-of-type(2) {
-                                                        div {
-                                                            background: url(/assets/images/common/caution_face.svg) no-repeat center;
-                                                            span {
-                                                                display: none;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            &.danger {
-                                background: $orange100;
-                                .con-wrap {
-                                    > div {
-                                        &.risk-scale {
-                                            ul {
-                                                li {
-                                                    div {
-                                                        background: $orange50;
-                                                    }
-                                                    &:nth-of-type(3) {
-                                                        div {
-                                                            background: url(/assets/images/common/danger_face.svg) no-repeat center;
-                                                            span {
-                                                                display: none;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            &.critical {
-                                background: $red50;
-                                .con-wrap {
-                                    > div {
-                                        &.risk-scale {
-                                            ul {
-                                                li {
-                                                    div {
-                                                        background: rgba(255, 229, 229, 0.50);
-                                                    }
-                                                    &:nth-of-type(4) {
-                                                        div {
-                                                            background: url(/assets/images/common/critical_face.svg) no-repeat center;
-                                                            span {
-                                                                display: none;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .severity {
-                            width: 100%;
-                            padding: 3rem;
-                            border-radius: 2rem;
-                            border: 1px solid $gray50;
-                            background: $gray0;
-                            box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-                            .con-wrap {
-                                margin-top: 3.2rem;
-                            }
-                        }
-                    }
-                    .sub-tit {
-                        padding-top: 6rem;
-                        margin-bottom: 2rem;
-                        strong {
-                            font-size: 2.4rem;
-                            font-weight: 700;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/* 상담일지 */
-.session-info-bar {
-    width: 100%;
-    margin-bottom: 3rem;
-    @include flexbox(row, space-between, center);
-    border-bottom: 1px solid $gray100;
-    .info {
-        @include flexbox(row, flex-start, center);
-        gap: 2.8rem;
-        strong {
-            position: relative;
-            font-size: 2.2rem;
-            font-weight: 700;
-            &::before {
-                content: "";
-                position: absolute;
-                top: 50%;
-                right: -1.4rem;
-                transform: translateY(-50%);
-                width: 1px;
-                height: 1.4rem;
-                background: #91A4AE;
-            }
-        }
-        p {
-            span {
-                font-weight: 500;
-                color: $gray400;
-            }
-        }
-    }
-    .panel-btn {
-        position: relative;
-        display: inline-block;
-        height: 4.2rem;
-        font-weight: 500;
-        color: $gray400;
-        @include flexbox(row, center, center);
-        gap: .4rem;
-        &::after {
-            content: "";
-            display: inline-block;
-            width: 2.4rem;
-            height: 2.4rem;
-            background: url(../../../assets/images/icon/panel_open.svg) no-repeat center;
-        }
-    }
-}
-
-.form-section {
-    @include flexbox(row, space-between, flex-start);
-    gap: 2.4rem;
-    .step-nav {
-        position: sticky;
-        top: 11rem;
-        width: 25.2rem;
-        border-radius: 1.6rem;
-        border: 1px solid #F3F3F3;
-        background: $white;
-        box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-        .inner {
-            width: 100%;
-            padding: 1.8rem 1.6rem;
-            > strong {
-                font-weight: 700;
-                color: #1E2125;
-            }
-            > ul {
-                width: 100%;
-                padding-top: 1.6rem;
-                @include flexbox(column, center, flex-start);
-                gap: 1.4rem;
-                li {
-                    &.on {
-                        > a {
-                            &::before {
-                                background-color: $secondary500;
-                            }
-                        }
-                    }
-                }
-                > li {
-                    width: 100%;
-                    > a {
-                        position: relative;
-                        display: inline-block;
-                        width: 100%;
-                        height: 4rem;
-                        padding: 0 .8rem;
-                        font-weight: 500;
-                        color: $gray400;
-                        border-radius: 1rem;
-                        @include flexbox(row, flex-start, center);
-                        gap: .75rem;
-                        transition: background .25s;
-                        &:hover {
-                            background: $gray50;
-                        }
-                        &::before {
-                            content: "";
-                            display: inline-block;
-                            width: 1.5rem;
-                            height: 1.5rem;
-                            border-radius: 50%;
-                            background: url(../../../assets/images/icon/check.svg) no-repeat center/12px $gray200;
-                        }
-                    }
-                    ul {
-                        position: relative;
-                        @include flexbox(column, center, flex-start);
-                        gap: 0;
-                        padding-left: 2.55rem;
-                        &::before {
-                            content: "";
-                            position: absolute;
-                            top: 0;
-                            left: 1.5rem;
-                            width: 1px;
-                            height: 100%;
-                            background: $gray200;
-                        }
-                        li {
-                            a {
-                                height: 3.6rem;
-                                font-weight: 500;
-                                color: $gray400;
-                                @include flexbox(row, flex-start, center);
-                                gap: .75rem;
-                                cursor: default;
-                                &::before {
-                                    content: "";
-                                    display: inline-block;
-                                    width: 1.5rem;
-                                    height: 1.5rem;
-                                    border-radius: 50%;
-                                    background: url(../../../assets/images/icon/check.svg) no-repeat center/12px $gray200;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    .form-content {
-        width: calc(100% - 27.6rem);
-        @include flexbox(column, flex-start, flex-start);
-        gap: 8rem;
-        > div {
-            position: relative;
-            width: 100%;
-            scroll-margin-top: 11rem;
-            .step-title {
-                width: 100%;
-                margin-bottom: 1.2rem;
-                @include flexbox(row, space-between, center);
-                strong {
-                    position: relative;
-                    font-size: 2.4rem;
-                    font-weight: 700;
-                    &.necessary {
-                        &::after {
-                            content: "*";
-                            position: absolute;
-                            color: #FF3D00;
-                        }
-                    }
-                }
-                &.type01 {
-                    justify-content: flex-start;
-                    .info {
-                        position: relative;
-                        .info-icon {
-                            width: 3rem;
-                            height: 3rem;
-                            background: url(../../../assets/images/icon/info.svg) no-repeat center;
-                        }
-                        .tooltip {
-                            position: absolute;
-                            top: 50%;
-                            left: 4.2rem;
-                            transform: translateY(-50%);
-                            padding: 1.2rem 1.6rem;
-                            color: $white;
-                            font-size: 1.4rem;
-                            font-weight: 500;
-                            border-radius: 1.4rem;
-                            white-space: nowrap;
-                            background: $gray600;
-                            display: none;
-                            z-index: 10;
-                            &::before {
-                                content: '';
-                                position: absolute;
-                                top: 50%;
-                                left: -14px;
-                                transform: translateY(-50%);
-                                width: 0;
-                                height: 0;
-                                border-top: 10px solid transparent;
-                                border-bottom: 10px solid transparent;
-                                border-right: 14px solid $gray600;
-                            }
-                        }
-                        // &:hover .tooltip {
-                        //     display: block;
-                        // }
-                    }
-                }
-                &.sub {
-                    strong {
-                        font-size: 1.8rem;
-                        font-weight: 500;
-                    }
-                }
-            }
-            .step-conts {
-                .write-wrap {
-                    width: 100%;
-                    border-radius: 1.4rem;
-                    background: $gray0;
-                    .write-title {
-                        @include flexbox(row, space-between, center);
-                        p {
-                            font-weight: 700;
-                        }
-                        .panel-btn {
-                            font-size: 1.4rem;
-                            font-weight: 500;
-                            color: $gray400;
-                            @include flexbox(row, center, center);
-                            gap: .2rem;
-                            &::after {
-                                content: "";
-                                display: inline-block;
-                                width: 1.2rem;
-                                height: 1.2rem;
-                                background: url(../../../assets/images/icon/arrow_right.svg) no-repeat center/contain;
-                            }
-                        }
-                    }
-                }
-            }
-            &.content01 {
-                .step-conts {
-                    .write-wrap {
-                        padding: 2.4rem 1.6rem 2rem;
-                        &:not(:last-of-type) {
-                            margin-bottom: 1.2rem;
-                            .write-area {
-                                ul {
-                                    gap: .6rem 0;
-                                    li {
-                                        height: 3.5rem;
-                                        @include flexbox(row, flex-start, center);
-                                    }
-                                }
-                            }
-                        }
-                        .write-title {
-                            margin-bottom: 1.8rem;
-                        }
-                        .write-area {
-                            ul {
-                                width: 100%;
-                                @include flexbox(row, flex-start, flex-start);
-                                flex-wrap: wrap;
-                                li {
-                                    width: 25%;
-                                }
-                            }
-                        }
-                        &.check {
-                            .write-area {
-                                ul {
-                                    li {
-                                        &:last-of-type {
-                                            width: 100%;
-                                            @include flexbox(row, flex-start, center);
-                                            gap: 1rem;
-                                            .input-wrap {
-                                                &:first-of-type {
-                                                    width: 5.9rem;
-                                                }
-                                                &:last-of-type {
-                                                    width: calc(100% - 6.9rem);
-                                                    input {
-                                                        width: 100%;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        &.risk-scale {
-                            .write-title {
-                                margin-bottom: .4rem;
-                                & + p {
-                                    margin-bottom: 1.8rem;
-                                    font-size: 1.4rem;
-                                    font-weight: 500;
-                                    color: $gray400;
-                                }
-                            }
-                            .write-area {
-                                ul {
-                                    gap: 1rem;
-                                    li {
-                                        position: relative;
-                                        width: calc(25% - .75rem);
-                                        height: 16.6rem;
-                                        border-radius: .8rem;
-                                        border: 1px solid $gray100;
-                                        overflow: hidden;
-                                        transition: all .25s;
-                                        &:has(input[type="radio"]:checked) {
-                                            border: 1px solid $secondary500;
-                                            .bottom {
-                                                border-top: 1px solid $secondary500;
-                                                background: rgba(50, 208, 103, 0.10);
-                                            }
-                                        }
-                                        .top {
-                                            height: 11.8rem;
-                                            @include flexbox(column, center, center);
-                                            gap: 1rem;
-                                        }
-                                        .input-wrap {
-                                            position: absolute;
-                                            top: 1.2rem;
-                                            left: 1.2rem;
-                                            label {
-                                                padding-left: 2rem;
-                                            }
-                                        }
-                                        .face-icon {
-                                            display: inline-block;
-                                            width: 5.4rem;
-                                            height: 5.4rem;
-                                            border-radius: 50%;
-                                            &.safe {
-                                                background: url(../../../assets/images/common/safe_face.svg) no-repeat center/contain;
-                                            }
-                                            &.caution {
-                                                background: url(../../../assets/images/common/caution_face.svg) no-repeat center/contain;
-                                            }
-                                            &.danger {
-                                                background: url(../../../assets/images/common/danger_face.svg) no-repeat center/contain;
-                                            }
-                                            &.critical {
-                                                background: url(../../../assets/images/common/critical_face.svg) no-repeat center/contain;
-                                            }
-                                        }
-                                        .bottom {
-                                            height: calc(100% - 11.8rem);
-                                            border-top: 1px solid $gray100;
-                                            @include flexbox(row, center, center);
-                                            transition: all .25s;
-                                            span {
-                                                font-weight: 500;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            &.content02 {
-                .step-conts {
-                    .write-wrap {
-                        padding: 2.4rem 1.6rem;
-                        .write-title {
-                            margin-bottom: 2.2rem;
-                        }
-                    }
-                    .tb-wrap {
-                        padding: 0 1.2rem;
-                        margin-bottom: 3.1rem;
-                        table {
-                            width: 100%;
-                            table-layout: fixed;
-                            thead {
-                                background: $gray50;
-                                tr {
-                                    th {
-                                        padding: 1.2rem;
-                                        &:first-of-type {
-                                            width: 14.6rem;
-                                            padding: 1.2rem 0 1.2rem 2rem;
-                                            border-radius: .6rem 0 0 .6rem;
-                                            text-align: left;
-                                            font-weight: 500;
-                                            color: $gray400;
-                                        }
-                                        &:not(:first-of-type) {
-                                            width: calc((100% - 14.6rem) / 6);
-                                            text-align: center;
-                                            font-weight: 700;
-                                            color: $gray500;
-                                        }
-                                        &:last-of-type {
-                                            padding: 1.2rem 2rem 1.2rem 0;
-                                            border-radius: 0 .6rem .6rem 0;
-                                        }
-                                    }
-                                }
-                            }
-                            tbody {
-                                tr {
-                                    border-bottom: 1px solid $gray50;
-                                    th {
-                                        box-sizing: content-box;
-                                        padding: .9rem 0;
-                                        height: 4.2rem;
-                                        padding-left: 2rem;
-                                        text-align: left;
-                                        font-weight: 700;
-                                        color: $gray800;
-                                        &.new-th {
-                                            padding-left: .7rem;
-                                            .symptom-input-wrap {
-                                                position: relative;
-                                                width: 100%;
-                                                .symptom-input {
-                                                    width: 100%;
-                                                    height: 3.8rem;
-                                                    padding: 0 1.2rem;
-                                                    font-family: $pretendard;
-                                                    font-size: 1.6rem;
-                                                    border-radius: .8rem;
-                                                    border: 1px solid $gray400;
-                                                    &::placeholder {
-                                                        color: $gray400;
-                                                    }
-                                                    &.error {
-                                                        border-color: #FF0606;
-                                                    }
-                                                }
-                                                .error-txt {
-                                                    font-family: $pretendard;
-                                                    font-size: 1.4rem;
-                                                    font-weight: 500;
-                                                    color: #FF0606;
-                                                    display: none;
-                                                    margin-top: .6rem;
-                                                    margin-left: .4rem;
-                                                }
-                                            }
-                                            .input-completed {
-                                                @include flexbox(row, flex-start, center);
-                                                gap: 1rem;
-                                                .remove-symptom {
-                                                    width: 3rem;
-                                                    height: 3rem;
-                                                    border-radius: 6px;
-                                                    border: 1px solid $gray100;
-                                                    background: url(../../../assets/images/icon/minus.svg) no-repeat center/2.4rem $gray0;
-                                                    cursor: pointer;
-                                                }
-                                                span {
-                                                    font-size: 1.6rem;
-                                                    font-weight: 700;
-                                                    color: $gray800;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    td {
-                                        .input-wrap {
-                                            @include flexbox(row, center, center);
-                                            label {
-                                                padding-left: 2rem;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .signs-add-btn {
-                        width: 100%;
-                        height: 5.2rem;
-                        border-radius: .6rem;
-                        background: rgba(239, 242, 243, 0.50);
-                        span {
-                            padding-left: 2.8rem;
-                            position: relative;
-                            font-weight: 700;
-                            color: $gray400;
-                            background: url(../../../assets/images/icon/plus.svg) no-repeat center left/24px;
-                        }
-                    }
-                }
-            }
-            &.content04 {
-                .step-conts {
-                    .write-wrap {
-                        &:nth-of-type(2) {
-                            margin-bottom: 2.4rem;
-                        }
-                    }
-                }
-            }
-            &.content09 {
-                .tips {
-                    width: 100%;
-                    padding: 0 1.2rem;
-                    margin-bottom: 2.8rem;
-                    height: 4rem;
-                    border-radius: .8rem;
-                    background: rgba(217, 226, 230, 0.30);
-                    @include flexbox(row, flex-start, center);
-                    p {
-                        font-size: 1.4rem;
-                        font-weight: 500;
-                        color: $gray600;
-                    }
-                }
-            }
-            &:not(.content01 , .content02) {
-                .step-conts {
-                    .write-wrap {
-                        padding: 1.6rem 1.6rem .8rem;
-                    }
-                }
+                background: url(../../assets/images/icon/close.svg) no-repeat center/contain;
             }
         }
     }
