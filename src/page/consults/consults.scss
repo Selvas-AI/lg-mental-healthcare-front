@@ -1,5 +1,5 @@
-@import "../common/common";
-@import "../common/layout";
+@import "@/styles/common/common.scss";
+@import "@/styles/common/_layout.scss";
 
 /* 상담관리 */
 .wrapper{
@@ -261,7 +261,13 @@
     .info-wrap {
         width: 100%;
         padding-top: 2rem;
-        display: none;
+        max-height: 1200px;
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding-top 0.35s cubic-bezier(0.4,0,0.2,1);
+        &.closed {
+            max-height: 0;
+            padding-top: 0;
+        }
         table {
             table-layout: fixed;
             width: 100%;

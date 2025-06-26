@@ -1,4 +1,10 @@
+
+
+import { useNavigate } from "react-router-dom";
+
 export default function Clients() {
+  const navigate = useNavigate();
+
   return (
     <>
       <div className="move-up">
@@ -10,7 +16,10 @@ export default function Clients() {
           </label>
         </div>
       </div>
-      <div>내담자 관리</div>
+
+      <button className="type07" style={{marginTop: '2rem'}} onClick={() => navigate('/clients/consults')}>
+        상담관리 보기
+      </button>
     </>
   );
 }

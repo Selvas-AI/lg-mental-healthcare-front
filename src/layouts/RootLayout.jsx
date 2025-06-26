@@ -62,6 +62,7 @@ const RootLayout = () => {
     '/document': '문서 관리',
     '/mypage': '마이페이지',
     '/support': '고객지원',
+    '/clients/consults': '상담관리',
   };
   const pageTitle = pathTitleMap[location.pathname] || '';
 

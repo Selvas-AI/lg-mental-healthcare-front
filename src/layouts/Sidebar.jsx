@@ -42,7 +42,13 @@ const Sidebar = ({ fold, onToggleFold }) => {
             ].map((item) => (
               <li
                 key={item.path}
-                className={window.location.pathname === item.path ? "on" : undefined}
+                className={
+                  item.path === "/"
+                    ? window.location.pathname === "/" ? "on" : undefined
+                    : window.location.pathname.startsWith(item.path)
+                      ? "on"
+                      : undefined
+                }
                 style={{ width: "100%", cursor: "pointer" }}
                 onClick={() => {
                   if (window.location.pathname !== item.path) {
