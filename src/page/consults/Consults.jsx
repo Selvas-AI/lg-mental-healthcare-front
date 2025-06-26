@@ -10,10 +10,10 @@ import DailyManagement from './DailyManagement';
 import DocumentBox from './DocumentBox';
 
 const TAB_LIST = [
-  { label: '상담관리', component: CounselManagement, panelClass: 'counsel-management' },
-  { label: '심리검사', component: PsychologicalTest, panelClass: 'psychological-test' },
-  { label: '일상관리', component: DailyManagement, panelClass: 'daily-management' },
-  { label: '문서함', component: DocumentBox, panelClass: 'document-box' },
+  { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
+  { label: '심리검사', component: PsychologicalTest, panelClass: 'test' },
+  { label: '일상관리', component: DailyManagement, panelClass: 'daily' },
+  { label: '문서함', component: DocumentBox, panelClass: 'document' },
 ];
 
 function Consults() {
