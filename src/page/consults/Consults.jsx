@@ -1,12 +1,44 @@
-import React, { useState } from 'react'
-import './consults.scss'
+import React, { useRef, useLayoutEffect, useState } from 'react';
+import { useRecoilState } from 'recoil';
+import { maskingState } from '@/recoil';
+import './consults.scss';
 
-import ClientProfile from './ClientProfile'
+import ClientProfile from './ClientProfile';
+import CounselManagement from './CounselManagement';
+import PsychologicalTest from './PsychologicalTest';
+import DailyManagement from './DailyManagement';
+import DocumentBox from './DocumentBox';
+
+const TAB_LIST = [
+  { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
+  { label: '심리검사', component: PsychologicalTest, panelClass: 'test' },
+  { label: '일상관리', component: DailyManagement, panelClass: 'daily' },
+  { label: '문서함', component: DocumentBox, panelClass: 'document' },
+];
 
 function Consults() {
-  const [masked, setMasked] = useState(false);
+  const [masked, setMasked] = useRecoilState(maskingState);
+  const [activeTab, setActiveTab] = useState(0);
+  const tabListRef = useRef([]);
+  const tabIndicatorRef = useRef(null);
+
+  // 탭 indicator 이동 효과
+  useLayoutEffect(() => {
+    const currentTab = tabListRef.current[activeTab];
+    const indicator = tabIndicatorRef.current;
+    if (currentTab && indicator) {
+      const tabWidth = currentTab.offsetWidth;
+      const tabLeft = currentTab.offsetLeft; 
+      indicator.style.width = tabWidth + 'px';
+      indicator.style.left = tabLeft + 'px';
+    }
+  }, [activeTab]);
+
+  const ActiveComponent = TAB_LIST[activeTab].component;
+
   return (
-    <div className="inner">
+    <>  
+      <div className="inner">
       <div className="move-up">
         <strong className="page-title">상담관리</strong>
         <div className="switch-wrap">
@@ -22,33 +54,36 @@ function Consults() {
           </label>
         </div>
       </div>
-      <ClientProfile masked={masked} />
+      <ClientProfile />
       <div className="tab-menu type01">
-        <div className="tab-list-wrap"> ... </div>
+        <div className="tab-list-wrap">
+          <ul className="tab-list" role="tablist">
+            {TAB_LIST.map((tab, idx) => (
+              <li
+                key={tab.label}
+                role="tab"
+                ref={el => tabListRef.current[idx] = el}
+                className={activeTab === idx ? 'on' : ''}
+                tabIndex={0}
+                onClick={() => setActiveTab(idx)}
+                style={{ cursor: 'pointer' }}
+              >
+                <a>{tab.label}</a>
+              </li>
+            ))}
+          </ul>
+          <div className="tab-indicator" ref={tabIndicatorRef}></div>
+        </div>
         <div className="tab-cont">
-          <div className="tab-panel counsel on" role="tabpanel">
-            <div className="transcript">
-              <div className="tit-wrap">
-                <strong>녹취록</strong>
-                <div className="btn-wrap">
-                  <button className="upload-btn type03 h40" type="button">녹취록 업로드</button>
-                  <button className="type05" type="button">녹취록 상세</button>
-                </div>
-              </div>
-              <div className="empty-board">
-                <img src="/assets/images/common/empty_face.svg" alt="empty" />
-                <p className="empty-tit">업로드된 녹취록이 없습니다.</p>
-                <p className="empty-info">[녹취록 업로드]를 선택하여 PC에 있는 녹취록을 업로드 할 수 있어요.</p>
-              </div>
-            </div>
-
+          <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
+            <ActiveComponent />
           </div>
-
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
-export default Consults
+export default Consults;
 

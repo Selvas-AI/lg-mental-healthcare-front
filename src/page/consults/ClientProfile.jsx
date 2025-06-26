@@ -1,6 +1,9 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
+import { useRecoilValue } from "recoil";
+import { maskingState } from "@/recoil";
 
-function ClientprofileData({ masked }) {
+function ClientProfile() {
+  const masked = useRecoilValue(maskingState);
   const [showInfo, setShowInfo] = useState(false);
   const infoWrapRef = useRef(null);
   const [maxHeight, setMaxHeight] = useState('0px');
@@ -145,4 +148,4 @@ const profileData = {
   );
 }
 
-export default ClientprofileData;
+export default ClientProfile;
