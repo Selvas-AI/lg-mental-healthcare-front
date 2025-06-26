@@ -1,6 +1,10 @@
 import React, { useMemo } from "react";
 
+import { useRecoilState } from "recoil";
+import { maskingState } from "@/recoil";
+
 function Header({ scroll, title, fold }) {
+  const [masked, setMasked] = useRecoilState(maskingState);
   const fadeStyle = useMemo(() => ({
     opacity: scroll ? 1 : 0,
     display: 'block',
@@ -22,7 +26,13 @@ function Header({ scroll, title, fold }) {
           <div className="switch-wrap" style={fadeStyle}>
             <label>
               <span>개인정보 보호</span>
-              <input role="switch" name="switch" type="checkbox" defaultChecked />
+              <input
+                role="switch"
+                name="switch"
+                type="checkbox"
+                checked={masked}
+                onChange={e => setMasked(e.target.checked)}
+              />
             </label>
           </div>
           <div className="btn-wrap">
