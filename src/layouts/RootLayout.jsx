@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import Footer from "./Footer";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 const MOBILE_WIDTH = 1280;
 const FOLDED_WIDTH = 7.6;
@@ -10,9 +10,10 @@ const UNFOLDED_WIDTH = 18;
 const SUPPORT_PANEL_WIDTH = 36;
 
 const RootLayout = () => {
-  const [fold, setFold] = useState(window.innerWidth <= MOBILE_WIDTH);
+  const location = useLocation();
+  const [fold, setFold] = useState(() => typeof window !== "undefined" ? window.innerWidth <= MOBILE_WIDTH : false);
   const [supportPanel, setSupportPanel] = useState(false);
-  const [scroll, setScroll] = useState(window.scrollY >= 100);
+  const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
 
   // main, footer width 조정
   const updateMainWidth = useCallback(() => {
@@ -29,56 +30,50 @@ const RootLayout = () => {
   }, [fold, supportPanel]);
 
   // fold 상태 체크 (반응형)
-  const handleResize = useCallback(() => {
-    const shouldFold = window.innerWidth <= MOBILE_WIDTH;
-    setFold(shouldFold);
-  }, []);
-
   useEffect(() => {
+    const handleResize = () => {
+      setFold(window.innerWidth <= MOBILE_WIDTH);
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [handleResize]);
+  }, []);
 
   // 스크롤 이벤트
   useEffect(() => {
-    function handleScroll() {
-      setScroll(window.scrollY >= 100);
-    }
+    const handleScroll = () => setScroll(window.scrollY >= 100);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // fold/supportPanel/scroll 상태 변경 시 main/footer width 조정
+  // fold/supportPanel 상태 변경 시 main/footer width 조정
   useEffect(() => {
     updateMainWidth();
   }, [fold, supportPanel, updateMainWidth]);
-
-  // 최초 진입 시 fold/scroll 상태 및 main/footer width 세팅
-  useEffect(() => {
-    setFold(window.innerWidth <= MOBILE_WIDTH);
-    setScroll(window.scrollY >= 100);
-    updateMainWidth();
-  }, []);
 
   const handleMenuClick = () => {
     setFold((prev) => !prev);
   };
 
-  useEffect(() => {
-    console.log('fold changed:', fold);
-  }, [fold]);
-  // support-panel on/off 토글 함수 (예시)
-  const toggleSupportPanel = () => setSupportPanel((v) => !v);
+  // 페이지별 타이틀 매핑
+  const pathTitleMap = {
+    '/': '홈',
+    '/schedule': '스케줄 관리',
+    '/clients': '내담자 관리',
+    '/document': '문서 관리',
+    '/mypage': '마이페이지',
+    '/support': '고객지원',
+    '/clients/consults': '상담관리',
+  };
+  const pageTitle = pathTitleMap[location.pathname] || '';
 
   return (
-    <div className="wrapper">
-      <Header scroll={scroll} />
+    <div className="wrapper consults">
+      <Header scroll={scroll} title={pageTitle} fold={fold} />
       <Sidebar fold={fold} onToggleFold={handleMenuClick} />
-      <main className={`consults${fold ? " on" : ""}`}>
+      <main className={`${fold ? " on" : ""}`}>
         <Outlet />
       </main>
-      <Footer />
-      {/* support-panel 토글 버튼/패널은 필요에 따라 구현 */}
+      <Footer fold={fold} />
     </div>
   );
 };
