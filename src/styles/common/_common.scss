@@ -176,7 +176,7 @@ button {
     &.type01 {
         padding: 0 .8rem;
         border: 1px solid $gray100;
-        background: url(/assets/images/icon/ixi.svg) no-repeat center left 8px/20px $gray0;
+        background: url(../../assets/images/icon/ixi.svg) no-repeat center left 8px/20px $gray0;
         transition: border .25s;
         span {
             font-size: 1.4rem;
@@ -195,13 +195,13 @@ button {
         width: 3.6rem;
         height: 3.6rem;
         border: 1px solid $gray200;
-        background: url(/assets/images/icon/file_upload.svg) no-repeat center $gray0;
+        background: url(../../assets/images/icon/file_upload.svg) no-repeat center $gray0;
     }
     &.type03 {
         padding: 0 4rem 0 1.4rem;
         color: $gray800;
         border: 1px solid $gray200;
-        background: url(/assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/24px $gray0;
+        background: url(../../assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/24px $gray0;
         transition: border .25s;
         &:hover {
             border: 1px solid $gray400;
