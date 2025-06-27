@@ -34,6 +34,10 @@ function Login() {
     const isPwValid = pw === "1234";
     setPwError(!isPwValid);
     if (isIdValid && isPwValid) {
+      // 로그인 성공 시 localStorage에 저장 (임시)
+      localStorage.setItem("isLoggedIn", "true");
+      //! 로그아웃시에는 아래 적용
+      //! localStorage.removeItem("isLoggedIn");
       navigate('/home');
     }
     // TODO: 로그인 로직 추가
