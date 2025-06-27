@@ -1,10 +1,14 @@
 import React, { useMemo } from "react";
-
+import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import { maskingState } from "@/recoil";
 
 function Header({ scroll, title, fold }) {
   const [masked, setMasked] = useRecoilState(maskingState);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const hideBackBtnPaths = ["/home","/schedule","/clients","/document","/mypage","/support"]; // 뒤로가기 버튼 미노출
+
   const fadeStyle = useMemo(() => ({
     opacity: scroll ? 1 : 0,
     display: 'block',
@@ -17,7 +21,9 @@ function Header({ scroll, title, fold }) {
     <header className={[scroll ? 'scroll' : '', fold ? 'on' : ''].filter(Boolean).join(' ')}>
       <div className="inner">
         <div className="left">
-          <button className="back-btn" type="button" aria-label="뒤로가기"></button>
+          {!hideBackBtnPaths.includes(location.pathname) && (
+            <button className="back-btn" type="button" aria-label="뒤로가기" onClick={() => navigate(-1)}></button>
+          )}
           {title && (
             <strong className="page-title" style={fadeStyle}>{title}</strong>
           )}
