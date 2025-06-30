@@ -15,7 +15,6 @@ function CounselManagement() {
 
   function handleSessionSelect(option, idx) {
     // TODO: 선택 시 동작 구현
-    // 예: setState 등
   }
 
   return (
