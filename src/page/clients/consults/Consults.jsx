@@ -37,8 +37,7 @@ function Consults() {
   const ActiveComponent = TAB_LIST[activeTab].component;
 
   return (
-    <>  
-      <div className="inner">
+    <div className="inner">
       <div className="move-up">
         <strong className="page-title">상담관리</strong>
         <div className="switch-wrap">
@@ -80,8 +79,7 @@ function Consults() {
           </div>
         </div>
       </div>
-      </div>
-    </>
+    </div>
   );
 }
 
