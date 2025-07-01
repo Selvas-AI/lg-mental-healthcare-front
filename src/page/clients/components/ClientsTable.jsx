@@ -1,7 +1,7 @@
-// ClientsTable.jsx
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
-function ClientsTable({ clients }) {
+function ClientsTable({ clients, onSelectClient, selectedClientId }) {
   const [showTooltip, setShowTooltip] = useState(false);
   
   return (
@@ -125,23 +125,34 @@ function ClientsTable({ clients }) {
           </thead>
           <tbody>
             {clients.map((client, idx) => (
-              <tr key={idx} className={client.isNew ? "new" : undefined}>
+              <tr
+                key={client.id || idx}
+                className={
+                  [client.isNew ? "new" : "", selectedClientId === client.id ? "selected" : ""].join(" ").trim()
+                }
+                onClick={() => onSelectClient && onSelectClient(client.id)}
+                style={{ cursor: onSelectClient ? "pointer" : undefined }}
+              >
                 <td>
-                  <a href="#">{client.name}</a>
+                  <Link
+                    to={`/clients/session?clientId=${client.id || client.name}`}
+                  >
+                    {client.name}({client.nickname})
+                  </Link>
                 </td>
-                <td>{client.phone}</td>
+                <td>{client.contact}</td>
                 <td>
                   {client.session === "신규" ? (
                     "신규"
                   ) : (
-                    <a href="#">{client.session}</a>
+                    <a>{client.session}</a>
                   )}
                 </td>
                 <td>
                   <div className="flex-wrap">
                     {client.todos && client.todos.length > 0 ? (
                       client.todos.map((todo, i) => (
-                        <a href="#" key={i}>{todo}</a>
+                        <a key={i}>{todo}</a>
                       ))
                     ) : (
                       "-"
