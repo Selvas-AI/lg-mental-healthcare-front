@@ -107,7 +107,7 @@ $red50: #FFE5E5;
         -webkit-line-clamp: $num;
     }
 }
-d
+
 *, *::before, *::after {box-sizing: border-box;}
 
 html {
@@ -347,7 +347,8 @@ button {
 /* 텍스트, 패스워드, 라디오, 체크박스 */
 .input-wrap {
     position: relative;
-    input[type="text"], input[type="password"] {
+    input[type="text"], input[type="password"], input[type="number"] {
+        font-family: $pretendard;
         font-size: 1.6rem;
         font-weight: 500;
         color: $gray950;
@@ -364,7 +365,7 @@ button {
         }
     }
     &.dim {
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="number"] {
             border: 1px solid $gray100;
             background: rgba(243, 243, 243, 0.30);
             &:focus {
@@ -378,7 +379,7 @@ button {
         }
     }
     &.search {
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="number"] {
             padding: 0 3.8rem 0 1.4rem;
         }
         .search-btn {
@@ -439,6 +440,7 @@ button {
             + label{
                 position: relative;
                 padding-left: 3.2rem;
+                font-family: $pretendard;
                 font-size: 1.6rem;
                 white-space: nowrap;
                 cursor: pointer;
@@ -524,6 +526,107 @@ button {
                         border: 2px solid $gray200;
                         background-color:$gray200;
                     }
+                }
+            }
+        }
+    }
+}
+
+.input-cont {
+    @include flexbox(row, flex-start, center);
+    gap: .8rem;
+    width: 100%;
+    height: 100%;
+    /* 이메일 폼 */
+    &.email {
+        .input-wrap {
+            height: 5.2rem;
+            &:first-of-type {
+                width: 33.8rem;
+            }
+            &:nth-of-type(2){
+                width: 17.5rem;
+            }
+            > span {
+                font-size: 1.8rem;
+                font-weight: 500;
+                color: $gray800;
+            }
+            input {
+                width: 100%;
+                height: 100%;
+            }
+        }
+    }
+    /* 보호자 정보 추가 */
+    &.input-add {
+        .input-wrap {
+            height: 5.2rem;
+            &:nth-of-type(2) {
+                width: 17.7rem;
+            }
+            &:nth-of-type(3) {
+                width: 29.8rem;
+            }
+            input {
+                width: 100%;
+                height: 100%;
+            }
+        }
+        .remove-btn {
+            width: 5.2rem;
+            height: 5.2rem;
+            border-radius: .8rem;
+            border: 1px solid $gray100;
+            background: url(../../assets/images/icon/minus.svg) no-repeat center/2.4rem $gray0;
+            cursor: pointer;
+        }
+        & + .add-btn {
+            width: 100%;
+            height: 5.2rem;
+            border-radius: .6rem;
+            background: rgba(239, 242, 243, 0.50);
+            span {
+                padding-left: 2.8rem;
+                position: relative;
+                font-weight: 700;
+                color: $gray400;
+                background: url(../../assets/images/icon/plus.svg) no-repeat center left/24px;
+            }
+        }
+    }
+}
+
+.raido-toggle {
+    position: relative;
+    @include flexbox(row, center, center);
+    gap: .8rem;
+    .toggle-btn {
+        input[type="radio"] {
+            overflow: hidden;
+            position: absolute;
+            clip: rect(0, 0, 0, 0);
+            clip-path: polygon(0 0, 0 0, 0 0);
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            + label {
+                display: inline-block;
+                width: 8.6rem;
+                height: 5.2rem;
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: $gray600;
+                border-radius: 1rem;
+                @include flexbox(row, center, center);
+                background: $gray50;
+                cursor: pointer;
+                transition: all .25s;
+            }
+            &:checked {
+                + label {
+                    color: $gray0;
+                    background: $secondary500;
                 }
             }
         }
@@ -777,7 +880,7 @@ span {
         position: relative;
         height: 25.6rem;
         padding: 1.2rem 1.4rem;
-        margin-bottom: .7rem;
+        margin-bottom: .6rem;
         color: $gray800;
         font-weight: 500;
         line-height: 1.8;
@@ -801,17 +904,18 @@ span {
         }
         .bullet-line {
             position: relative;
-            padding-left: 1.2rem;
+            padding-left: 1.8rem;
             font-weight: 500;
             color: $gray800;
             line-height: 1.8;
             &::before {
-                content: '•';
+                content: '・';
                 position: absolute;
                 left: 0;
                 top: 0;
                 font-size: 1.6rem;
                 font-weight: 500;
+                line-height: 1.8;
                 color: $gray800;
             }
         }
@@ -943,17 +1047,18 @@ span {
 /* 불릿 */
 .bullet-line {
     position: relative;
-    padding-left: 1.2rem;
+    padding-left: 1.8rem;
     font-weight: 500;
     color: $gray800;
     line-height: 1.8;
     &::before {
-        content: '•';
+        content: '・';
         position: absolute;
         left: 0;
         top: 0;
         font-size: 1.6rem;
         font-weight: 500;
+        line-height: 1.8;
         color: $gray800;
     }
 }

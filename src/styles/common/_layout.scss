@@ -57,18 +57,19 @@
         }
     }
     main {
-        position: relative;
-        width: calc(100% - 18rem);
-        min-height: calc(100vh - 8rem);
-        margin-top: 8rem;
-        margin-left: 18rem;
-        transition: all .3s;
-        > .inner {
-            position: relative;
-            width: calc(100% - 4rem);
-            max-width: 1110px;
-            margin: 0 auto;
-            z-index: 1;
+        main {
+            position: static;
+            width: 100%;
+            min-height: auto;
+            margin: 0;
+            transition: none;
+            > .inner {
+                position: relative;
+                width: calc(100% - 4rem);
+                max-width: 1110px;
+                margin: 0 auto;
+                z-index: 1;
+            }
         }
     }
 }
@@ -398,6 +399,14 @@ footer {
                 height: 3.2rem;
                 border: none;
                 background: url(../../assets/images/icon/close.svg) no-repeat center/contain;
+            }
+        }
+        > .btn-wrap {
+            padding-top: 3rem;
+            @include flexbox(row, center, center);
+            gap: .8rem;
+            button {
+                width: calc(50% - .4rem);
             }
         }
     }

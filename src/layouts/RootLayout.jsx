@@ -54,6 +54,13 @@ const RootLayout = () => {
     setFold((prev) => !prev);
   };
 
+  // 경로에 따라 페이지별 클래스명 매칭
+  const pageClass = (() => {
+    if (location.pathname.startsWith("/clients/consults")) return "consults";
+    if (location.pathname.startsWith("/clients")) return "clients";
+    return "";
+  })();
+
   // 페이지별 타이틀 매핑
   const pathTitleMap = {
     '/': '홈',
@@ -67,7 +74,7 @@ const RootLayout = () => {
   const pageTitle = pathTitleMap[location.pathname] || '';
 
   return (
-    <div className="wrapper consults">
+    <div className={`wrapper ${pageClass}`}>
       <Header scroll={scroll} title={pageTitle} fold={fold} />
       <Sidebar fold={fold} onToggleFold={handleMenuClick} />
       <main className={`${fold ? " on" : ""}`}>
