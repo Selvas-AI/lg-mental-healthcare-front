@@ -4,11 +4,11 @@ import { maskingState, clientsState } from "@/recoil";
 import { useLocation } from 'react-router-dom';
 import './consults.scss';
 
-import ClientProfile from '../components/ClientProfile';
-import CounselManagement from './CounselManagement';
-import PsychologicalTest from './PsychologicalTest';
-import DailyManagement from './DailyManagement';
-import DocumentBox from './DocumentBox';
+import ClientProfile from './../components/ClientProfile';
+import CounselManagement from './components/CounselManagement';
+import PsychologicalTest from './psychologicalTest/PsychologicalTest';
+import DailyManagement from './daily/DailyManagement';
+import DocumentBox from './document/DocumentBox';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },

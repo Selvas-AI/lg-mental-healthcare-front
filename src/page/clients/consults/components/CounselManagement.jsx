@@ -1,8 +1,9 @@
 import React from "react";
-import Transcript from "./Transcript";
-import CounselLog from "./CounselLog";
+import Transcript from "../transcript/Transcript";
+import CounselLog from "../counselLog/CounselLog";
 import SessionSelect from "./SessionSelect";
 
+//상담관리
 function CounselManagement() {
   const sessionOptions = [
     { session: "7회기", date: "2025.04.19(토) 오전 10시" },
