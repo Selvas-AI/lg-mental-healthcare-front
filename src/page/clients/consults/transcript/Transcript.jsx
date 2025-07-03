@@ -6,8 +6,10 @@ import IssueBox from "./IssueBox";
 import KeywordBox from "./KeywordBox";
 import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
+import { useNavigate } from "react-router-dom";
 
 function Transcript() {
+  const navigate = useNavigate();
   const hasTranscript = false;
   const isAIGenerated = true;
   const TranscriptData = {
@@ -20,16 +22,29 @@ function Transcript() {
       "예시 텍스트",
       "예시 텍스트"
     ],
-    keyword: [],
+    keyword: [
+      { text: '힘들어', freq: 18, x: 240, y: 70 },
+      { text: '트라우마', freq: 16, x: 370, y: 70 },
+      { text: '죽고싶은', freq: 12, x: 155, y: 100 },
+      { text: '괴롭힘', freq: 12, x: 100, y: 50 },
+      { text: '우울감', freq: 11, x: 50, y: 100 },
+      { text: '잘했다', freq: 10, x: 35, y: 35 },
+      { text: '엄마', freq: 9, x: 165, y: 35 },
+      { text: '후회', freq: 8, x: 308, y: 110 },
+      { text: '사랑', freq: 8, x: 310, y: 25 }
+    ],
     frequency: {
       counselor: { minutes: 12},
       client: { minutes: 45}
     },
-    stress: []
+    stress: {
+      data: [1.5, 3.2, 2.8, 1.5, 4.5, 3, 1.5],
+      labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
+    }
   };
 
   const handleAIGenerate = () => {
-    console.log("AI 생성하기");
+    navigate('/clients/consults/transcript');
   };
   return (
     <div className="transcript">
@@ -39,7 +54,7 @@ function Transcript() {
           <button className="upload-btn type03 h40" type="button">
             녹취록 업로드
           </button>
-          <button className="type05" type="button">
+          <button className="type05" type="button" onClick={handleAIGenerate}>
             녹취록 상세
           </button>
         </div>
@@ -77,11 +92,13 @@ function Transcript() {
             <SummaryBox
               summary={TranscriptData.summary}
               onEdit={() => {}}
+              onAIGenerate={handleAIGenerate}
             />
             {/* 고민주제 */}
             <IssueBox
               issues={TranscriptData.issues}
               onEdit={() => {}}
+              onAIGenerate={handleAIGenerate}
             />
             {/* 키워드 분석 */}
             <KeywordBox
@@ -94,7 +111,8 @@ function Transcript() {
             />
             {/* 스트레스 징후 */}
             <StressBox
-              data={TranscriptData.stress}
+              data={TranscriptData.stress.data}
+              labels={TranscriptData.stress.labels}
               onAIGenerate={handleAIGenerate}
             />
           </div>

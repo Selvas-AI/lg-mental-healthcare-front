@@ -43,24 +43,31 @@ function TranscriptBox({
         <strong>{title}</strong>
         {editable && <a className="edit-btn" onClick={onEdit}>수정</a>}
       </div>
-      <div
-        className={`box-explain${toggleable && !isBeforeCreate && expanded ? " expanded" : toggleable && !isBeforeCreate ? " clamped" : ""}`}
-        ref={boxExplainRef}
-        style={
-          toggleable && !isBeforeCreate
-            ? { maxHeight: expanded ? boxExplainRef.current?.scrollHeight : "8.7rem", transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)" }
-            : { minHeight: 'unset', maxHeight: 'unset', overflow: 'unset', transition: 'none' }
-        }
-      >
-        {children}
-      </div>
-      {!isBeforeCreate && toggleable && (
-        <button
-          className={`toggle-btn${expanded ? " rotate" : ""}`}
-          type="button"
-          aria-label="펼치기/접기"
-          onClick={handleToggle}
-        ></button>
+      {toggleable ? (
+        <>
+          <div
+            className={`box-explain${!isBeforeCreate && expanded ? " expanded" : !isBeforeCreate ? " clamped" : ""}`}
+            ref={boxExplainRef}
+            style={
+              !isBeforeCreate
+                ? { maxHeight: expanded ? boxExplainRef.current?.scrollHeight : "8.7rem", transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)" }
+                : { minHeight: 'unset', maxHeight: 'unset', overflow: 'unset', transition: 'none' }
+            }
+          >
+            {children}
+          </div>
+          {!isBeforeCreate && (
+            <button
+              className={`toggle-btn${expanded ? " rotate" : ""}`}
+              type="button"
+              aria-label="펼치기/접기"
+              onClick={handleToggle}
+            ></button>
+          )}
+        </>
+      ) : (
+        // box-explain 구조 없이 바로 children만 노출
+        children
       )}
     </div>
   );
