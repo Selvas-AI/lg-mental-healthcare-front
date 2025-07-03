@@ -1,9 +1,10 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
-import { useRecoilState } from 'recoil';
-import { maskingState } from '@/recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { maskingState, clientsState } from "@/recoil";
+import { useLocation } from 'react-router-dom';
 import './consults.scss';
 
-import ClientProfile from './ClientProfile';
+import ClientProfile from '../components/ClientProfile';
 import CounselManagement from './CounselManagement';
 import PsychologicalTest from './PsychologicalTest';
 import DailyManagement from './DailyManagement';
@@ -17,6 +18,11 @@ const TAB_LIST = [
 ];
 
 function Consults() {
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const clientId = query.get('clientId');
+  const clients = useRecoilValue(clientsState);
+  const client = clients.find(c => String(c.id) === String(clientId));
   const [masked, setMasked] = useRecoilState(maskingState);
   const [activeTab, setActiveTab] = useState(0);
   const tabListRef = useRef([]);
@@ -53,7 +59,7 @@ function Consults() {
           </label>
         </div>
       </div>
-      <ClientProfile />
+      <ClientProfile profileData={client} />
       <div className="tab-menu type01">
         <div className="tab-list-wrap">
           <ul className="tab-list" role="tablist">

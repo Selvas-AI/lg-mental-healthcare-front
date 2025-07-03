@@ -2,7 +2,7 @@ import React, { useState, useRef, useLayoutEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { maskingState } from "@/recoil";
 
-function ClientProfile() {
+function ClientProfile({ profileData }) {
   const masked = useRecoilValue(maskingState);
   const [showInfo, setShowInfo] = useState(false);
   const infoWrapRef = useRef(null);
@@ -52,19 +52,7 @@ function maskValue(label, value) {
   }
 }
 
-const profileData = {
-  name: '김마음',
-  danger: true,
-  contact: '010-1234-1234',
-  address: '서울특별시 강남구 압구정로 151-2 108동 504호',
-  birth: '2005.04.22 (만 18세)',
-  email: 'Kimmau @gmail.com',
-  gender: '남자',
-  job: '대학생',
-  guardians: '김매순 (모) 010-1234-1234, 김복남 (부) 010-1234-1234 한마음 (사회복지사) 010-1234-1234',
-  memo: '본 환자는 최근 몇 개월 간 지속적인 우울감, 무기력, 수면장애 및 식욕 저하를 호소하며 내원하였습니다. 내원하였습니다 내원하였습니다 내원하였습니다 내원하였습니다 내원하였습니다 내원하였습니다',
-};
-
+  if (!profileData) return null;
 
   const name = masked ? maskName(profileData.name) : profileData.name;
   const contact = masked ? maskValue('연락처', profileData.contact) : profileData.contact;
@@ -76,13 +64,24 @@ const profileData = {
   const guardians = masked ? maskValue('보호자', profileData.guardians) : profileData.guardians;
   const memo = masked ? profileData.memo.replace(/[^\s]/g, '*') : profileData.memo;
 
+  const handleEdit = () => {
+    console.log('정보수정');
+  };
+
+  const handleEditMemo = () => {
+    console.log('메모수정');
+  };
+
   return (
     <div className="client-profile">
       <div className="name-wrap">
         <div className="left">
           <strong>{name}</strong>
-          {profileData.danger && <span className="tag danger">위험</span>}
-          <a className="edit-btn" href="#">정보수정</a>
+          {profileData.danger === "critical" && <span className="tag critical">고위험</span>}
+          {profileData.danger === "danger" && <span className="tag danger">위험</span>}
+          {profileData.danger === "caution" && <span className="tag caution">주의</span>}
+          {profileData.danger === "safe" && <span className="tag safe">양호</span>}
+          <a className="edit-btn cursor-pointer" onClick={handleEdit}>정보수정</a>
         </div>
         <button
           className={`toggle-btn${showInfo ? ' on' : ''}`}
@@ -137,7 +136,7 @@ const profileData = {
                 <td colSpan={3}>
                   <div className="memo-wrap">
                     <p className="memo">{memo}</p>
-                    <a className="edit-btn" href="#">수정</a>
+                    <a className="edit-btn cursor-pointer" onClick={handleEditMemo}>수정</a>
                   </div>
                 </td>
               </tr>
