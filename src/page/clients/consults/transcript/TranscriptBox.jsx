@@ -37,6 +37,15 @@ function TranscriptBox({
     }
   };
 
+  // box-explain 컨텐츠 높이 측정 및 토글버튼 표시 여부 판단
+  const [showToggle, setShowToggle] = useState(false);
+  React.useEffect(() => {
+    if (toggleable && boxExplainRef.current) {
+      // 8.7rem = 139.2px
+      setShowToggle(boxExplainRef.current.scrollHeight > 87);
+    }
+  }, [children, toggleable]);
+
   return (
     <div className={`${className} txt-box`}>
       <div className="box-tit">
@@ -56,7 +65,7 @@ function TranscriptBox({
           >
             {children}
           </div>
-          {!isBeforeCreate && (
+          {!isBeforeCreate && showToggle && (
             <button
               className={`toggle-btn${expanded ? " rotate" : ""}`}
               type="button"

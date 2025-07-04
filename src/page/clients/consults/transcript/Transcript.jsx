@@ -1,12 +1,11 @@
 import React from "react";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
-import SummaryBox from "./SummaryBox";
-import IssueBox from "./IssueBox";
 import KeywordBox from "./KeywordBox";
 import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
 import { useNavigate } from "react-router-dom";
+import TranscriptBox from "./TranscriptBox";
 
 function Transcript() {
   const navigate = useNavigate();
@@ -17,10 +16,10 @@ function Transcript() {
     issues: [
       "원인을 알 수 없는 불안감 호소",
       "간헐적 불면증",
-      "낮은 자존감으로 인한 대인관계 어려움",
-      "예시 텍스트",
-      "예시 텍스트",
-      "예시 텍스트"
+      // "낮은 자존감으로 인한 대인관계 어려움",
+      // "예시 텍스트",
+      // "예시 텍스트",
+      // "예시 텍스트"
     ],
     keyword: [
       { text: '힘들어', freq: 18, x: 240, y: 70 },
@@ -89,17 +88,29 @@ function Transcript() {
         <div className="transcript-board">
           <div className="dashboard">
             {/* 상담요약 */}
-            <SummaryBox
-              summary={TranscriptData.summary}
+            <TranscriptBox
+              className="summary"
+              title="1. 상담요약"
+              editable={true}
               onEdit={() => {}}
-              onAIGenerate={handleAIGenerate}
-            />
+              toggleable={true}
+            >
+              <div className="save-txt">{TranscriptData.summary}</div>
+            </TranscriptBox>
             {/* 고민주제 */}
-            <IssueBox
-              issues={TranscriptData.issues}
+            <TranscriptBox
+              className="issue"
+              title="2. 고민주제"
+              editable={true}
               onEdit={() => {}}
-              onAIGenerate={handleAIGenerate}
-            />
+              toggleable={true}
+            >
+              <div className="save-txt">
+                {TranscriptData.issues.map((issue, idx) => (
+                  <div className="bullet-line" key={idx}>{issue}</div>
+                ))}
+              </div>
+            </TranscriptBox>
             {/* 키워드 분석 */}
             <KeywordBox
               data={TranscriptData.keyword}
