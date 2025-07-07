@@ -85,6 +85,7 @@ function Consults() {
           </div>
         </div>
       </div>
+      <div className="floating-btn"></div>
     </div>
   );
 }
