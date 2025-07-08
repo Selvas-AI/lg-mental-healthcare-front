@@ -5,6 +5,7 @@ import TranscriptBox from "../transcript/TranscriptBox";
 import { useRecoilValue } from "recoil";
 import { clientsState } from "@/recoil";
 import { useLocation } from "react-router-dom";
+import ChartBarStacked from "./ChartBarStacked";
 
 function CounselLog() {
   const location = useLocation();
@@ -92,8 +93,7 @@ function CounselLog() {
                 <a className="edit-btn" onClick={() => {}}>수정</a>
               </div>
               <div className="con-wrap">
-                {/* 퍼블리싱은 <canvas class="chart-bar-stacked">, 실제 구현시 별도 컴포넌트로 분리 */}
-                <div className="chart-bar-stacked-placeholder" style={{width:1100, height:176, background:'#f5f5f5', border:'1px dashed #ccc'}} />
+                <ChartBarStacked />
               </div>
             </div>
           </div>
