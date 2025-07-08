@@ -40,7 +40,6 @@ function Clients() {
           <EmptyClients onRegister={handleRegister} />
         ) : (
           <ClientsTable
-            clients={clients}
             onSelectClient={setSelectedClientId}
             selectedClientId={selectedClientId}
             memoClient={memoClient}
