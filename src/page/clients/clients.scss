@@ -351,6 +351,13 @@
                         padding-bottom: 2.4rem;
                     }
                     .con-wrap {
+                        height: inherit;
+                        min-height: inherit;
+                        padding: inherit;
+                        border-radius: inherit;
+                        border: inherit;
+                        background: inherit;
+                        box-shadow: inherit;
                         ul {
                             width: 100%;
                             gap: 1.6rem 1.2rem;

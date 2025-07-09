@@ -59,7 +59,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                 />
                 <button className="search-btn" type="button" aria-label="검색" onClick={handleSearch}></button>
               </div>
-              <div className="filter-wrap">
+              {/* <div className="filter-wrap">
                 <button className="filter-btn" type="button">
                   필터<span className="chk-num">(2)</span>
                 </button>
@@ -113,7 +113,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
           <div className={`tb-wrap${filteredClients.length === 0 ? ' empty' : ''}`}>
@@ -181,7 +181,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                         {client.name}{client.nickname && `(${client.nickname})`}
                       </Link>
                     </td>
-                    <td>{client.contact}</td>
+                    <td>{client.phone}</td>
                     <td>
                       {client.session === "신규" ? (
                         "신규"

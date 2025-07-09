@@ -2,7 +2,7 @@ import React, { useState, useRef, useLayoutEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { maskingState } from "@/recoil";
 
-function ClientProfile({ profileData }) {
+function ClientProfile({ profileData, onEdit }) {
   const masked = useRecoilValue(maskingState);
   const [showInfo, setShowInfo] = useState(false);
   const infoWrapRef = useRef(null);
@@ -55,18 +55,29 @@ function maskValue(label, value) {
   if (!profileData) return null;
 
   const name = masked ? maskName(profileData.name) : profileData.name;
-  const contact = masked ? maskValue('연락처', profileData.contact) : profileData.contact;
+  const phone = masked ? maskValue('연락처', profileData.phone) : profileData.phone;
   const address = masked ? maskValue('주소', profileData.address) : profileData.address;
   const birth = masked ? maskValue('생년월일', profileData.birth) : profileData.birth;
+  const age = masked ? maskValue('나이', profileData.age) : profileData.age;
   const email = masked ? maskValue('이메일', profileData.email) : profileData.email;
   const gender = masked ? maskValue('성별', profileData.gender) : profileData.gender;
   const job = masked ? maskValue('직업', profileData.job) : profileData.job;
-  const guardians = masked ? maskValue('보호자', profileData.guardians) : profileData.guardians;
+  const guardians = Array.isArray(profileData.guardians) ? profileData.guardians.map(g => {
+  if (masked) {
+    // 이름, 전화번호 마스킹
+    const maskedName = g.name ? '*'.repeat(g.name.length) : '';
+    const maskedPhone = g.phone ? g.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1-****-$2') : '';
+    return `${g.relation} (${maskedName}, ${maskedPhone})`;
+  } else {
+    return `${g.name} (${g.relation}) ${g.phone}`;
+  }
+}) : [];
+
   const memo = masked ? profileData.memo.replace(/[^\s]/g, '*') : profileData.memo;
 
   const handleEdit = () => {
-    console.log('정보수정');
-  };
+    onEdit && onEdit(profileData);
+  }
 
   const handleEditMemo = () => {
     console.log('메모수정');
@@ -111,7 +122,7 @@ function maskValue(label, value) {
             <tbody>
               <tr>
                 <th>연락처</th>
-                <td>{contact}</td>
+                <td>{phone}</td>
                 <th>주소</th>
                 <td>{address}</td>
               </tr>
@@ -125,7 +136,11 @@ function maskValue(label, value) {
                 <th>성별</th>
                 <td>{gender}</td>
                 <th rowSpan={2}>보호자</th>
-                <td rowSpan={2}>{guardians}</td>
+                <td rowSpan={2}>
+                  {guardians.length === 0 ? '없음' : guardians.map((g, idx) => (
+                    <span key={idx}>{g}{idx < guardians.length - 1 ? ', ' : ''}</span>
+                  ))}
+                </td>
               </tr>
               <tr>
                 <th>직업</th>
