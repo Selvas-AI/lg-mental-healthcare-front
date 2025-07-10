@@ -11,7 +11,6 @@ function Clients() {
   const [memoClient, setMemoClient] = useState(null);
   const handleCloseMemo = () => setMemoClient(null);
   const [clients, setClients] = useRecoilState(clientsState);
-
   const [registerOpen, setRegisterOpen] = useState(false);
   const handleRegister = () => setRegisterOpen(true);
   const handleCloseRegister = () => setRegisterOpen(false);

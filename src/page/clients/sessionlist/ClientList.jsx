@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 
-function ClientList({ clients, onSelect }) {
+function ClientList({ clients, onSelect, fold }) {
   const [search, setSearch] = useState("");
   const filtered = clients.filter(client =>
     client.name.includes(search) || (client.engName && client.engName.includes(search))
   );
 
   return (
-    <div className="client-list">
+    <div className={"client-list" + (fold ? " on" : "")}>
       <div className="inner">
         <div className="tit-wrap">
           <strong>내담자 목록</strong>

@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
+import { foldState, supportPanelState } from "@/recoilLayout";
 import { maskingState, clientsState } from "@/recoil";
 import "./sessions.scss";
 
 import ClientRegisterModal from "../components/ClientRegisterModal";
 import emptyFace from "@/assets/images/common/empty_face.svg";
+import TimelinePanel from "./TimelinePanel";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -22,7 +24,10 @@ function SessionList() {
   const client = clients.find(c => String(c.id) === String(clientId));
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
-  const [isEmpty, setIsEmpty] = useState(true);
+  const [isEmpty, setIsEmpty] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const fold = useRecoilValue(foldState);
+  const setSupportPanel = useSetRecoilState(supportPanelState);
 
   const onSave = (clientData) => {
     if (editClient) {
@@ -33,14 +38,17 @@ function SessionList() {
     setRegisterOpen(false);
   };
 
+  const handleSelectClient = (client) => {
+    navigate(`/clients/session?clientId=${client.id}`, { replace: true });
+  };
+
   // TODO: 실제 데이터 fetch 및 렌더링 구현
   return (
     <>
       <ClientList
         clients={clients}
-        onSelect={client => {
-          navigate(`/clients/session?clientId=${client.id}`);
-        }}
+        onSelect={handleSelectClient}
+        fold={fold}
       />
       <div className="inner">
         <div className="move-up">
@@ -67,19 +75,30 @@ function SessionList() {
           isEmpty={isEmpty}
         />
         <div className={isEmpty ? "con-wrap empty" : "con-wrap"}>
-          <img src={emptyFace} alt="empty"/>
-          <p className="empty-info">예정, 완료한 상담이 없습니다.<br/>내담자와의 예약 일정을 확인해 보세요.</p>
-          <button className="type05 h44" type="button">스케줄 관리</button>
+          {isEmpty ? (
+            <>
+              <img src={emptyFace} alt="empty"/>
+              <p className="empty-info">예정, 완료한 상담이 없습니다.<br/>내담자와의 예약 일정을 확인해 보세요.</p>
+              <button className="type05 h44" type="button">스케줄 관리</button>
+            </>
+          ) : (
+            <>
+              <div className="btn-wrap">
+                <button className="type05" type="button" onClick={() => {
+                  setTimelineOpen(true);
+                  setSupportPanel(true);
+                }}>타임라인 보기</button>
+              </div>
+            </>
+          )}
         </div>
-
-
-        <button
+        {/* <button
           className="type07"
           style={{ marginTop: "2rem" }}
           onClick={() => navigate("/clients/consults?clientId=" + clientId)}
         >
           상담관리 보기
-        </button>
+        </button> */}
       </div>
       <ClientRegisterModal
         open={registerOpen}
@@ -87,6 +106,14 @@ function SessionList() {
         onSave={onSave}
         mode={editClient ? "edit" : "register"}
         initialData={editClient}
+      />
+      <TimelinePanel
+        open={timelineOpen}
+        onClose={() => {
+          setTimelineOpen(false);
+          setSupportPanel(false);
+        }}
+        isEmpty={isEmpty}
       />
     </>
   );
