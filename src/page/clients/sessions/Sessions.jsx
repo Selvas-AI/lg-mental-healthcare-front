@@ -10,12 +10,15 @@ import "./sessions.scss";
 import ClientRegisterModal from "../components/ClientRegisterModal";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 import TimelinePanel from "./TimelinePanel";
+import SessionTable from "./SessionTable";
+//! 회기 더미 데이터
+import sessionDummyData from "./sessionDummyData";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-function SessionList() {
+function Sessions() {
   const [masked, setMasked] = useRecoilState(maskingState);
   const query = useQuery();
   const clientId = query.get("clientId");
@@ -39,7 +42,7 @@ function SessionList() {
   };
 
   const handleSelectClient = (client) => {
-    navigate(`/clients/session?clientId=${client.id}`, { replace: true });
+    navigate(`/clients/sessions?clientId=${client.id}`, { replace: true });
   };
 
   // TODO: 실제 데이터 fetch 및 렌더링 구현
@@ -72,8 +75,15 @@ function SessionList() {
             setEditClient(clientData);
             setRegisterOpen(true);
           }}
-          isEmpty={isEmpty}
         />
+        {isEmpty ? null : (
+          <div className="btn-wrap">
+            <button className="type05" type="button" onClick={() => {
+              setTimelineOpen(true);
+              setSupportPanel(true);
+              }}>타임라인 보기</button>
+            </div>
+        )}
         <div className={isEmpty ? "con-wrap empty" : "con-wrap"}>
           {isEmpty ? (
             <>
@@ -82,14 +92,7 @@ function SessionList() {
               <button className="type05 h44" type="button">스케줄 관리</button>
             </>
           ) : (
-            <>
-              <div className="btn-wrap">
-                <button className="type05" type="button" onClick={() => {
-                  setTimelineOpen(true);
-                  setSupportPanel(true);
-                }}>타임라인 보기</button>
-              </div>
-            </>
+            <SessionTable sessionDummyData={sessionDummyData}/>
           )}
         </div>
         {/* <button
@@ -114,9 +117,10 @@ function SessionList() {
           setSupportPanel(false);
         }}
         isEmpty={isEmpty}
+        sessionDummyData={sessionDummyData}
       />
     </>
   );
 }
 
-export default SessionList;
+export default Sessions;

@@ -25,9 +25,9 @@ const RootLayout = () => {
     // 회기목록에서 supportPanel이 열려있고, sidebar가 접혀있으면 26.6/62.6, 그 외는 37/62.6
     let leftWidth;
     let rightWidth = supportPanel ? SUPPORT_PANEL_WIDTH : 0;
-    if (fold && supportPanel && location.pathname.startsWith("/clients/session")) {
+    if (fold && supportPanel && location.pathname.startsWith("/clients/sessions")) {
       leftWidth = 26.6;
-    } else if (supportPanel && location.pathname.startsWith("/clients/session")) {
+    } else if (supportPanel && location.pathname.startsWith("/clients/sessions")) {
       leftWidth = 37;
     } else {
       leftWidth = fold ? FOLDED_WIDTH : UNFOLDED_WIDTH;
@@ -60,9 +60,9 @@ const RootLayout = () => {
     updateMainWidth();
   }, [fold, supportPanel, updateMainWidth]);
 
-  // /clients/session 경로에서만 supportPanel(main영역) 유지
+  // /clients/sessions 경로에서만 supportPanel(main영역) 유지
   useEffect(() => {
-    if (!location.pathname.startsWith("/clients/session")) {
+    if (!location.pathname.startsWith("/clients/sessions")) {
       setSupportPanel(false);
     }
   }, [location.pathname, setSupportPanel]);
@@ -74,7 +74,7 @@ const RootLayout = () => {
   // 경로에 따라 페이지별 클래스명 매칭
   const pageClass = (() => {
     if (location.pathname.startsWith("/clients/consults")) return "consults";
-    if (location.pathname.startsWith("/clients/session")) return "sessions";
+    if (location.pathname.startsWith("/clients/sessions")) return "sessions";
     if (location.pathname.startsWith("/clients")) return "clients";
     return "";
   })();
@@ -88,7 +88,7 @@ const RootLayout = () => {
     '/mypage': '마이페이지',
     '/support': '고객지원',
     '/clients/consults': '상담관리',
-    '/clients/session': '회기 목록',
+    '/clients/sessions': '회기 목록',
   };
   const pageTitle = pathTitleMap[location.pathname] || '';
 

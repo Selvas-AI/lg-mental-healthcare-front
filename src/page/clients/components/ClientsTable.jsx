@@ -176,7 +176,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                   >
                     <td>
                       <Link
-                        to={`/clients/session?clientId=${client.id || client.name}`}
+                        to={`/clients/sessions?clientId=${client.id || client.name}`}
                       >
                         {client.name}{client.nickname && `(${client.nickname})`}
                       </Link>

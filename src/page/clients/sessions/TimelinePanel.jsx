@@ -1,7 +1,8 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import emptyFace from "@/assets/images/common/empty_face.svg";
+import EmergencyChart from "./EmergencyChart";
 
-function TimelinePanel({ open, onClose, isEmpty }) {
+function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
   // 각 토글 영역(상담요약/고민주제/긴급도/심각도/스트레스 징후) 열림 상태
   const [openSection, setOpenSection] = useState([true, true, true, true, true]);
   const sectionRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
@@ -10,6 +11,9 @@ function TimelinePanel({ open, onClose, isEmpty }) {
   const handleToggle = idx => {
     setOpenSection(arr => arr.map((v, i) => (i === idx ? !v : v)));
   };
+
+  // 긴급도 차트 데이터 역순으로 정렬
+  const reversedData = [...sessionDummyData].reverse();
 
   useLayoutEffect(() => {
     setMaxHeights(prev => prev.map((_, i) => {
@@ -63,18 +67,12 @@ function TimelinePanel({ open, onClose, isEmpty }) {
                   </div>
                 ) : (
                   <ul className="session-list">
-                    <li>
-                      <span>3회기</span>
-                      <div>자기 통제력에 대한 자신감을 표현하며 회복에 대한 기대를 언급함</div>
-                    </li>
-                    <li>
-                      <span>2회기</span>
-                      <div>가족과의 갈등 완화 시도가 시작되었고, 정서적 지지 확보를 위한 중재를 시도함. 항정신성 약물 복용을 시작했으며, 부작용으로 인한 신체 불편감을 토로함</div>
-                    </li>
-                    <li>
-                      <span>1회기</span>
-                      <div>내담자는 심한 충동성, 자해 충동, 감정 기복을 호소하였음</div>
-                    </li>
+                    {sessionDummyData.map((row, idx) => (
+                      <li key={idx}>
+                        <span>{row.session}</span>
+                        <div>{row.summary}</div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -107,25 +105,14 @@ function TimelinePanel({ open, onClose, isEmpty }) {
                   </div>
                 ) : (
                   <ul className="session-list">
-                    <li>
-                      <span>3회기</span>
-                      <div>
-                        원인을 알 수 없는 불안감 호소<br />
-                        간헐적 불면증<br />
-                        낮은 자존감으로 인한 대인관계 어려움
-                      </div>
-                    </li>
-                    <li>
-                      <span>2회기</span>
-                      <div>
-                        대인관계 어려움<br />
-                        주호소문 불명확
-                      </div>
-                    </li>
-                    <li>
-                      <span>1회기</span>
-                      <div>내담자는 심한 충동성, 자해 충동, 감정 기복을 호소하였음</div>
-                    </li>
+                    {sessionDummyData.map((row, idx) => (
+                      <li key={idx}>
+                        <span>{row.session}</span>
+                        <div>{row.summaryList && row.summaryList.map((summary, i) => (
+                          <React.Fragment key={i}>{summary}{i < row.summaryList.length - 1 && <br />}</React.Fragment>
+                        ))}</div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -159,8 +146,14 @@ function TimelinePanel({ open, onClose, isEmpty }) {
                 ) : (
                   <>
                     <div className="chart-wrap">
-                      {/* 차트 라이브러리 연동 필요 */}
-                      <canvas className="line-chart03" width="288" height="159" data-values="[1,2,4]" data-labels='["1회기","2회기","3회기"]' data-min="0" data-max="4"></canvas>
+                      <EmergencyChart
+                        values={reversedData.map(row => (row.crisis) ?? null)}
+                        labels={reversedData.map(row => row.session)}
+                        min={0}
+                        max={4}
+                        width={304}
+                        height={159}
+                      />
                     </div>
                     <div className="chart-summary rising">
                       <span>긴급도</span>
@@ -197,55 +190,115 @@ function TimelinePanel({ open, onClose, isEmpty }) {
                     <p className="empty-info">이전 회기 상담 확인 또는<br />이전 상담 녹취록을 확인해 주세요.</p>
                   </div>
                 ) : (
-                  <div className="severity-wrap">
-                    <div className="severity-hd">
-                      <ul>
-                        <li>1회기</li>
-                        <li>2회기</li>
-                        <li>3회기</li>
-                      </ul>
-                    </div>
-                    <div className="stage-wrap">
-                      <div className="severity-stage rising">
-                        <span>우울</span>
-                        <ul>
-                          <li><span>1</span></li>
-                          <li><span>3</span></li>
-                          <li><span>5</span></li>
-                        </ul>
+                    <>
+                      <div className="severity-wrap">
+                        <div className="severity-hd">
+                          <ul>
+                            {reversedData.map((row, idx) => (
+                              <li key={idx}>{row.session}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="stage-wrap">
+                          {/* 우울 */}
+                          <div className="severity-stage rising">
+                            <span>우울</span>
+                            <ul>
+                              {(() => {
+                                // 우울: 마지막 null이 아닌 인덱스 찾기
+                                let lastIdx = -1;
+                                reversedData.forEach((row, idx) => {
+                                  const val = row.severity && row.severity["우울"];
+                                  const value = Array.isArray(val) ? val[0] : val;
+                                  if (value != null) lastIdx = idx;
+                                });
+                                return reversedData.map((row, idx) => {
+                                  const val = row.severity && row.severity["우울"];
+                                  const value = Array.isArray(val) ? val[0] : val;
+                                  return (
+                                    <li key={idx}>
+                                      <span
+                                        className={idx === lastIdx ? "last-span" : ""}
+                                        style={value == null ? { opacity: 0 } : {}}
+                                      >{value ?? 0}</span>
+                                    </li>
+                                  );
+                                });
+                              })()}
+                            </ul>
+                          </div>
+                          {/* 강박 */}
+                          <div className="severity-stage falling">
+                            <span>강박</span>
+                            <ul>
+                              {(() => {
+                                // 강박: 마지막 null이 아닌 인덱스 찾기
+                                let lastIdx = -1;
+                                reversedData.forEach((row, idx) => {
+                                  const val = row.severity && row.severity["강박"];
+                                  const value = Array.isArray(val) ? val[0] : val;
+                                  if (value != null) lastIdx = idx;
+                                });
+                                return reversedData.map((row, idx) => {
+                                  const val = row.severity && row.severity["강박"];
+                                  const value = Array.isArray(val) ? val[0] : val;
+                                  return (
+                                    <li key={idx}>
+                                      <span
+                                        className={idx === lastIdx ? "last-span" : ""}
+                                        style={value == null ? { opacity: 0 } : {}}
+                                      >{value ?? 0}</span>
+                                    </li>
+                                  );
+                                });
+                              })()}
+                            </ul>
+                          </div>
+                          {/* PTSD */}
+                          <div className="severity-stage steady">
+                            <span>PTSD</span>
+                            <ul>
+                              {(() => {
+                                // PTSD: 마지막 null이 아닌 인덱스 찾기
+                                let lastIdx = -1;
+                                reversedData.forEach((row, idx) => {
+                                  const val = row.severity && row.severity["PTSD"];
+                                  const value = Array.isArray(val) ? val[0] : val;
+                                  if (value != null) lastIdx = idx;
+                                });
+                                return reversedData.map((row, idx) => {
+                                  const val = row.severity && row.severity["PTSD"];
+                                  const value = Array.isArray(val) ? val[0] : val;
+                                  return (
+                                    <li key={idx}>
+                                      <span
+                                        className={idx === lastIdx ? "last-span" : ""}
+                                        style={value == null ? { opacity: 0 } : {}}
+                                      >{value ?? 0}</span>
+                                    </li>
+                                  );
+                                });
+                              })()}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
-                      <div className="severity-stage falling">
-                        <span>강박</span>
-                        <ul>
-                          <li><span>1</span></li>
-                          <li><span>3</span></li>
-                          <li></li>
-                        </ul>
+                      {/* 요약은 임시 고정, 실제 데이터 연동시 동적으로 */}
+                      <div className="summary-wrap">
+                        <div className="severity-summary rising">
+                          <span>우울</span>
+                          <p>높아지고 있어요.</p>
+                        </div>
+                        <div className="severity-summary falling">
+                          <span>강박</span>
+                          <p>낮아지고 있어요.</p>
+                        </div>
+                        <div className="severity-summary steady">
+                          <span>PTSD</span>
+                          <p>변화가 없어요.</p>
+                        </div>
                       </div>
-                      <div className="severity-stage steady">
-                        <span>PTSD</span>
-                        <ul>
-                          <li></li>
-                          <li><span>3</span></li>
-                          <li><span>5</span></li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="summary-wrap">
-                      <div className="severity-summary rising">
-                        <span>우울</span>
-                        <p>높아지고 있어요.</p>
-                      </div>
-                      <div className="severity-summary falling">
-                        <span>강박</span>
-                        <p>낮아지고 있어요.</p>
-                      </div>
-                      <div className="severity-summary steady">
-                        <span>PTSD</span>
-                        <p>변화가 없어요.</p>
-                      </div>
-                    </div>
-                  </div>
+                    </>
                 )}
               </div>
             </div>
@@ -278,7 +331,14 @@ function TimelinePanel({ open, onClose, isEmpty }) {
                 ) : (
                   <>
                     <div className="chart-wrap">
-                      <canvas className="line-chart03" width="288" height="159" data-values="[1,1,1]" data-labels='["1회기","2회기","3회기"]' data-min="1" data-max="4"></canvas>
+                      <canvas
+                        className="line-chart03"
+                        width="288"
+                        height="159"
+                        data-values={`[${sessionDummyData.map(row => row.stress && row.stress[0]).join(",")}]`}
+                        data-labels={`[${sessionDummyData.map(row => `\"${row.session}\"`).join(",")}]`}
+                        data-min="1" data-max="4"
+                      ></canvas>
                     </div>
                     <div className="chart-summary steady">
                       <span>위기단계</span>
