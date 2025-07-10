@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import ClientProfile from "./ClientProfile";
+import ClientProfile from "../components/ClientProfile";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { maskingState, clientsState } from "@/recoil";
-import ClientRegisterModal from "./ClientRegisterModal";
+import ClientRegisterModal from "../components/ClientRegisterModal";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);

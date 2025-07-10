@@ -297,7 +297,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                   </div>
                 </li>
                 <li>
-                  <label htmlFor="guardian">보호자 정보</label>
+                  <label>보호자 정보</label>
                   {/* 혹시라도 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
                   {(Array.isArray(form.guardians) ? form.guardians : []).map((g, idx) => {
                     const guardian = (g && typeof g === 'object') ? g : { relation: '', name: '', phone: '' };

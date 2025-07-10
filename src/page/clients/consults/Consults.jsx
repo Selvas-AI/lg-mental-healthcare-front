@@ -9,6 +9,7 @@ import CounselManagement from './components/CounselManagement';
 import PsychologicalTest from './psychologicalTest/PsychologicalTest';
 import DailyManagement from './daily/DailyManagement';
 import DocumentBox from './document/DocumentBox';
+import ClientRegisterModal from './../components/ClientRegisterModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
@@ -27,6 +28,8 @@ function Consults() {
   const [activeTab, setActiveTab] = useState(0);
   const tabListRef = useRef([]);
   const tabIndicatorRef = useRef(null);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [editClient, setEditClient] = useState(null);
 
   // 탭 indicator 이동 효과
   useLayoutEffect(() => {
@@ -42,51 +45,75 @@ function Consults() {
 
   const ActiveComponent = TAB_LIST[activeTab].component;
 
+  const onSave = (clientData) => {
+    if (editClient) {
+      // TODO: 수정 로직 구현
+    } else {
+      // TODO: 등록 로직 구현
+    }
+    setRegisterOpen(false);
+  };
+
   return (
-    <div className="inner">
-      <div className="move-up">
-        <strong className="page-title">상담관리</strong>
-        <div className="switch-wrap">
-          <label>
-            <span>개인정보 보호</span>
-            <input
-              role="switch"
-              name="switch"
-              type="checkbox"
-              checked={masked}
-              onChange={e => setMasked(e.target.checked)}
-            />
-          </label>
-        </div>
-      </div>
-      <ClientProfile profileData={client} />
-      <div className="tab-menu type01">
-        <div className="tab-list-wrap">
-          <ul className="tab-list" role="tablist">
-            {TAB_LIST.map((tab, idx) => (
-              <li
-                key={tab.label}
-                role="tab"
-                ref={el => tabListRef.current[idx] = el}
-                className={activeTab === idx ? 'on' : ''}
-                tabIndex={0}
-                onClick={() => setActiveTab(idx)}
-                style={{ cursor: 'pointer' }}
-              >
-                <a>{tab.label}</a>
-              </li>
-            ))}
-          </ul>
-          <div className="tab-indicator" ref={tabIndicatorRef}></div>
-        </div>
-        <div className="tab-cont">
-          <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
-            <ActiveComponent />
+    <>
+      <div className="inner">
+        <div className="move-up">
+          <strong className="page-title">상담관리</strong>
+          <div className="switch-wrap">
+            <label>
+              <span>개인정보 보호</span>
+              <input
+                role="switch"
+                name="switch"
+                type="checkbox"
+                checked={masked}
+                onChange={e => setMasked(e.target.checked)}
+              />
+            </label>
           </div>
         </div>
+        <ClientProfile 
+          profileData={client} 
+          onEdit={clientData => {
+            setEditClient(clientData);
+            setRegisterOpen(true);
+          }}
+        />
+        <div className="tab-menu type01">
+          <div className="tab-list-wrap">
+            <ul className="tab-list" role="tablist">
+              {TAB_LIST.map((tab, idx) => (
+                <li
+                  key={tab.label}
+                  role="tab"
+                  ref={el => tabListRef.current[idx] = el}
+                  className={activeTab === idx ? 'on' : ''}
+                  tabIndex={0}
+                  onClick={() => setActiveTab(idx)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <a>{tab.label}</a>
+                </li>
+              ))}
+            </ul>
+            <div className="tab-indicator" ref={tabIndicatorRef}></div>
+          </div>
+          <div className="tab-cont">
+            <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
+              <ActiveComponent />
+            </div>
+          </div>
+        </div>
+        <div className="floating-btn"></div>
       </div>
-      <div className="floating-btn"></div>
-    </div>
+      <ClientRegisterModal
+        open={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onSave={onSave}
+        mode={editClient ? "edit" : "register"}
+        initialData={editClient}
+      />
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { maskingState } from "@/recoil";
+import ClientRegisterModal from "./ClientRegisterModal";
 
 function ClientProfile({ profileData, onEdit }) {
   const masked = useRecoilValue(maskingState);
@@ -8,6 +9,8 @@ function ClientProfile({ profileData, onEdit }) {
   const infoWrapRef = useRef(null);
   const [maxHeight, setMaxHeight] = useState('0px');
   const [paddingTop, setPaddingTop] = useState('0');
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [editClient, setEditClient] = useState(null);
 
   useLayoutEffect(() => {
     if (showInfo && infoWrapRef.current) {
@@ -18,6 +21,16 @@ function ClientProfile({ profileData, onEdit }) {
       setPaddingTop('0');
     }
   }, [showInfo]);
+
+  
+  const onSave = (clientData) => {
+    if (editClient) {
+      // TODO: 수정 로직 구현
+    } else {
+      // TODO: 등록 로직 구현
+    }
+    setRegisterOpen(false);
+  };
 
 function maskName(name) {
   if (name.length <= 1) return '*';
@@ -84,81 +97,90 @@ function maskValue(label, value) {
   };
 
   return (
-    <div className="client-profile">
-      <div className="name-wrap">
-        <div className="left">
-          <strong>{name}</strong>
-          {profileData.danger === "critical" && <span className="tag critical">고위험</span>}
-          {profileData.danger === "danger" && <span className="tag danger">위험</span>}
-          {profileData.danger === "caution" && <span className="tag caution">주의</span>}
-          {profileData.danger === "safe" && <span className="tag safe">양호</span>}
-          <a className="edit-btn cursor-pointer" onClick={handleEdit}>정보수정</a>
+    <>
+      <div className="client-profile">
+        <div className="name-wrap">
+          <div className="left">
+            <strong>{name}</strong>
+            {profileData.danger === "critical" && <span className="tag critical">고위험</span>}
+            {profileData.danger === "danger" && <span className="tag danger">위험</span>}
+            {profileData.danger === "caution" && <span className="tag caution">주의</span>}
+            {profileData.danger === "safe" && <span className="tag safe">양호</span>}
+            <a className="edit-btn cursor-pointer" onClick={handleEdit}>정보수정</a>
+          </div>
+          <button
+            className={`toggle-btn${showInfo ? ' on' : ''}`}
+            type="button"
+            aria-label="펼치기/접기"
+            onClick={() => setShowInfo(v => !v)}
+          ></button>
         </div>
-        <button
-          className={`toggle-btn${showInfo ? ' on' : ''}`}
-          type="button"
-          aria-label="펼치기/접기"
-          onClick={() => setShowInfo(v => !v)}
-        ></button>
+        <div
+          className="info-wrap"
+          ref={infoWrapRef}
+          style={{
+            maxHeight: maxHeight,
+            overflow: 'hidden',
+            transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding-top 0.35s cubic-bezier(0.4,0,0.2,1)',
+            paddingTop: paddingTop,
+          }}
+        >
+          <table>
+              <caption>내담자 프로필</caption>
+              <colgroup>
+                <col style={{ width: "50px" }} />
+                <col style={{ width: "calc((100% - 100px) / 2)" }} />
+                <col style={{ width: "50px" }} />
+                <col style={{ width: "calc((100% - 100px) / 2)" }} />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <th>연락처</th>
+                  <td>{phone}</td>
+                  <th>주소</th>
+                  <td>{address}</td>
+                </tr>
+                <tr>
+                  <th>생년월일</th>
+                  <td>{birth}</td>
+                  <th>이메일</th>
+                  <td>{email}</td>
+                </tr>
+                <tr>
+                  <th>성별</th>
+                  <td>{gender}</td>
+                  <th rowSpan={2}>보호자</th>
+                  <td rowSpan={2}>
+                    {guardians.length === 0 ? '없음' : guardians.map((g, idx) => (
+                      <span key={idx}>{g}{idx < guardians.length - 1 ? ', ' : ''}</span>
+                    ))}
+                  </td>
+                </tr>
+                <tr>
+                  <th>직업</th>
+                  <td>{job}</td>
+                </tr>
+                <tr>
+                  <th>메모</th>
+                  <td colSpan={3}>
+                    <div className="memo-wrap">
+                      <p className="memo">{memo}</p>
+                      <a className="edit-btn cursor-pointer" onClick={handleEditMemo}>수정</a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
       </div>
-      <div
-        className="info-wrap"
-        ref={infoWrapRef}
-        style={{
-          maxHeight: maxHeight,
-          overflow: 'hidden',
-          transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding-top 0.35s cubic-bezier(0.4,0,0.2,1)',
-          paddingTop: paddingTop,
-        }}
-      >
-        <table>
-            <caption>내담자 프로필</caption>
-            <colgroup>
-              <col style={{ width: "50px" }} />
-              <col style={{ width: "calc((100% - 100px) / 2)" }} />
-              <col style={{ width: "50px" }} />
-              <col style={{ width: "calc((100% - 100px) / 2)" }} />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th>연락처</th>
-                <td>{phone}</td>
-                <th>주소</th>
-                <td>{address}</td>
-              </tr>
-              <tr>
-                <th>생년월일</th>
-                <td>{birth}</td>
-                <th>이메일</th>
-                <td>{email}</td>
-              </tr>
-              <tr>
-                <th>성별</th>
-                <td>{gender}</td>
-                <th rowSpan={2}>보호자</th>
-                <td rowSpan={2}>
-                  {guardians.length === 0 ? '없음' : guardians.map((g, idx) => (
-                    <span key={idx}>{g}{idx < guardians.length - 1 ? ', ' : ''}</span>
-                  ))}
-                </td>
-              </tr>
-              <tr>
-                <th>직업</th>
-                <td>{job}</td>
-              </tr>
-              <tr>
-                <th>메모</th>
-                <td colSpan={3}>
-                  <div className="memo-wrap">
-                    <p className="memo">{memo}</p>
-                    <a className="edit-btn cursor-pointer" onClick={handleEditMemo}>수정</a>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-    </div>
+      <ClientRegisterModal
+        open={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onSave={onSave}
+        mode={editClient ? "edit" : "register"}
+        initialData={editClient}
+      />
+    </>
   );
 }
 

@@ -6,7 +6,7 @@ import Schedule from "./page/schedule/schedule.jsx";
 import Clients from "./page/clients/clients.jsx";
 import Consults from "./page/clients/consults/Consults.jsx";
 import TranscriptViewer from './page/clients/consults/transcript/TranscriptViewer';
-import SessionList from "./page/clients/components/SessionList.jsx";
+import SessionList from "./page/clients/sessionlist/SessionList.jsx";
 import Document from "./page/document/document.jsx";
 import MyPage from "./page/mypage/mypage.jsx";
 import Support from "./page/support/support.jsx";
