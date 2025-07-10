@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientProfile from "../components/ClientProfile";
+import ClientList from "./ClientList";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { maskingState, clientsState } from "@/recoil";
+import "./sessions.scss";
+
 import ClientRegisterModal from "../components/ClientRegisterModal";
+import emptyFace from "@/assets/images/common/empty_face.svg";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -18,6 +22,7 @@ function SessionList() {
   const client = clients.find(c => String(c.id) === String(clientId));
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
+  const [isEmpty, setIsEmpty] = useState(true);
 
   const onSave = (clientData) => {
     if (editClient) {
@@ -31,6 +36,12 @@ function SessionList() {
   // TODO: 실제 데이터 fetch 및 렌더링 구현
   return (
     <>
+      <ClientList
+        clients={clients}
+        onSelect={client => {
+          navigate(`/clients/session?clientId=${client.id}`);
+        }}
+      />
       <div className="inner">
         <div className="move-up">
           <strong className="page-title">회기 목록</strong>
@@ -47,22 +58,28 @@ function SessionList() {
             </label>
           </div>
         </div>
-        <ClientProfile profileData={client} 
+        <ClientProfile 
+          profileData={client} 
           onEdit={clientData => {
             setEditClient(clientData);
             setRegisterOpen(true);
-          }}/>
-        <div style={{marginTop: "2rem"}}>
-          <p>회기 리스트 UI</p>
-  
-          <button
-            className="type07"
-            style={{ marginTop: "2rem" }}
-            onClick={() => navigate("/clients/consults?clientId=" + clientId)}
-          >
-            상담관리 보기
-          </button>
+          }}
+          isEmpty={isEmpty}
+        />
+        <div className={isEmpty ? "con-wrap empty" : "con-wrap"}>
+          <img src={emptyFace} alt="empty"/>
+          <p className="empty-info">예정, 완료한 상담이 없습니다.<br/>내담자와의 예약 일정을 확인해 보세요.</p>
+          <button className="type05 h44" type="button">스케줄 관리</button>
         </div>
+
+
+        <button
+          className="type07"
+          style={{ marginTop: "2rem" }}
+          onClick={() => navigate("/clients/consults?clientId=" + clientId)}
+        >
+          상담관리 보기
+        </button>
       </div>
       <ClientRegisterModal
         open={registerOpen}

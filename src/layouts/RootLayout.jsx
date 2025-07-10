@@ -57,6 +57,7 @@ const RootLayout = () => {
   // 경로에 따라 페이지별 클래스명 매칭
   const pageClass = (() => {
     if (location.pathname.startsWith("/clients/consults")) return "consults";
+    if (location.pathname.startsWith("/clients/session")) return "sessions";
     if (location.pathname.startsWith("/clients")) return "clients";
     return "";
   })();

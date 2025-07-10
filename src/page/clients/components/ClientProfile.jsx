@@ -3,7 +3,7 @@ import { useRecoilValue } from "recoil";
 import { maskingState } from "@/recoil";
 import ClientRegisterModal from "./ClientRegisterModal";
 
-function ClientProfile({ profileData, onEdit }) {
+function ClientProfile({ profileData, onEdit, isEmpty }) {
   const masked = useRecoilValue(maskingState);
   const [showInfo, setShowInfo] = useState(false);
   const infoWrapRef = useRef(null);
@@ -98,7 +98,7 @@ function maskValue(label, value) {
 
   return (
     <>
-      <div className="client-profile">
+      <div className="client-profile" style={{ marginBottom: isEmpty ? '2rem' : '' }}>
         <div className="name-wrap">
           <div className="left">
             <strong>{name}</strong>

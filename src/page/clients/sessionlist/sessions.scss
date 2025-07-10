@@ -1,0 +1,701 @@
+@import "@/styles/common/common.scss";
+@import "@/styles/common/layout.scss";
+
+/* 회기목록 */
+.wrapper {
+    &.sessions {
+        header {
+            .inner {
+                width: calc(100% - 19rem);
+                margin-left: auto;
+            }
+            @include notebook {
+                left: 7.6rem;
+                width: calc(100% - 7.6rem);
+            }
+        }
+        main {
+            width: calc(100% - 37rem);
+            margin-left: 37rem;
+            > .inner {
+                max-width: 90.6rem;
+                padding-bottom: 2rem;
+                > .btn-wrap {
+                    margin-bottom: 2rem;
+                    @include flexbox(row, flex-end, center);
+                }
+                .con-wrap {
+                    min-height: calc(100vh - 34.6rem);
+                    padding: 3rem;
+                    border-radius: 20px;
+                    border: 1px solid $gray50;
+                    background: $gray0;
+                    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    &.empty {
+                        min-height: calc(100vh - 28.5rem);
+                        @include flexbox(column, center, center);
+                        img {
+                            width: 8.5rem;
+                            height: 7.9rem;
+                            object-fit: contain;
+                        }
+                        .empty-info {
+                            padding: 2rem 0 3rem;
+                            text-align: center;
+                            font-weight: 500;
+                            color: $gray400;
+                        }
+                        button {
+                            height: 4.4rem;
+                        }
+                    }
+                    .tb-wrap {
+                        position: relative;
+                        table {
+                            width: 100%;
+                            thead {
+                                tr {
+                                    height: 5.2rem;
+                                    background: $gray50;
+                                    th {
+                                        padding: 0 2rem;
+                                        text-align: left;
+                                        font-size: 1.8rem;
+                                        font-weight: 600;
+                                        color: $gray800;
+                                        &:first-of-type {
+                                            border-radius: .6rem 0 0 .6rem;
+                                        }
+                                        &:nth-of-type(2) {
+                                            padding: 0;
+                                            text-align: center;
+                                            white-space: nowrap;
+                                        }
+                                        &:nth-of-type(4) {
+                                            .tooltip {
+                                                width: 22.9rem;
+                                            }
+                                        }
+                                        &:last-of-type {
+                                            padding: 0 2rem 0 1rem;
+                                            border-radius: 0 .6rem .6rem 0;
+                                            .tooltip {
+                                                width: 28.9rem;
+                                            }
+                                        }
+                                        .step-title {
+                                            @include flexbox(row, flex-start, center);
+                                            gap: .6rem;
+                                        }
+                                        .info {
+                                            position: relative;
+                                            .info-icon {
+                                                width: 2rem;
+                                                height: 2rem;
+                                                background: url(../../../assets/images/icon/info.svg) no-repeat center/2rem;
+                                            }
+                                            .tooltip {
+                                                position: absolute;
+                                                top: 3.7rem;
+                                                left: -1.9rem;
+                                                padding: 1.2rem 1.6rem;
+                                                color: $white;
+                                                font-size: 1.4rem;
+                                                font-weight: 500;
+                                                text-align: left;
+                                                border-radius: 1.4rem;
+                                                letter-spacing: -0.56px;
+                                                background: $gray600;
+                                                display: none;
+                                                z-index: 10;
+                                                &::before {
+                                                    content: '';
+                                                    position: absolute;
+                                                    top: -1.2rem;
+                                                    left: 2rem;
+                                                    width: 0;
+                                                    height: 0;
+                                                    border-left: 10px solid transparent;
+                                                    border-right: 10px solid transparent;
+                                                    border-bottom: 14px solid $gray600;
+                                                }
+                                                ul {
+                                                    li {
+                                                        &:not(:last-of-type) {
+                                                            margin-bottom: 1rem;
+                                                        }
+                                                    }
+                                                }
+                                                p {
+                                                &:nth-of-type(2) {
+                                                    padding-top: 1rem;
+                                                }
+                                            }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            tbody {
+                                tr {
+                                    height: 8rem;
+                                    &:not(:last-of-type) {
+                                        border-bottom: 1px solid $gray50;
+                                    }
+                                    td {
+                                        text-align: left;
+                                        font-weight: 500;
+                                        color: $gray800;
+                                        letter-spacing: -0.32px;
+                                        &:first-child, &:nth-child(2) {
+                                            text-align: center;
+                                        }
+                                        &:not(:first-child, :nth-child(2), :last-child) {
+                                            padding: 0 2rem;
+                                        }
+                                        &:last-child {
+                                            padding: 0 0 0 1rem;
+                                        }
+                                        /* 상태 */
+                                        &.no-schedule {
+                                            color: $gray300;
+                                        }
+                                        &.scheduled {
+                                            color: $secondary500;
+                                        }
+                                        &.no-show {
+                                            color: $orange500;
+                                        }
+                                        &.cancelled {
+                                            color: $orange500;
+                                        }
+                                        .summary-wrap {
+                                            @include ellipsis(2);
+                                        }
+                                        .flex-wrap {
+                                            @include flexbox(row, flex-start, center);
+                                            flex-wrap: wrap;
+                                            gap: .4rem .8rem;
+                                        }
+                                        a {
+                                            position: relative;
+                                            padding-right: 2rem;
+                                            white-space: nowrap;
+                                            letter-spacing: -0.32px;
+                                            &::after {
+                                                content: "";
+                                                position: absolute;
+                                                top: 50%;
+                                                transform: translateY(-50%);
+                                                right: 0;
+                                                width: 2rem;
+                                                height: 2rem;
+                                                background: url(../../../assets/images/icon/arrow_right_bk.svg) no-repeat center/2rem;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 내담자 프로필 */
+.client-profile {
+//     width: 100%;
+//     padding: 3rem 2.6rem;
+//     border-radius: 1.6rem;
+//     border: 1px solid $gray50;
+//     background: $gray0;
+//     box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+//     margin-bottom: 2rem;
+//     .name-wrap {
+//         width: 100%;
+//         @include flexbox(row, space-between, center);
+//         .left {
+//             @include flexbox(row, flex-start, center);
+//             gap: 1rem;
+//             strong {
+//                 font-size: 2.2rem;
+//                 font-weight: 700;
+//             }
+//         }
+//         .toggle-btn {
+//             width: 2rem;
+//             height: 2rem;
+//             background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center;
+//             transition: all .25s;
+//             &.on {
+//                 transform: rotate(180deg);
+//                 transition: all .25s;
+//             }
+//         }
+//     }
+//     .info-wrap {
+//         width: 100%;
+//         padding-top: 2rem;
+//         display: none;
+//         table {
+//             table-layout: fixed;
+//             width: 100%;
+//             border-collapse: separate;
+//             border-spacing: .8rem .4rem;
+//             tr {
+//                 width: 100%;
+//                 th {
+//                     width: 5rem;
+//                     font-size: 1.4rem;
+//                     font-weight: 700;
+//                     color: $gray800;
+//                     text-align: left;
+//                     white-space: nowrap;
+//                     vertical-align: top;
+//                 }
+//                 td {
+//                     width: calc(50% - 5rem);
+//                     font-size: 1.4rem;
+//                     font-weight: 500;
+//                     color: $gray600;
+//                     vertical-align: top;
+//                     .memo-wrap {
+//                         width: 100%;
+//                         @include flexbox(row, flex-start, center);
+//                         .memo {
+//                             max-width: calc(100% - 40px);
+//                             @include ellipsis(1);
+//                         }
+//                         .edit-btn {
+//                             white-space: nowrap;
+//                             margin-left: .8rem;
+//                             font-size: 1.4rem;
+//                             color: $gray600;
+//                             text-decoration: underline;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+}
+
+/* 내담자 검색 */
+.client-list {
+    position: fixed;
+    top: 1.8rem;
+    left: 20rem;
+    width: 17rem;
+    height: calc(100vh - 3.8rem);
+    padding: 2.8rem 2rem 3rem;
+    border-radius: 1.6rem;
+    border: 1px solid $gray50;
+    background: $gray0;
+    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+    z-index: 30;
+    transition: left .3s;
+    &.on {
+        left: 9.6rem;
+    }
+    @include notebook {
+        left: 9.6rem;
+    }
+    .tit-wrap {
+        margin-bottom: 2rem;
+        strong {
+            font-size: 2rem;
+            font-weight: 700;
+            color: $gray600;
+        }
+    }
+    .input-wrap {
+        &.search {
+            margin-bottom: 1rem;
+            input {
+                width: 100%;
+                padding: 0 3.3rem 0 .8rem !important;
+                background: $gray50;
+            }
+            .search-btn {
+                right: .6rem;
+            }
+        }
+    }
+    .list-wrap {
+        ul {
+            width: 100%;
+            @include flexbox(column, flex-start, flex-start);
+            gap: .4rem;
+            li {
+                width: 100%;
+                height: 3.8rem;
+                border-radius: .8rem;
+                transition: all .25s;
+                a {
+                    display: inline-block;
+                    width: 100%;
+                    height: 100%;
+                    padding: .8rem;
+                    color: $gray600;
+                    font-weight: 500;
+                    @include ellipsis(1);
+                }
+                &:hover {
+                    background: rgba(239, 242, 243, 0.60);
+                    a {
+                        color: $gray950;
+                    }
+                }
+            }
+        }
+        .empty-txt {
+            padding: .8rem;
+            font-weight: 500;
+            color: $gray400;
+            text-align: center;
+        }
+    }
+}
+
+/* 타임라인 */
+.support-panel {
+    > .inner {
+        .panel-tit {
+            padding: 2.8rem 2.4rem;
+            border-bottom: 1px solid $gray50;
+            .tit-wrap {
+                @include flexbox(row, space-between, center);
+                strong {
+                    font-size: 2.2rem;
+                    font-weight: 700;
+                }
+                .close-btn {
+                    width: 2.4rem;
+                    height: 2.4rem;
+                    border: none;
+                    background: url(../../../assets/images/icon/close.svg) no-repeat center/contain;
+                }
+            }
+        }
+    }
+    &.timeline {
+        .panel-cont {
+            padding: 3rem .6rem 3rem 2.4rem;
+            height: calc(100vh - 19rem);
+            .toggle-cont {
+                padding-right: 1.6rem;
+                height: 100%;
+                overflow-y: auto;
+                .toggle-wrap {
+                    padding-bottom: 3.2rem;
+                    border-bottom: 1px solid $gray50;
+                    &:not(:first-of-type) {
+                        padding-top: 3.2rem;
+                    }
+                    &:last-of-type {
+                        padding-bottom: 0;
+                        border-bottom: 0;
+                    }
+                    .tit-wrap {
+                        @include flexbox(row, space-between, center);
+                        strong {
+                            font-size: 1.8rem;
+                            font-weight: 600;
+                        }
+                        .toggle-btn {
+                            width: 2.4rem;
+                            height: 2.4rem;
+                            background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center/2.4rem;
+                            transition: all .25s;
+                            &.on {
+                                transform: rotate(180deg);
+                            }
+                        }
+                    }
+                    .con-wrap {
+                        .session-list {
+                            width: 100%;
+                            padding-left: 2rem;
+                            li {
+                                position: relative;
+                                padding-top: .8rem;
+                                @include flexbox(column, flex-start, flex-start);
+                                gap: .4rem;
+                                span {
+                                    position: relative;
+                                    display: inline-block;
+                                    height: 2.4rem;
+                                    padding: 0 .8rem;
+                                    font-size: 1.4rem;
+                                    font-weight: 700;
+                                    line-height: 2.4rem;
+                                    color: $gray900;
+                                    border-radius: .6rem;
+                                    &::before {
+                                        content: "";
+                                        position: absolute;
+                                        top: 50%;
+                                        left: -1.6rem;
+                                        transform: translateY(-50%);
+                                        width: .6rem;
+                                        height: .6rem;
+                                        border-radius: 50%;
+                                        background: $gray400;
+                                    }
+                                }
+                                div {
+                                    width: 100%;
+                                    position: relative;
+                                    padding: 1rem 1.2rem;
+                                    border: 1px solid $gray50;
+                                    border-radius: .8rem;
+                                    &::before {
+                                        content: "";
+                                        position: absolute;
+                                        top: 0;
+                                        left: -1.4rem;
+                                        width: 1px;
+                                        height: 100%;
+                                        border-left: 1px dashed $gray400;
+                                    }
+                                }
+                                &:first-child {
+                                    span {
+                                        background: $gray50;
+                                    }
+                                }
+                            }
+                        }
+                        .chart-wrap {
+                            margin-top: .8rem;
+                            margin-bottom: .8rem;
+                            border-radius: .8rem;
+                            border: 1px solid $gray50;
+                        }
+                        .chart-summary {
+                            padding: 1rem 1.2rem;
+                            border-radius: .8rem;
+                            background: rgba(239, 242, 243, 0.50);
+                            @include flexbox(row, flex-start, center);
+                            gap: 1.6rem;
+                            &.rising {
+                                p {
+                                    color: $red500;
+                                }
+                            }
+                            &.falling {
+                                p {
+                                    color: $blue500;
+                                }
+                            }
+                            &.steady {
+                                p {
+                                    color: $gray600;
+                                }
+                            }
+                            span {
+                                display: inline-block;
+                                width: 5.2rem;
+                                padding: 0 .25rem;
+                                font-size: 1.4rem;
+                                font-weight: 700;
+                                color: $gray900;
+                                white-space: nowrap;
+                            }
+                            p {
+                                font-weight: 500;
+                            }
+                        }
+                        .severity-wrap {
+                            padding: 1rem 1.2rem;
+                            margin-top: 0.8rem;
+                            margin-bottom: 0.8rem;
+                            border-radius: .8rem;
+                            border: 1px solid $gray50;
+                            .severity-hd {
+                                ul {
+                                    padding-left: 4.5rem;
+                                    padding-right: .1rem;
+                                    @include flexbox(row, space-between, center);
+                                    li {
+                                        padding: .1rem .8rem;
+                                        border-radius: .6rem;
+                                        text-align: center;
+                                        font-size: 1.4rem;
+                                        font-weight: 700;
+                                        color: $gray900;
+                                        &:last-child {
+                                            background: $gray50;
+                                        }
+                                    }
+                                }
+                            }
+                            .stage-wrap {
+                                .severity-stage {
+                                    height: 4.4rem;
+                                    @include flexbox(row, flex-start, center);
+                                    gap: 1rem;
+                                    &:not(:last-child) {
+                                        margin-bottom: 1px;
+                                    }
+                                    > span {
+                                        display: inline-block;
+                                        width: 3.4rem;
+                                        text-align: left;
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        color: $gray400;
+                                        white-space: nowrap;
+                                    }
+                                    ul {
+                                        position: relative;
+                                        width: calc(100% - 4.4rem);
+                                        @include flexbox(row, space-between, center);
+                                        padding: 0 .9rem;
+                                        &::before {
+                                            content: "";
+                                            position: absolute;
+                                            top: 50%;
+                                            left: 0;
+                                            transform: translateY(-50%);
+                                            width: 100%;
+                                            height: 1px;
+                                            background: $gray100;
+                                            z-index: 1;
+                                        }
+                                        li {
+                                            width: 3.2rem;
+                                            height: 3.2rem;
+                                            z-index: 2;
+                                            span {
+                                                width: 100%;
+                                                height: 100%;
+                                                font-weight: 700;
+                                                color: $gray600;
+                                                border-radius: 50%;
+                                                background: $gray50;
+                                                @include flexbox(row, center, center);
+                                            }
+                                        }
+                                    }
+                                    &.rising {
+                                        .last-span {
+                                            color: $gray0;
+                                            background: $red300;
+                                        }
+                                    }
+                                    &.falling {
+                                        .last-span {
+                                            color: $gray0;
+                                            background: $blue300;
+                                        }
+                                    }
+                                    &.steady {
+                                        .last-span {
+                                            color: $gray0;
+                                            background: $gray400;
+                                        }
+                                    }
+                                }
+                            }
+                            table {
+                                tbody {
+                                    tr {
+                                        td {
+                                            text-align: center;
+
+                                        }
+                                        // &.rising {
+                                        //     .last-span {
+                                        //         color: $gray0;
+                                        //         font-weight: 700;
+                                        //         background: $red300;
+                                        //     }
+                                        // }
+                                        // &.falling {
+                                        //     .last-span {
+                                        //         color: $gray0;
+                                        //         font-weight: 700;
+                                        //         background: $blue300;
+                                        //     }
+                                        // }
+                                        // &.steady {
+                                        //     .last-span {
+                                        //         color: $gray0;
+                                        //         font-weight: 700;
+                                        //         background: $gray400;
+                                        //     }
+                                        // }
+                                    }
+                                }
+                            }
+                        }
+                        .summary-wrap {
+                            width: 100%;
+                            @include flexbox(column, flex-start, center);
+                            gap: .8rem;
+                            .severity-summary {
+                                width: 100%;
+                                padding: 1rem 1.2rem;
+                                border-radius: .8rem;
+                                background: rgba(239, 242, 243, 0.50);
+                                @include flexbox(row, flex-start, center);
+                                gap: 1.6rem;
+                                span {
+                                    display: inline-block;
+                                    width: 5.2rem;
+                                    padding: 0 .25rem;
+                                    font-size: 1.4rem;
+                                    font-weight: 700;
+                                    color: $gray900;
+                                    white-space: nowrap;
+                                }
+                                p {
+                                    font-weight: 500;
+                                }
+                                &.rising {
+                                    p {
+                                        color: $red500;
+                                    }
+                                }
+                                &.falling {
+                                    p {
+                                        color: $blue500;
+                                    }
+                                }
+                                &.steady {
+                                    p {
+                                        color: $gray600;
+                                    }
+                                }
+                            }
+                        }
+                        .empty {
+                            margin-top: .8rem;
+                            padding: 2.25rem 0;
+                            @include flexbox(column, center, center);
+                            img {
+                                width: 8.5rem;
+                                height: 7.9rem;
+                                object-fit: contain;
+                            }
+                            .empty-tit {
+                                padding: 2rem 0 .6rem;
+                                text-align: center;
+                                font-weight: 700;
+                                color: $gray600;
+                            }
+                            .empty-info {
+                                text-align: center;
+                                font-weight: 500;
+                                color: $gray400;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
