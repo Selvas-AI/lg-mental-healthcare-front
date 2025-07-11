@@ -92,16 +92,12 @@ function Sessions() {
               <button className="type05 h44" type="button">스케줄 관리</button>
             </>
           ) : (
-            <SessionTable sessionDummyData={sessionDummyData}/>
+            <SessionTable 
+              clientId={clientId}
+              sessionDummyData={sessionDummyData}
+            />
           )}
         </div>
-        {/* <button
-          className="type07"
-          style={{ marginTop: "2rem" }}
-          onClick={() => navigate("/clients/consults?clientId=" + clientId)}
-        >
-          상담관리 보기
-        </button> */}
       </div>
       <ClientRegisterModal
         open={registerOpen}

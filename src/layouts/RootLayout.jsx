@@ -36,7 +36,7 @@ const RootLayout = () => {
     const newMargin = `${leftWidth}rem`;
     main.style.width = newWidth;
     main.style.marginLeft = newMargin;
-    footer.style.width = newWidth;
+    // footer.style.width = newWidth;
   }, [fold, supportPanel, location.pathname]);
 
   // fold 상태 체크 (반응형)
@@ -92,9 +92,6 @@ const RootLayout = () => {
   };
   const pageTitle = pathTitleMap[location.pathname] || '';
 
-  // Footer 렌더링 여부
-  const showFooter = !location.pathname.startsWith("/clients/sessions");
-
   return (
     <div className={`wrapper ${pageClass}`}>
       <Header scroll={scroll} title={pageTitle} fold={fold} />
@@ -102,7 +99,7 @@ const RootLayout = () => {
       <main className={`${fold ? " on" : ""}`}>
         <Outlet />
       </main>
-      {showFooter && <Footer fold={fold} />}
+      <Footer fold={fold}/>
     </div>
   );
 };
