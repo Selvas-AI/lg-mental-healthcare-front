@@ -205,7 +205,6 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                             <span>우울</span>
                             <ul>
                               {(() => {
-                                // 우울: 마지막 null이 아닌 인덱스 찾기
                                 let lastIdx = -1;
                                 reversedData.forEach((row, idx) => {
                                   const val = row.severity && row.severity["우울"];
@@ -232,7 +231,6 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                             <span>강박</span>
                             <ul>
                               {(() => {
-                                // 강박: 마지막 null이 아닌 인덱스 찾기
                                 let lastIdx = -1;
                                 reversedData.forEach((row, idx) => {
                                   const val = row.severity && row.severity["강박"];
@@ -259,7 +257,6 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                             <span>PTSD</span>
                             <ul>
                               {(() => {
-                                // PTSD: 마지막 null이 아닌 인덱스 찾기
                                 let lastIdx = -1;
                                 reversedData.forEach((row, idx) => {
                                   const val = row.severity && row.severity["PTSD"];
@@ -331,14 +328,14 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                 ) : (
                   <>
                     <div className="chart-wrap">
-                      <canvas
-                        className="line-chart03"
-                        width="288"
-                        height="159"
-                        data-values={`[${sessionDummyData.map(row => row.stress && row.stress[0]).join(",")}]`}
-                        data-labels={`[${sessionDummyData.map(row => `\"${row.session}\"`).join(",")}]`}
-                        data-min="1" data-max="4"
-                      ></canvas>
+                      <EmergencyChart
+                        values={reversedData.map(row => (row.stress) ?? null)}
+                        labels={reversedData.map(row => row.session)}
+                        min={1}
+                        max={4}
+                        width={304}
+                        height={159}
+                      />
                     </div>
                     <div className="chart-summary steady">
                       <span>위기단계</span>

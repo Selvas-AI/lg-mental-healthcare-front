@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 
 function SessionTable({ sessionDummyData }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showTooltip2, setShowTooltip2] = useState(false);
+
   return (
     <div className="tb-wrap">
       <table>
@@ -21,8 +24,8 @@ function SessionTable({ sessionDummyData }) {
               <div className="step-title">
                 <span>상담 요약</span>
                 <div className="info">
-                  <div className="info-icon" aria-label="툴팁 안내 아이콘"></div>
-                  <div className="tooltip">
+                  <div className="info-icon" aria-label="툴팁 안내 아이콘" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}></div>
+                  <div className={`tooltip${showTooltip ? " show" : ""}`}>
                     <p>녹취록을 기반으로 AI가 생성한<br />해당회차 상담 요약입니다.</p>
                     <p>약녹취록이 없거나, 생성중인 경우에는<br />제공이 어려울 수 있어요.</p>
                   </div>
@@ -33,8 +36,8 @@ function SessionTable({ sessionDummyData }) {
               <div className="step-title">
                 <span>To-Do</span>
                 <div className="info">
-                  <div className="info-icon" aria-label="툴팁 안내 아이콘"></div>
-                  <div className="tooltip">
+                  <div className="info-icon" aria-label="툴팁 안내 아이콘" onMouseEnter={() => setShowTooltip2(true)} onMouseLeave={() => setShowTooltip2(false)}></div>
+                  <div className={`tooltip${showTooltip2 ? " show" : ""}`}>
                     <ul>
                       <li>1. 해당 회차에서 작성하거나 확인하지 않은 업무인 경우에 TO-DO로 표시돼요.</li>
                       <li>2. AI는 도움 드리지만 자동으로 생성하지 않아요.</li>
