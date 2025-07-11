@@ -7,7 +7,7 @@ import StressBox from "./StressBox";
 import { useNavigate } from "react-router-dom";
 import TranscriptBox from "./TranscriptBox";
 
-function Transcript() {
+function Transcript({ setShowUploadModal }) {
   const navigate = useNavigate();
   const hasTranscript = false;
   const isAIGenerated = true;
@@ -45,12 +45,16 @@ function Transcript() {
   const handleAIGenerate = () => {
     navigate('/clients/consults/transcript');
   };
+
+  const handleUpload = () => {
+    if (setShowUploadModal) setShowUploadModal(true);
+  };
   return (
     <div className="transcript">
       <div className="tit-wrap">
         <strong>녹취록</strong>
         <div className="btn-wrap">
-          <button className="upload-btn type03 h40" type="button">
+          <button className="upload-btn type03 h40" type="button" onClick={handleUpload}>
             녹취록 업로드
           </button>
           <button className="type05" type="button" onClick={handleAIGenerate}>

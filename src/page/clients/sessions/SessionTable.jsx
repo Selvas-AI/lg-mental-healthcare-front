@@ -56,7 +56,7 @@ function SessionTable({ clientId, sessionDummyData }) {
           {sessionDummyData && sessionDummyData.map((row, idx) => (
             <tr key={idx}>
               <td>
-                <a onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>{row.session}회기</a>
+                <a className="cursor-pointer" onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>{row.session}회기</a>
               </td>
               <td className={row.status.className}>{row.status.text.split(" ").map((t, i) => (
                 <span key={i}>
@@ -71,7 +71,7 @@ function SessionTable({ clientId, sessionDummyData }) {
               <td>
                 <div className="flex-wrap">
                   {row.todos.map((todo, i) => (
-                    <a href="#" key={i}>{todo}</a>
+                    <a className="cursor-pointer" key={i}>{todo}</a>
                   ))}
                 </div>
               </td>

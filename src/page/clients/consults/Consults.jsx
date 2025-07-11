@@ -10,6 +10,7 @@ import PsychologicalTest from './psychologicalTest/PsychologicalTest';
 import DailyManagement from './daily/DailyManagement';
 import DocumentBox from './document/DocumentBox';
 import ClientRegisterModal from './../components/ClientRegisterModal';
+import UploadModal from './components/UploadModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
@@ -30,6 +31,7 @@ function Consults() {
   const tabIndicatorRef = useRef(null);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // 탭 indicator 이동 효과
   useLayoutEffect(() => {
@@ -100,7 +102,7 @@ function Consults() {
           </div>
           <div className="tab-cont">
             <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
-              <ActiveComponent />
+              <ActiveComponent setShowUploadModal={setShowUploadModal}/>
             </div>
           </div>
         </div>
@@ -113,6 +115,9 @@ function Consults() {
         mode={editClient ? "edit" : "register"}
         initialData={editClient}
       />
+      {showUploadModal && (
+        <UploadModal setShowUploadModal={setShowUploadModal} />
+      )}
     </>
   );
 }
