@@ -1,13 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useRecoilState } from "recoil";
+import { clientsState } from "@/recoil";
+import emptyFace from "@/assets/images/common/empty_face.svg";
 
-function ClientsTable({ clients, onSelectClient, selectedClientId, memoClient, setMemoClient, onCloseMemo }) {
+function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoClient, onCloseMemo }) {
   const [showTooltip, setShowTooltip] = useState(false);
-  
+  const [clients] = useRecoilState(clientsState);
+  const [searchValue, setSearchValue] = useState("");
+  const [filteredClients, setFilteredClients] = useState(clients);
+
   const handleSearch = () => {
-    // TODO: 검색 로직
+    const keyword = searchValue.trim();
+    if (!keyword) {
+      setFilteredClients(clients);
+      return;
+    }
+    const result = clients.filter(client => client.name.includes(keyword));
+    setFilteredClients(result);
   };
-  
+
+  const handleInputChange = e => {
+    setSearchValue(e.target.value);
+    if (!e.target.value) {
+      setFilteredClients(clients);
+    }
+  };
+
+  useEffect(() => {
+    setFilteredClients(clients);
+  }, [clients]);
+
   return (
     <>
       <div className="con-wrap">
@@ -26,10 +49,17 @@ function ClientsTable({ clients, onSelectClient, selectedClientId, memoClient, s
             </div>
             <div className="right">
               <div className="input-wrap search">
-                <input type="text" name="client-search" placeholder="내담자 검색" />
+                <input
+                  type="text"
+                  name="client-search"
+                  placeholder="내담자 검색"
+                  value={searchValue}
+                  onChange={handleInputChange}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+                />
                 <button className="search-btn" type="button" aria-label="검색" onClick={handleSearch}></button>
               </div>
-              <div className="filter-wrap">
+              {/* <div className="filter-wrap">
                 <button className="filter-btn" type="button">
                   필터<span className="chk-num">(2)</span>
                 </button>
@@ -83,10 +113,16 @@ function ClientsTable({ clients, onSelectClient, selectedClientId, memoClient, s
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
-          <div className="tb-wrap">
+          <div className={`tb-wrap${filteredClients.length === 0 ? ' empty' : ''}`}>
+            {filteredClients.length === 0 && (
+              <div className="empty-data">
+                <img src={emptyFace} alt="empty" />
+                <p className="empty-info">내담자명 검색결과가 없습니다.</p>
+              </div>
+            )}
             <table>
               <caption>내담자 리스트</caption>
               <colgroup>
@@ -129,7 +165,7 @@ function ClientsTable({ clients, onSelectClient, selectedClientId, memoClient, s
                 </tr>
               </thead>
               <tbody>
-                {clients.map((client, idx) => (
+                {filteredClients.map((client, idx) => (
                   <tr
                     key={client.id || idx}
                     className={
@@ -140,12 +176,12 @@ function ClientsTable({ clients, onSelectClient, selectedClientId, memoClient, s
                   >
                     <td>
                       <Link
-                        to={`/clients/session?clientId=${client.id || client.name}`}
+                        to={`/clients/sessions?clientId=${client.id || client.name}`}
                       >
                         {client.name}{client.nickname && `(${client.nickname})`}
                       </Link>
                     </td>
-                    <td>{client.contact}</td>
+                    <td>{client.phone}</td>
                     <td>
                       {client.session === "신규" ? (
                         "신규"

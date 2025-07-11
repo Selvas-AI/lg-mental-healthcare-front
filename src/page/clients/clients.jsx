@@ -4,17 +4,20 @@ import "./clients.scss";
 import EmptyClients from "./components/EmptyClients";
 import { clientsState } from "@/recoil";
 import { useState } from "react";
-
+import ClientRegisterModal from "./components/ClientRegisterModal";
 import ClientMemo from "./components/clientMemo";
 
 function Clients() {
   const [memoClient, setMemoClient] = useState(null);
   const handleCloseMemo = () => setMemoClient(null);
   const [clients, setClients] = useRecoilState(clientsState);
-
-  const handleRegister = () => {
-    // TODO: 내담자 등록 로직
-  };
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const handleRegister = () => setRegisterOpen(true);
+  const handleCloseRegister = () => setRegisterOpen(false);
+  const handleSaveRegister = () => {
+    // TODO: 저장 처리
+    setRegisterOpen(false);
+  }
 
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || null);
 
@@ -40,7 +43,6 @@ function Clients() {
           <EmptyClients onRegister={handleRegister} />
         ) : (
           <ClientsTable
-            clients={clients}
             onSelectClient={setSelectedClientId}
             selectedClientId={selectedClientId}
             memoClient={memoClient}
@@ -61,6 +63,9 @@ function Clients() {
           onClose={handleCloseMemo}
           initialMemo={memoClient.memo || ""}
         />
+      )}
+      {registerOpen && (
+        <ClientRegisterModal open={registerOpen} onClose={handleCloseRegister} onSave={handleSaveRegister} />
       )}
     </>
   );
