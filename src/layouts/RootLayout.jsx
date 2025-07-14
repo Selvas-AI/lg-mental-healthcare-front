@@ -36,7 +36,8 @@ const RootLayout = () => {
     const newMargin = `${leftWidth}rem`;
     main.style.width = newWidth;
     main.style.marginLeft = newMargin;
-    // footer.style.width = newWidth;
+    footer.style.width = newWidth;
+    footer.style.marginLeft = newMargin;
   }, [fold, supportPanel, location.pathname]);
 
   // fold 상태 체크 (반응형)

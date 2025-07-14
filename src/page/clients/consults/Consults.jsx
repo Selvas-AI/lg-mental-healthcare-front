@@ -1,5 +1,6 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { supportPanelState } from "@/recoilLayout";
 import { maskingState, clientsState } from "@/recoil";
 import { useLocation } from 'react-router-dom';
 import './consults.scss';
@@ -11,6 +12,7 @@ import DailyManagement from './daily/DailyManagement';
 import DocumentBox from './document/DocumentBox';
 import ClientRegisterModal from './../components/ClientRegisterModal';
 import UploadModal from './components/UploadModal';
+import AiSummaryPanel from './components/AiSummaryPanel';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
@@ -32,6 +34,8 @@ function Consults() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAiSummary, setShowAiSummary] = useState(false);
+  const setSupportPanel = useSetRecoilState(supportPanelState);
 
   // 탭 indicator 이동 효과
   useLayoutEffect(() => {
@@ -106,7 +110,10 @@ function Consults() {
             </div>
           </div>
         </div>
-        <div className="floating-btn"></div>
+        <div className="floating-btn" onClick={() => {
+          setShowAiSummary(true);
+          setSupportPanel(true);
+        }} style={{cursor:'pointer'}}></div>
       </div>
       <ClientRegisterModal
         open={registerOpen}
@@ -117,6 +124,13 @@ function Consults() {
       />
       {showUploadModal && (
         <UploadModal setShowUploadModal={setShowUploadModal} />
+      )}
+      {showAiSummary && (
+        // AI 종합 의견 생성 패널 UI
+        <AiSummaryPanel onClose={() => {
+          setShowAiSummary(false);
+          setSupportPanel(false);
+        }} />
       )}
     </>
   );
