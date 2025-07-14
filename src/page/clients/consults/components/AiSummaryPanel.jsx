@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "../consults.scss";
 import IconLoading from "@/assets/images/common/loading.svg";
+import EditorModal from "../../components/EditorModal";
 
 const SKIP_REASONS = [
   "약간의 수정이 필요해요",
@@ -20,6 +21,13 @@ function AiSummaryPanel({ onClose }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [directInput, setDirectInput] = useState("");  // 직접입력 상태
+
+  const handleSaveDirectInput = () => {
+    // TODO: 저장 처리
+    setShowDirectInputModal(false);
+    setDirectInput("");
+  };
 
   // 생략하기 버튼 클릭
   const handleSkip = () => {
@@ -152,17 +160,19 @@ function AiSummaryPanel({ onClose }) {
           </div>
         </div>
       </div>
-      {/* 직접입력 모달 (placeholder) */}
+      {/* 직접입력 모달 */}
       {showDirectInputModal && (
-        <div className="modal direct-input on" style={{position:'fixed', top:0, left:0, width:'100vw', height:'100vh', background:'rgba(0,0,0,0.3)', zIndex:999}}>
-          <div style={{background:'#fff', borderRadius:'12px', padding:'2rem', maxWidth:'400px', margin:'10vh auto', position:'relative'}}>
-            <h3 style={{marginBottom:'1rem'}}>직접 입력</h3>
-            <textarea style={{width:'100%', minHeight:'100px'}} placeholder="사유를 입력하세요" />
-            <div style={{marginTop:'1rem', textAlign:'right'}}>
-              <button type="button" className="type09" onClick={handleCloseDirectInput}>닫기</button>
-            </div>
-          </div>
-        </div>
+        <EditorModal
+          open={showDirectInputModal}
+          onClose={handleCloseDirectInput}
+          onSave={handleSaveDirectInput}
+          title="자유롭게 구체적인 내용을 기재해 주세요."
+          className="direct-input"
+          placeholder="기대했던 내용은 무엇인가요? 어떻게 개선 할 수 있을까요?"
+          maxLength={200}
+          initialValue={directInput}
+          saveDisabled={directInput.length === 0 || directInput.length > 200}
+        />
       )}
     </>
   );
