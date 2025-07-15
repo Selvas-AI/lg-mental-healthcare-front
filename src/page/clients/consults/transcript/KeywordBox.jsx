@@ -17,11 +17,19 @@ function drawCloud(canvas, words) {
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // baseWidth/baseHeight는 원본 데이터 기준
+  const baseWidth = 421;
+  const baseHeight = 136;
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
   const rotatedIndex = Math.floor(Math.random() * words.length);
+
   words.forEach((word, index) => {
-    const radius = word.freq * 3;
-    const x = word.x;
-    const y = word.y;
+    // 좌표/반지름 비율 변환
+    const x = (word.x / baseWidth) * canvasWidth;
+    const y = (word.y / baseHeight) * canvasHeight;
+    const radius = (word.freq * 3 / baseWidth) * canvasWidth;
     const color = colorPairs[index % colorPairs.length];
     // 원
     ctx.beginPath();
@@ -45,7 +53,7 @@ function drawCloud(canvas, words) {
   });
 }
 
-function KeywordBox({ data, onAIGenerate }) {
+function KeywordBox({ data, onAIGenerate, isPanel = false}) {
   const hasData = Array.isArray(data) && data.length > 0;
   const canvasRef = useRef(null);
 
@@ -55,32 +63,43 @@ function KeywordBox({ data, onAIGenerate }) {
   }, [hasData, data]);
 
   return (
-    <TranscriptBox
-      className={`keyword box${!hasData ? ' before-create' : ''}`}
-      title="3. 키워드 분석"
-      toggleable={false}
-    >
-      {!hasData ? (
-        <div className="create-wrap">
-          <p>
-            [AI 생성하기]를 선택하면<br />
-            AI가 생성한 분석 자료를 확인 할 수 있어요!
-          </p>
-          <button className="type01 h40" type="button" onClick={onAIGenerate}>
-            <span>AI 생성하기</span>
-          </button>
-        </div>
+    <>
+      {isPanel ? (
+        <canvas
+          ref={canvasRef}
+          className="word-cloud"
+          width="284"
+          height="92"
+        />
       ) : (
-        <div className="con-wrap">
-          <canvas
-            ref={canvasRef}
-            className="word-cloud"
-            width="421"
-            height="136"
-          />
-        </div>
+        <TranscriptBox
+          className={`keyword box${!hasData ? ' before-create' : ''}`}
+          title={isPanel ? undefined : "3. 키워드 분석"}
+          toggleable={false}
+        >
+          {!hasData ? (
+            <div className="create-wrap">
+              <p>
+                [AI 생성하기]를 선택하면<br />
+                AI가 생성한 분석 자료를 확인 할 수 있어요!
+              </p>
+              <button className="type01 h40" type="button" onClick={onAIGenerate}>
+                <span>AI 생성하기</span>
+              </button>
+            </div>
+          ) : (
+            <div className="con-wrap">
+              <canvas
+                ref={canvasRef}
+                className="word-cloud"
+                width={421}
+                height={136}
+              />
+            </div>
+          )}
+        </TranscriptBox>
       )}
-    </TranscriptBox>
+    </>
   );
 }
 

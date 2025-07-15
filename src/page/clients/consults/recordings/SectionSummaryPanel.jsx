@@ -1,9 +1,10 @@
 import React from "react";
 import './recordings.scss';
 
-function SectionSummaryPanel({ onClose }) {
+function SectionSummaryPanel({ open, onClose }) {
+  
   return (
-    <div className="support-panel section-summary on">
+    <div className={"support-panel section-summary" + (open ? " on" : "")}>
       <div className="inner">
         <div className="panel-tit">
           <div className="tit-wrap">

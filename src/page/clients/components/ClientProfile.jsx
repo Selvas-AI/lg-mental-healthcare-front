@@ -123,6 +123,7 @@ function maskValue(label, value) {
             overflow: 'hidden',
             transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding-top 0.35s cubic-bezier(0.4,0,0.2,1)',
             paddingTop: paddingTop,
+            display: 'block',
           }}
         >
           <table>

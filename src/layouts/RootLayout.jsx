@@ -15,7 +15,7 @@ const RootLayout = () => {
   const [supportPanel, setSupportPanel] = useRecoilState(supportPanelState);
   const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
   const activeTab = useRecoilValue(recordingsTabState);
-  const isRecordingsPage = location.pathname.startsWith('/clients/recordings');
+  const isRecordingsPage = location.pathname.startsWith('/clients/recordings') || location.pathname.startsWith('/clients/sessions');
   const showFooter = !isRecordingsPage || activeTab === 'aianalysis';
 
   // main, footer의 className을 상태별로 조합
@@ -34,9 +34,7 @@ const RootLayout = () => {
     let cls = "footer";
     if (fold) cls += " folded";
     else cls += " unfolded";
-    const supportPaths = ["/clients/sessions"];
     const consultPaths = ["/clients/consults", "/clients/recordings"];
-    if (supportPanel && supportPaths.some(path => location.pathname.startsWith(path))) cls += " support-open";
     if (supportPanel && consultPaths.some(path => location.pathname.startsWith(path))) cls += " support-open-consults";
     return cls;
   }

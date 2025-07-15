@@ -712,8 +712,11 @@
                                 white-space: nowrap;
                                 letter-spacing: -0.56px;
                                 background: $gray600;
-                                display: none;
+                                // display: none;
                                 z-index: 10;
+                                opacity: 0;
+                                visibility: hidden;
+                                transition: opacity 0.5s ease, visibility 0.2s;
                                 &::before {
                                     content: '';
                                     position: absolute;
@@ -745,6 +748,10 @@
                                         }
                                     }
                                 }
+                            }
+                            .tooltip.show {
+                                opacity: 1;
+                                visibility: visible;
                             }
                         }
                     }

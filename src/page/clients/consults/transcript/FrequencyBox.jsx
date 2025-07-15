@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import TranscriptBox from "./TranscriptBox";
 
-function FrequencyBox({ data, onAIGenerate }) {
+function FrequencyBox({ data, onAIGenerate, isPanel }) {
   const hasData = !!(data && typeof data === 'object' && data.counselor && data.client);
   const barContainerRef = useRef(null);
   const [barWidths, setBarWidths] = useState({ counselor: 0, client: 0 });
@@ -36,6 +36,38 @@ function FrequencyBox({ data, onAIGenerate }) {
       client: clientWidth
     });
   }, [data, hasData]);
+
+  if (isPanel) {
+    // con-wrap 내부만 랜더링
+    return (
+      <div className="bar-wrap small">
+        <div className="legend">
+          <span className="counselor">발화자1</span>
+          <span className="client">발화자2</span>
+        </div>
+        <div className="bar-labels">
+          <div>
+            <span>{data?.counselor?.minutes ?? "-"}분</span>
+            <div className="value counselor-pct">{percents.counselor.toFixed(2)}%</div>
+          </div>
+          <div>
+            <span>{data?.client?.minutes ?? "-"}분</span>
+            <div className="value client-pct">{percents.client.toFixed(2)}%</div>
+          </div>
+        </div>
+        <div className="bar-container" ref={barContainerRef}>
+          <div
+            className="bar-counselor"
+            style={{ width: barWidths.counselor}}
+          ></div>
+          <div
+            className="bar-client"
+            style={{ width: barWidths.client}}
+          ></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TranscriptBox

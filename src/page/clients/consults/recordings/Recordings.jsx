@@ -7,6 +7,7 @@ import SectionSummaryPanel from './SectionSummaryPanel';
 import { useSetRecoilState, useRecoilState } from 'recoil';
 import { supportPanelState, recordingsTabState } from '@/recoil';
 import AiAnalysis from "./AiAnalysis";
+import AiCreatePanel from "./AiCreatePanel";
 
 // 화자별 녹취 더미데이터
 const transcriptDummyInit = [
@@ -42,6 +43,30 @@ const transcriptDummyInit = [
   },
 ];
 
+const AiSummaryData = {
+    summary: "최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잦고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잦고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잦고, 스스로에 대한 매우 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵고 회사업무 시 고충으로 다가온다고함. 가장 불편한 부분이 이런점이라고 꼽으며 개선 가능 여부를 물어봄. 일상생활에 집중하기 어렵다고 호소함",
+    issue: ["원인을 알 수 없는 불안감 호소", "간헐적 불면증", "낮은 자존감으로 인한 대인관계 어려움", "자신에 대한 부정적인 생각", "고충", "개선 가능 여부"],
+    keyword: [
+      { text: '힘들어', freq: 18, x: 240, y: 70 },
+      { text: '트라우마', freq: 16, x: 370, y: 70 },
+      { text: '죽고싶은', freq: 12, x: 155, y: 100 },
+      { text: '괴롭힘', freq: 12, x: 100, y: 50 },
+      { text: '우울감', freq: 11, x: 50, y: 100 },
+      { text: '잘했다', freq: 10, x: 35, y: 35 },
+      { text: '엄마', freq: 9, x: 165, y: 35 },
+      { text: '후회', freq: 8, x: 308, y: 110 },
+      { text: '사랑', freq: 8, x: 310, y: 25 }
+    ],
+    frequency: {
+      counselor: { minutes: 12},
+      client: { minutes: 45}
+    },
+    stress: {
+      data: [1.5, 3.2, 2.8, 1.5, 4.5, 3, 1.5],
+      labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
+    }
+};
+
 function Recordings() {
   const tabListRef = useRef([]); // 각 탭 li 참조 배열 추가
   const [activeTab, setActiveTab] = useRecoilState(recordingsTabState);
@@ -50,6 +75,7 @@ function Recordings() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [highlightInfo, setHighlightInfo] = useState(null);
   const [showSectionSummary, setShowSectionSummary] = useState(false);
+  const [showAiCreatePanel, setShowAiCreatePanel] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   
   // 수정 가능한 transcript 상태
@@ -90,80 +116,99 @@ function Recordings() {
   };
 
   return (
-    <div className="inner">
-      <div className="move-up">
-        <strong className="page-title">3회기 녹취록</strong>
-        <div className="flex-wrap">
-            {/* 녹음내용 검색 컴포넌트 */}
-            <SearchTranscript
-              targetRef={speakWrapRef}
-              transcript={transcriptDummy}
-              onSearch={handleSearch}
-              searchKeyword={searchKeyword}
-            />
-            {/* 수정/저장 버튼 토글 */}
-            <button className={`record-edit-btn type07 black ${!editMode ? 'on' : ''}`} type="button" onClick={() => setEditMode(true)}>수정</button>
-            <button className={`record-save-btn type07 black ${editMode ? 'on' : ''}`} type="button" onClick={handleSave}>저장</button>
-        </div>
-      </div>
-      <div className="tab-menu">
-        <div className="tab-list-wrap">
-          <div>
-              <ul className="tab-list" role="tablist" style={{ cursor: 'pointer' }}>
-                  <li
-                    className={activeTab === "recordings" ? 'on' : ''}
-                    role="tab"
-                    ref={el => tabListRef.current[0] = el}
-                  >
-                      <a onClick={() => setActiveTab("recordings")}>녹취내용</a>
-                  </li>
-                  <li
-                    className={activeTab === "aianalysis" ? 'on' : ''}
-                    role="tab"
-                    ref={el => tabListRef.current[1] = el}
-                  >
-                      <a onClick={() => setActiveTab("aianalysis")}>AI 분석</a>
-                  </li>
-              </ul>
-              <div className="tab-indicator" ref={tabIndicatorRef}></div>
-          </div>
-          <div className="info-bar">
-              <p className="info">2024.09.28(토) 오후 2시</p>
-              <a className="panel-btn" onClick={() => {
-                setShowSectionSummary(true);
-                setSupportPanel(true);
-              }} style={{cursor:'pointer'}}>
-                구간 요약
-              </a>
+    <>
+      <div className="inner">
+        <div className="move-up">
+          <strong className="page-title">3회기 녹취록</strong>
+          <div className="flex-wrap">
+              {/* 녹음내용 검색 컴포넌트 */}
+              <SearchTranscript
+                targetRef={speakWrapRef}
+                transcript={transcriptDummy}
+                onSearch={handleSearch}
+                searchKeyword={searchKeyword}
+              />
+              {/* 수정/저장 버튼 토글 */}
+              <button className={`record-edit-btn type07 black ${!editMode ? 'on' : ''}`} type="button" onClick={() => setEditMode(true)}>수정</button>
+              <button className={`record-save-btn type07 black ${editMode ? 'on' : ''}`} type="button" onClick={handleSave}>저장</button>
           </div>
         </div>
-        <div className="tab-cont">
-          {/* 녹취내용 */}
-          {activeTab === "recordings" && (
-            <RecordingsPlayer
-              speakWrapRef={speakWrapRef}
-              transcript={transcriptDummy}
-              searchKeyword={searchKeyword}
-              highlightInfo={highlightInfo}
-              currentIndex={currentIndex}
-              editMode={editMode}
-              onChangeTranscript={handleChangeTranscript}
-            />
-          )}
-          {/* AI 분석 */}
-          {activeTab === "aianalysis" && (
-            <AiAnalysis />
-          )}
+        <div className="tab-menu">
+          <div className="tab-list-wrap">
+            <div>
+                <ul className="tab-list" role="tablist" style={{ cursor: 'pointer' }}>
+                    <li
+                      className={activeTab === "recordings" ? 'on' : ''}
+                      role="tab"
+                      ref={el => tabListRef.current[0] = el}
+                    >
+                        <a onClick={() => setActiveTab("recordings")}>녹취내용</a>
+                    </li>
+                    <li
+                      className={activeTab === "aianalysis" ? 'on' : ''}
+                      role="tab"
+                      ref={el => tabListRef.current[1] = el}
+                    >
+                        <a onClick={() => setActiveTab("aianalysis")}>AI 분석</a>
+                    </li>
+                </ul>
+                <div className="tab-indicator" ref={tabIndicatorRef}></div>
+            </div>
+            <div className="info-bar">
+                <p className="info">2024.09.28(토) 오후 2시</p>
+                <a className="panel-btn" onClick={() => {
+                  setShowSectionSummary(true);
+                  setShowAiCreatePanel(false);
+                  setSupportPanel(true);
+                }} style={{cursor:'pointer'}}>
+                  구간 요약
+                </a>
+            </div>
+          </div>
+          <div className="tab-cont">
+            {/* 녹취내용 */}
+            {activeTab === "recordings" && (
+              <RecordingsPlayer
+                speakWrapRef={speakWrapRef}
+                transcript={transcriptDummy}
+                searchKeyword={searchKeyword}
+                highlightInfo={highlightInfo}
+                currentIndex={currentIndex}
+                editMode={editMode}
+                onChangeTranscript={handleChangeTranscript}
+              />
+            )}
+            {/* AI 분석 */}
+            {activeTab === "aianalysis" && (
+              <AiAnalysis 
+                AiSummaryData={AiSummaryData}
+                onAiCreateClick={() => {
+                  setShowAiCreatePanel(true);
+                  setShowSectionSummary(false);
+                  setSupportPanel(true);
+                }} />
+            )}
+          </div>
         </div>
+        <SectionSummaryPanel 
+          open={showSectionSummary} 
+          onClose={() => {
+            setShowSectionSummary(false);
+            setSupportPanel(false);
+          }} 
+        />
+        <ToastPop message="변경사항이 녹취록에 저장 되었습니다." showToast={showToast} />
       </div>
-      {showSectionSummary && (
-        <SectionSummaryPanel onClose={() => {
-          setShowSectionSummary(false);
+      <AiCreatePanel 
+        status="complete"
+        AiSummaryData={AiSummaryData}
+        open={showAiCreatePanel} 
+        onClose={() => {
+          setShowAiCreatePanel(false); 
           setSupportPanel(false);
-        }} />
-      )}
-      <ToastPop message="변경사항이 녹취록에 저장 되었습니다." showToast={showToast} />
-    </div>
+        }} 
+      />
+    </>
   );
 }
 
