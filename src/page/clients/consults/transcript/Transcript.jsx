@@ -9,8 +9,8 @@ import TranscriptBox from "./TranscriptBox";
 
 function Transcript({ setShowUploadModal }) {
   const navigate = useNavigate();
-  const hasTranscript = true;
-  const isAIGenerated = false;
+  const hasTranscript = false;
+  const isAIGenerated = true;
   const TranscriptData = {
     summary: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.",
     issues: [

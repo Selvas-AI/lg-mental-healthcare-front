@@ -1,7 +1,6 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { supportPanelState } from "@/recoilLayout";
-import { maskingState, clientsState } from "@/recoil";
+import { maskingState, clientsState, supportPanelState } from "@/recoil";
 import { useLocation } from 'react-router-dom';
 import './consults.scss';
 

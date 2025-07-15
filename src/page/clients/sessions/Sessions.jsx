@@ -3,8 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
-import { foldState, supportPanelState } from "@/recoilLayout";
-import { maskingState, clientsState } from "@/recoil";
+import { maskingState, clientsState, foldState, supportPanelState } from "@/recoil";
 import "./sessions.scss";
 
 import ClientRegisterModal from "../components/ClientRegisterModal";

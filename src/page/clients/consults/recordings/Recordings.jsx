@@ -1,11 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import './recordings.scss';
 import RecordingsPlayer from "./RecordingsPlayer";
 import SearchTranscript from "./SearchTranscript";
 import ToastPop from '@/components/ToastPop';
 import SectionSummaryPanel from './SectionSummaryPanel';
-import { useSetRecoilState } from 'recoil';
-import { supportPanelState } from '@/recoilLayout';
+import { useSetRecoilState, useRecoilState } from 'recoil';
+import { supportPanelState, recordingsTabState } from '@/recoil';
+import AiAnalysis from "./AiAnalysis";
 
 // 화자별 녹취 더미데이터
 const transcriptDummyInit = [
@@ -42,7 +43,9 @@ const transcriptDummyInit = [
 ];
 
 function Recordings() {
-  const [activeTab, setActiveTab] = useState("recordings");
+  const tabListRef = useRef([]); // 각 탭 li 참조 배열 추가
+  const [activeTab, setActiveTab] = useRecoilState(recordingsTabState);
+  const tabIndicatorRef = useRef(null);
   const speakWrapRef = useRef();
   const [searchKeyword, setSearchKeyword] = useState("");
   const [highlightInfo, setHighlightInfo] = useState(null);
@@ -65,6 +68,19 @@ function Recordings() {
   const handleChangeTranscript = (idx, newContent) => {
     setTranscriptDummy(prev => prev.map((item, i) => i === idx ? { ...item, content: newContent } : item));
   };
+  
+  // 탭 indicator 이동 효과
+  useLayoutEffect(() => {
+    const tabIdx = activeTab === "recordings" ? 0 : 1;
+    const currentTab = tabListRef.current[tabIdx];
+    const indicator = tabIndicatorRef.current;
+    if (currentTab && indicator) {
+      const tabWidth = currentTab.offsetWidth;
+      const tabLeft = currentTab.offsetLeft;
+      indicator.style.width = tabWidth + 'px';
+      indicator.style.left = tabLeft + 'px';
+    }
+  }, [activeTab]);
 
   // 저장 버튼 클릭 시
   const handleSave = () => {
@@ -93,15 +109,23 @@ function Recordings() {
       <div className="tab-menu">
         <div className="tab-list-wrap">
           <div>
-              <ul className="tab-list" role="tablist">
-                  <li className="on" role="tab">
+              <ul className="tab-list" role="tablist" style={{ cursor: 'pointer' }}>
+                  <li
+                    className={activeTab === "recordings" ? 'on' : ''}
+                    role="tab"
+                    ref={el => tabListRef.current[0] = el}
+                  >
                       <a onClick={() => setActiveTab("recordings")}>녹취내용</a>
                   </li>
-                  <li role="tab">
-                      <a onClick={() => setActiveTab("ai")}>AI 분석</a>
+                  <li
+                    className={activeTab === "aianalysis" ? 'on' : ''}
+                    role="tab"
+                    ref={el => tabListRef.current[1] = el}
+                  >
+                      <a onClick={() => setActiveTab("aianalysis")}>AI 분석</a>
                   </li>
               </ul>
-              <div className="tab-indicator"></div>
+              <div className="tab-indicator" ref={tabIndicatorRef}></div>
           </div>
           <div className="info-bar">
               <p className="info">2024.09.28(토) 오후 2시</p>
@@ -127,10 +151,8 @@ function Recordings() {
             />
           )}
           {/* AI 분석 */}
-          {activeTab === "ai" && (
-            <div className="tab-panel ai-panel on" role="tabpanel">
-              {aiAnalysisContent || <p>AI 분석 데이터가 없습니다.</p>}
-            </div>
+          {activeTab === "aianalysis" && (
+            <AiAnalysis />
           )}
         </div>
       </div>

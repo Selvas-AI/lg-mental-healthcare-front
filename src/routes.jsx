@@ -5,7 +5,7 @@ import Home from "./page/home/home.jsx";
 import Schedule from "./page/schedule/schedule.jsx";
 import Clients from "./page/clients/clients.jsx";
 import Consults from "./page/clients/consults/Consults.jsx";
-import Recordings from './page/clients/consults/transcript/Recordings';
+import Recordings from './page/clients/consults/recordings/Recordings';
 import Sessions from "./page/clients/sessions/Sessions.jsx";
 import Document from "./page/document/document.jsx";
 import MyPage from "./page/mypage/mypage.jsx";
