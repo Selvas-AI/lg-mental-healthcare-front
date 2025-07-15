@@ -124,7 +124,7 @@
                                                         }
                                                         &:nth-of-type(1) {
                                                             div {
-                                                                background: url(../../../assets/images/common/safe_face.svg) no-repeat center;
+                                                                background: url(@/assets/images/common/safe_face.svg) no-repeat center;
                                                                 span {
                                                                     display: none;
                                                                 }
@@ -148,7 +148,7 @@
                                                         }
                                                         &:nth-of-type(2) {
                                                             div {
-                                                                background: url(../../../assets/images/common/caution_face.svg) no-repeat center;
+                                                                background: url(@/assets/images/common/caution_face.svg) no-repeat center;
                                                                 span {
                                                                     display: none;
                                                                 }
@@ -172,7 +172,7 @@
                                                         }
                                                         &:nth-of-type(3) {
                                                             div {
-                                                                background: url(../../../assets/images/common/danger_face.svg) no-repeat center;
+                                                                background: url(@/assets/images/common/danger_face.svg) no-repeat center;
                                                                 span {
                                                                     display: none;
                                                                 }
@@ -196,7 +196,7 @@
                                                         }
                                                         &:nth-of-type(4) {
                                                             div {
-                                                                background: url(../../../assets/images/common/critical_face.svg) no-repeat center;
+                                                                background: url(@/assets/images/common/critical_face.svg) no-repeat center;
                                                                 span {
                                                                     display: none;
                                                                 }
@@ -259,7 +259,7 @@
                         height: 4.4rem;
                         border-radius: 50%;
                         border: 1px solid $gray50;
-                        background: url(../../../assets/images/icon/back.svg) no-repeat center $gray0;
+                        background: url(@/assets/images/icon/back.svg) no-repeat center $gray0;
                         box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
                     }
                     strong {
@@ -510,7 +510,7 @@
         .toggle-btn {
             width: 2rem;
             height: 2rem;
-            background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center;
+            background: url(@/assets/images/icon/arrow_down.svg) no-repeat center;
             transition: all .25s;
             &.on {
                 transform: rotate(180deg);
@@ -711,7 +711,7 @@
         background: $gray0;
         box-shadow: 0px 2px 6px 0px rgba(195, 195, 195, 0.25);
         &.before-create {
-            background: url(../../../assets/images/common/create_board_bg.svg) no-repeat center/cover, linear-gradient(0deg, rgba(255, 225, 255, 0.40) 0%, rgba(255, 241, 255, 0.00) 41.05%) $gray0;
+            background: url(@/assets/images/common/create_board_bg.svg) no-repeat center/cover, linear-gradient(0deg, rgba(255, 225, 255, 0.40) 0%, rgba(255, 241, 255, 0.00) 41.05%) $gray0;
             .create-wrap {
                 margin-top: 1.2rem;
                 @include flexbox(column, center, center);
@@ -799,7 +799,7 @@
         > button {
             width: 100%;
             height: 1.4rem;
-            background: url(../../../assets/images/icon/arrow_down_box.svg) no-repeat center/contain;
+            background: url(@/assets/images/icon/arrow_down_box.svg) no-repeat center/contain;
             transition: transform .3s;
             &.rotate {
                 transform: rotate(180deg);
@@ -842,7 +842,7 @@
     border-radius: 2rem;
     border: 1px solid $gray50;
     box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
-    background: url(../../../assets/images/common/create_board_bg.svg) no-repeat center/cover, linear-gradient(0deg, rgba(255, 225, 255, 0.40) 0%, rgba(255, 241, 255, 0.00) 41.05%) $gray0;
+    background: url(@/assets/images/common/create_board_bg.svg) no-repeat center/cover, linear-gradient(0deg, rgba(255, 225, 255, 0.40) 0%, rgba(255, 241, 255, 0.00) 41.05%) $gray0;
     @include flexbox(column, center, center);
     &::before {
         content: "";
@@ -851,7 +851,7 @@
         bottom: 4rem;
         width: 13.7rem;
         height: 12.6rem;
-        background: url(../../../assets/images/common/character.svg) no-repeat center/contain;
+        background: url(@/assets/images/common/character.svg) no-repeat center/contain;
     }
     strong {
         font-size: 2rem;
@@ -902,7 +902,7 @@
                     color: $gray800;
                     border-radius: .8rem;
                     border: 1px solid $gray200;
-                    background: url(../../../assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/2.4rem $gray0;
+                    background: url(@/assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/2.4rem $gray0;
                     @include flexbox(row, flex-start, center);
                     cursor: pointer;
                     transition: border 0.25s;
@@ -1067,7 +1067,7 @@
                                                             display: inline-block;
                                                             width: 2.4rem;
                                                             height: 2.4rem;
-                                                            background: url(../../../assets/images/icon/sorting.svg) no-repeat center / contain;
+                                                            background: url(@/assets/images/icon/sorting.svg) no-repeat center / contain;
                                                         }
                                                     }
                                                 }
@@ -1099,7 +1099,7 @@
                                                 }
                                                 button {
                                                     padding: 0 2.1rem 0 .9rem;
-                                                    background: url(../../../assets/images/icon/arrow_right_bk.svg) no-repeat center right 4px/20px #FFFFFF;
+                                                    background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center right 4px/20px #FFFFFF;
                                                 }
                                             }
                                         }
@@ -1221,7 +1221,7 @@
                     width: 2.4rem;
                     height: 2.4rem;
                     border: none;
-                    background: url(../../../assets/images/icon/close.svg) no-repeat center/contain;
+                    background: url(@/assets/images/icon/close.svg) no-repeat center/contain;
                 }
             }
             .info {
@@ -1255,7 +1255,7 @@
                             display: inline-block;
                             width: 2.4rem;
                             height: 2.4rem;
-                            background: url(../../../assets/images/icon/ixi.svg) no-repeat center/2rem;
+                            background: url(@/assets/images/icon/ixi.svg) no-repeat center/2rem;
                         }
                     }
                 }

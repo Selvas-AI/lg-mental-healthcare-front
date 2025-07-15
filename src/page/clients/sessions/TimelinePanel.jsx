@@ -69,7 +69,7 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                   <ul className="session-list">
                     {sessionDummyData.map((row, idx) => (
                       <li key={idx}>
-                        <span>{row.session}</span>
+                        <span>{row.session}회기</span>
                         <div>{row.summary}</div>
                       </li>
                     ))}

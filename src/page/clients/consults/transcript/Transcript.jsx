@@ -43,7 +43,7 @@ function Transcript({ setShowUploadModal }) {
   };
 
   const handleAIGenerate = () => {
-    navigate('/clients/consults/transcript');
+    navigate('/clients/recordings');
   };
 
   const handleUpload = () => {

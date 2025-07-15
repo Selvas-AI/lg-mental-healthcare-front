@@ -7,38 +7,34 @@ import Footer from "./Footer";
 import { Outlet, useLocation } from "react-router-dom";
 
 const MOBILE_WIDTH = 1280;
-const FOLDED_WIDTH = 7.6;
-const UNFOLDED_WIDTH = 18;
-const SUPPORT_PANEL_WIDTH = 36;
-
 const RootLayout = () => {
   const location = useLocation();
   const [fold, setFold] = useRecoilState(foldState);
   const [supportPanel, setSupportPanel] = useRecoilState(supportPanelState);
   const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
 
-  // main, footer width 조정
-  const updateMainWidth = useCallback(() => {
-    const main = document.querySelector("main");
-    const footer = document.querySelector("footer");
-    if (!main || !footer) return;
-    // 회기목록에서 supportPanel이 열려있고, sidebar가 접혀있으면 26.6/62.6, 그 외는 37/62.6
-    let leftWidth;
-    let rightWidth = supportPanel ? SUPPORT_PANEL_WIDTH : 0;
-    if (fold && supportPanel && location.pathname.startsWith("/clients/sessions")) {
-      leftWidth = 26.6;
-    } else if (supportPanel && location.pathname.startsWith("/clients/sessions")) {
-      leftWidth = 37;
-    } else {
-      leftWidth = fold ? FOLDED_WIDTH : UNFOLDED_WIDTH;
-    }
-    const newWidth = `calc(100% - ${leftWidth}rem - ${rightWidth}rem)`;
-    const newMargin = `${leftWidth}rem`;
-    main.style.width = newWidth;
-    main.style.marginLeft = newMargin;
-    footer.style.width = newWidth;
-    footer.style.marginLeft = newMargin;
-  }, [fold, supportPanel, location.pathname]);
+  // main, footer의 className을 상태별로 조합
+  function getMainClass() {
+    let cls = "main";
+    if (fold) cls += " folded";
+    else cls += " unfolded";
+    const supportPaths = ["/clients/sessions"];
+    const consultPaths = ["/clients/consults", "/clients/recordings"];
+    if (supportPanel && supportPaths.some(path => location.pathname.startsWith(path))) cls += " support-open";
+    if (supportPanel && consultPaths.some(path => location.pathname.startsWith(path))) cls += " support-open-consults";
+    return cls;
+  }
+
+  function getFooterClass() {
+    let cls = "footer";
+    if (fold) cls += " folded";
+    else cls += " unfolded";
+    const supportPaths = ["/clients/sessions"];
+    const consultPaths = ["/clients/consults"];
+    if (supportPanel && supportPaths.some(path => location.pathname.startsWith(path))) cls += " support-open";
+    if (supportPanel && consultPaths.some(path => location.pathname.startsWith(path))) cls += " support-open-consults";
+    return cls;
+  }
 
   // fold 상태 체크 (반응형)
   useEffect(() => {
@@ -56,16 +52,9 @@ const RootLayout = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // fold/supportPanel 상태 변경 시 main/footer width 조정
   useEffect(() => {
-    updateMainWidth();
-  }, [fold, supportPanel, updateMainWidth]);
-
-  // /clients/sessions 경로에서만 supportPanel(main영역) 유지
-  useEffect(() => {
-    if (!location.pathname.startsWith("/clients/sessions")) {
-      setSupportPanel(false);
-    }
+    // main 스타일 초기화
+    setSupportPanel(false);
   }, [location.pathname, setSupportPanel]);
 
   const handleMenuClick = () => {
@@ -74,6 +63,7 @@ const RootLayout = () => {
 
   // 경로에 따라 페이지별 클래스명 매칭
   const pageClass = (() => {
+    if (location.pathname.startsWith("/clients/recordings")) return "recordings";
     if (location.pathname.startsWith("/clients/consults")) return "consults";
     if (location.pathname.startsWith("/clients/sessions")) return "sessions";
     if (location.pathname.startsWith("/clients")) return "clients";
@@ -93,14 +83,19 @@ const RootLayout = () => {
   };
   const pageTitle = pathTitleMap[location.pathname] || '';
 
+  const noFooterPaths = [
+    "/clients/recordings",
+    "/clients/sessions"
+  ];
+
   return (
     <div className={`wrapper ${pageClass}`}>
       <Header scroll={scroll} title={pageTitle} fold={fold} />
       <Sidebar fold={fold} onToggleFold={handleMenuClick} />
-      <main className={`${fold ? " on" : ""}`}>
+      <main className={getMainClass()}>
         <Outlet />
       </main>
-      <Footer fold={fold}/>
+      {!noFooterPaths.some(path => location.pathname.startsWith(path)) && <Footer className={getFooterClass()} fold={fold} />}
     </div>
   );
 };

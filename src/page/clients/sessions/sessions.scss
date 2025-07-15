@@ -92,7 +92,7 @@
                                             .info-icon {
                                                 width: 2rem;
                                                 height: 2rem;
-                                                background: url(../../../assets/images/icon/info.svg) no-repeat center/2rem;
+                                                background: url(@/assets/images/icon/info.svg) no-repeat center/2rem;
                                             }
                                             .tooltip {
                                                 position: absolute;
@@ -196,7 +196,7 @@
                                                 right: 0;
                                                 width: 2rem;
                                                 height: 2rem;
-                                                background: url(../../../assets/images/icon/arrow_right_bk.svg) no-repeat center/2rem;
+                                                background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center/2rem;
                                             }
                                         }
                                     }
@@ -211,7 +211,7 @@
 }
 
 /* 내담자 프로필 */
-.client-profile {
+.sessions .client-profile {
 //     width: 100%;
 //     padding: 3rem 2.6rem;
 //     border-radius: 1.6rem;
@@ -381,7 +381,7 @@
                     width: 2.4rem;
                     height: 2.4rem;
                     border: none;
-                    background: url(../../../assets/images/icon/close.svg) no-repeat center/contain;
+                    background: url(@/assets/images/icon/close.svg) no-repeat center/contain;
                 }
             }
         }
@@ -413,7 +413,7 @@
                         .toggle-btn {
                             width: 2.4rem;
                             height: 2.4rem;
-                            background: url(../../../assets/images/icon/arrow_down.svg) no-repeat center/2.4rem;
+                            background: url(@/assets/images/icon/arrow_down.svg) no-repeat center/2.4rem;
                             transition: all .25s;
                             &.on {
                                 transform: rotate(180deg);

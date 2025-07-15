@@ -5,7 +5,7 @@ import Home from "./page/home/home.jsx";
 import Schedule from "./page/schedule/schedule.jsx";
 import Clients from "./page/clients/clients.jsx";
 import Consults from "./page/clients/consults/Consults.jsx";
-import TranscriptViewer from './page/clients/consults/transcript/TranscriptViewer';
+import Recordings from './page/clients/consults/transcript/Recordings';
 import Sessions from "./page/clients/sessions/Sessions.jsx";
 import Document from "./page/document/document.jsx";
 import MyPage from "./page/mypage/mypage.jsx";
@@ -33,7 +33,7 @@ const router = createBrowserRouter([
       // 내담자 관리
       { path: "clients", element: <Clients /> },
       { path: "clients/consults", element: <Consults /> },
-      { path: "clients/consults/transcript", element: <TranscriptViewer /> },
+      { path: "clients/recordings", element: <Recordings /> },
       { path: "clients/sessions", element: <Sessions/> },
       // 문서 관리
       { path: "document", element: <Document /> },
