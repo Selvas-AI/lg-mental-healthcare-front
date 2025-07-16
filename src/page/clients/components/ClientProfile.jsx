@@ -39,9 +39,17 @@ function maskName(name) {
   return name.slice(0, mid) + '*' + name.slice(mid + 1);
 }
 function maskValue(label, value) {
+  if (value == null) return '**'
   switch (label) {
-    case '연락처':
-      return value.replace(/(\d{3})-(\d{4})-(\d{4})/, (_, a, b, c) => `${a}-****-${c}`);
+    case '연락처': {
+      // 하이픈이 있든 없든 모두 처리
+      const digits = value.replace(/\D/g, ''); // 숫자만 추출
+      if (digits.length === 11) {
+        return `${digits.slice(0,3)}-****-${digits.slice(7,11)}`;
+      }
+      // fallback: 기존 값에 하이픈만 마스킹
+      return value.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3');
+    }
     case '성별':
     case '직업':
       return '*'.repeat(value.length);
@@ -70,21 +78,67 @@ function maskValue(label, value) {
   const name = masked ? maskName(profileData.name) : profileData.name;
   const phone = masked ? maskValue('연락처', profileData.phone) : profileData.phone;
   const address = masked ? maskValue('주소', profileData.address) : profileData.address;
-  const birth = masked ? maskValue('생년월일', profileData.birth) : profileData.birth;
-  const age = masked ? maskValue('나이', profileData.age) : profileData.age;
+  function getKoreanAge(birthStr) {
+  // 'YYYY.MM.DD' 형식에서 만 나이 계산
+  const match = birthStr.match(/(\d{4})\.(\d{2})\.(\d{2})/);
+  if (!match) return '';
+  const [ , y, m, d ] = match;
+  const birthDate = new Date(`${y}-${m}-${d}`);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const mDiff = today.getMonth() - birthDate.getMonth();
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+const birth = masked
+  ? maskValue('생년월일', profileData.birth) + ' (만 **세)'
+  : profileData.birth + (profileData.birth && /\d{4}\.\d{2}\.\d{2}/.test(profileData.birth) ? ` (만 ${getKoreanAge(profileData.birth)}세)` : '');
+const age = masked ? maskValue('나이', profileData.age) : profileData.age;
   const email = masked ? maskValue('이메일', profileData.email) : profileData.email;
-  const gender = masked ? maskValue('성별', profileData.gender) : profileData.gender;
+  function getKoreanGender(gender) {
+  if (!gender) return '';
+  const g = gender.toLowerCase();
+  if (g === 'male' || g === 'm' || g === '남' || g === '남자') return '남자';
+  if (g === 'female' || g === 'f' || g === '여' || g === '여자') return '여자';
+  return gender;
+}
+const gender = masked ? '**' : getKoreanGender(profileData.gender);
   const job = masked ? maskValue('직업', profileData.job) : profileData.job;
-  const guardians = Array.isArray(profileData.guardians) ? profileData.guardians.map(g => {
+  function formatPhoneNumber(phone) {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11) {
+    return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7,11)}`;
+  }
+  return phone;
+}
+
+const guardians = Array.isArray(profileData.guardians) ? profileData.guardians.map(g => {
   if (masked) {
-    // 이름, 전화번호 마스킹
+    // 이름, 전화번호 마스킹 + 하이픈 포맷
     const maskedName = g.name ? '*'.repeat(g.name.length) : '';
-    const maskedPhone = g.phone ? g.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1-****-$2') : '';
-    return `${g.relation} (${maskedName}, ${maskedPhone})`;
+    let maskedPhone = g.phone ? g.phone.replace(/\D/g, '') : '';
+    if (maskedPhone.length === 11) {
+      maskedPhone = `${maskedPhone.slice(0,3)}-****-${maskedPhone.slice(7,11)}`;
+    } else if (g.phone) {
+      maskedPhone = g.phone.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3');
+    }
+    return `${maskedName} (${g.relation}) ${maskedPhone}`;
   } else {
-    return `${g.name} (${g.relation}) ${g.phone}`;
+    return `${g.name} (${g.relation}) ${formatPhoneNumber(g.phone)}`;
   }
 }) : [];
+
+
+// 전화번호 하이픈 추가
+function formatPhoneNumber(phone) {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11) {
+    return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7,11)}`;
+  }
+  return phone; // fallback
+}
 
   const memo = masked ? profileData.memo.replace(/[^\s]/g, '*') : profileData.memo;
 
@@ -137,7 +191,7 @@ function maskValue(label, value) {
               <tbody>
                 <tr>
                   <th>연락처</th>
-                  <td>{phone}</td>
+                  <td>{formatPhoneNumber(phone)}</td>
                   <th>주소</th>
                   <td>{address}</td>
                 </tr>
