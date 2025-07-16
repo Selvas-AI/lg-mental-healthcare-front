@@ -13,7 +13,7 @@ const SKIP_REASONS = [
   "문제의 소지가 있는 표현이 있어요",
 ];
 
-function AiSummaryPanel({ onClose }) {
+function AiSummaryPanel({ open, onClose }) {
   // 생성완료/생성중 상태, 생략 사유 노출 여부, 선택된 사유, 직접입력 모달 상태
   const [showSkipReason, setShowSkipReason] = useState(false);
   const [selectedReasons, setSelectedReasons] = useState([]);
@@ -57,7 +57,7 @@ function AiSummaryPanel({ onClose }) {
 
   return (
     <>
-      <div className="support-panel ai-create on">
+      <div className={"support-panel ai-create" + (open ? " on" : "")}>
         <div className="inner">
           <div className="panel-tit">
             <div className="tit-wrap">

@@ -124,13 +124,11 @@ function Consults() {
       {showUploadModal && (
         <UploadModal setShowUploadModal={setShowUploadModal} />
       )}
-      {showAiSummary && (
-        // AI 종합 의견 생성 패널 UI
-        <AiSummaryPanel onClose={() => {
-          setShowAiSummary(false);
-          setSupportPanel(false);
-        }} />
-      )}
+      {/* AI 종합 의견 생성 패널 UI */}
+      <AiSummaryPanel open={showAiSummary} onClose={() => {
+        setShowAiSummary(false);
+        setSupportPanel(false);
+      }} />
     </>
   );
 }

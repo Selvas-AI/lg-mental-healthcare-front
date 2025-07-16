@@ -1,0 +1,1305 @@
+@import "@/styles/common/common.scss";
+@import "@/styles/common/layout.scss";
+
+@keyframes loading {
+    0% {
+        transform: rotate(0);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 상담일지 */
+.wrapper {
+    &.notes {
+        main {
+            .form-section {
+                @include flexbox(row, space-between, flex-start);
+                gap: 2.4rem;
+                .step-nav {
+                    position: sticky;
+                    top: 11rem;
+                    width: 25.2rem;
+                    border-radius: 1.6rem;
+                    border: 1px solid #F3F3F3;
+                    background: $white;
+                    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    .inner {
+                        width: 100%;
+                        padding: 1.8rem 1.6rem;
+                        > strong {
+                            font-weight: 700;
+                            color: #1E2125;
+                        }
+                        > ul {
+                            width: 100%;
+                            padding-top: 1.6rem;
+                            @include flexbox(column, center, flex-start);
+                            gap: 1.4rem;
+                            li {
+                                &.on {
+                                    > a {
+                                        &::before {
+                                            background-color: $secondary500;
+                                        }
+                                    }
+                                }
+                            }
+                            > li {
+                                width: 100%;
+                                > a {
+                                    position: relative;
+                                    display: inline-block;
+                                    width: 100%;
+                                    height: 4rem;
+                                    padding: 0 .8rem;
+                                    font-weight: 500;
+                                    color: $gray400;
+                                    border-radius: 1rem;
+                                    @include flexbox(row, flex-start, center);
+                                    gap: .75rem;
+                                    transition: background .25s;
+                                    &:hover {
+                                        background: $gray50;
+                                    }
+                                    &::before {
+                                        content: "";
+                                        display: inline-block;
+                                        width: 1.5rem;
+                                        height: 1.5rem;
+                                        border-radius: 50%;
+                                        background: url(@/assets/images/icon/check.svg) no-repeat center/12px $gray200;
+                                    }
+                                }
+                                ul {
+                                    position: relative;
+                                    @include flexbox(column, center, flex-start);
+                                    gap: 0;
+                                    padding-left: 2.55rem;
+                                    &::before {
+                                        content: "";
+                                        position: absolute;
+                                        top: 0;
+                                        left: 1.5rem;
+                                        width: 1px;
+                                        height: 100%;
+                                        background: $gray200;
+                                    }
+                                    li {
+                                        a {
+                                            height: 3.6rem;
+                                            font-weight: 500;
+                                            color: $gray400;
+                                            @include flexbox(row, flex-start, center);
+                                            gap: .75rem;
+                                            cursor: default;
+                                            &::before {
+                                                content: "";
+                                                display: inline-block;
+                                                width: 1.5rem;
+                                                height: 1.5rem;
+                                                border-radius: 50%;
+                                                background: url(@/assets/images/icon/check.svg) no-repeat center/12px $gray200;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .form-content {
+                    width: calc(100% - 27.6rem);
+                    @include flexbox(column, flex-start, flex-start);
+                    gap: 8rem;
+                    > div,
+                    > .content-step {
+                        position: relative;
+                        width: 100%;
+                        scroll-margin-top: 11rem;
+                    }
+                    .content-step {
+                        > .step-title,
+                        > .step-title.sub,
+                        > .step-title.type01 {
+                            width: 100%;
+                            margin-bottom: 1.2rem;
+                            @include flexbox(row, space-between, center);
+                            strong {
+                                position: relative;
+                                font-size: 2.4rem;
+                                font-weight: 700;
+                                &.necessary {
+                                    &::after {
+                                        content: "*";
+                                        position: absolute;
+                                        color: #FF3D00;
+                                    }
+                                }
+                            }
+                            &.type01 {
+                                justify-content: flex-start;
+                                .info {
+                                    position: relative;
+                                    .info-icon {
+                                        width: 3rem;
+                                        height: 3rem;
+                                        background: url(@/assets/images/icon/info.svg) no-repeat center;
+                                    }
+                                    .tooltip {
+                                        position: absolute;
+                                        top: 50%;
+                                        left: 4.2rem;
+                                        transform: translateY(-50%);
+                                        padding: 1.2rem 1.6rem;
+                                        color: $white;
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        border-radius: 1.4rem;
+                                        white-space: nowrap;
+                                        background: $gray600;
+                                        display: none;
+                                        z-index: 10;
+                                        &::before {
+                                            content: '';
+                                            position: absolute;
+                                            top: 50%;
+                                            left: -14px;
+                                            transform: translateY(-50%);
+                                            width: 0;
+                                            height: 0;
+                                            border-top: 10px solid transparent;
+                                            border-bottom: 10px solid transparent;
+                                            border-right: 14px solid $gray600;
+                                        }
+                                    }
+                                }
+                            }
+                            &.sub {
+                                strong {
+                                    font-size: 1.8rem;
+                                    font-weight: 500;
+                                }
+                            }
+                        }
+                        > .step-conts {
+                            .write-wrap {
+                                width: 100%;
+                                border-radius: 1.4rem;
+                                background: $gray0;
+                                .write-title {
+                                    @include flexbox(row, space-between, center);
+                                    p {
+                                        font-weight: 700;
+                                    }
+                                    .panel-btn {
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        color: $gray400;
+                                        @include flexbox(row, center, center);
+                                        gap: .2rem;
+                                        &::after {
+                                            content: "";
+                                            display: inline-block;
+                                            width: 1.2rem;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    > div {
+                        .step-title { // 기존 구조와 호환
+                            width: 100%;
+                            margin-bottom: 1.2rem;
+                            @include flexbox(row, space-between, center);
+                            strong {
+                                position: relative;
+                                font-size: 2.4rem;
+                                font-weight: 700;
+                                &.necessary {
+                                    &::after {
+                                        content: "*";
+                                        position: absolute;
+                                        color: #FF3D00;
+                                    }
+                                }
+                            }
+                            &.type01 {
+                                justify-content: flex-start;
+                                .info {
+                                    position: relative;
+                                    .info-icon {
+                                        width: 3rem;
+                                        height: 3rem;
+                                        background: url(@/assets/images/icon/info.svg) no-repeat center;
+                                    }
+                                    .tooltip {
+                                        position: absolute;
+                                        top: 50%;
+                                        left: 4.2rem;
+                                        transform: translateY(-50%);
+                                        padding: 1.2rem 1.6rem;
+                                        color: $white;
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        border-radius: 1.4rem;
+                                        white-space: nowrap;
+                                        background: $gray600;
+                                        display: none;
+                                        z-index: 10;
+                                        &::before {
+                                            content: '';
+                                            position: absolute;
+                                            top: 50%;
+                                            left: -14px;
+                                            transform: translateY(-50%);
+                                            width: 0;
+                                            height: 0;
+                                            border-top: 10px solid transparent;
+                                            border-bottom: 10px solid transparent;
+                                            border-right: 14px solid $gray600;
+                                        }
+                                    }
+                                }
+                            }
+                            &.sub {
+                                strong {
+                                    font-size: 1.8rem;
+                                    font-weight: 500;
+                                }
+                            }
+                        }
+                        .step-conts {
+                            .write-wrap {
+                                width: 100%;
+                                border-radius: 1.4rem;
+                                background: $gray0;
+                                .write-title {
+                                    @include flexbox(row, space-between, center);
+                                    p {
+                                        font-weight: 700;
+                                    }
+                                    .panel-btn {
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        color: $gray400;
+                                        @include flexbox(row, center, center);
+                                        gap: .2rem;
+                                        &::after {
+                                            content: "";
+                                            display: inline-block;
+                                            width: 1.2rem;
+                                            height: 1.2rem;
+                                            background: url(@/assets/images/icon/arrow_right.svg) no-repeat center/contain;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        &.content01 {
+                            .step-conts {
+                                .write-wrap {
+                                    padding: 2.4rem 1.6rem 2rem;
+                                    &:not(:last-of-type) {
+                                        margin-bottom: 1.2rem;
+                                        .write-area {
+                                            ul {
+                                                gap: .6rem 0;
+                                                li {
+                                                    height: 3.5rem;
+                                                    @include flexbox(row, flex-start, center);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .write-title {
+                                        margin-bottom: 1.8rem;
+                                    }
+                                    .write-area {
+                                        ul {
+                                            width: 100%;
+                                            @include flexbox(row, flex-start, flex-start);
+                                            flex-wrap: wrap;
+                                            li {
+                                                width: 25%;
+                                            }
+                                        }
+                                    }
+                                    &.check {
+                                        .write-area {
+                                            ul {
+                                                li {
+                                                    &:last-of-type {
+                                                        width: 100%;
+                                                        @include flexbox(row, flex-start, center);
+                                                        gap: 1rem;
+                                                        .input-wrap {
+                                                            &:first-of-type {
+                                                                width: 5.9rem;
+                                                            }
+                                                            &:last-of-type {
+                                                                width: calc(100% - 6.9rem);
+                                                                input {
+                                                                    width: 100%;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    &.risk-scale {
+                                        .write-title {
+                                            margin-bottom: .4rem;
+                                            & + p {
+                                                margin-bottom: 1.8rem;
+                                                font-size: 1.4rem;
+                                                font-weight: 500;
+                                                color: $gray400;
+                                            }
+                                        }
+                                        .write-area {
+                                            ul {
+                                                gap: 1rem;
+                                                li {
+                                                    position: relative;
+                                                    width: calc(25% - .75rem);
+                                                    height: 16.6rem;
+                                                    border-radius: .8rem;
+                                                    border: 1px solid $gray100;
+                                                    overflow: hidden;
+                                                    transition: all .25s;
+                                                    &:has(input[type="radio"]:checked) {
+                                                        border: 1px solid $secondary500;
+                                                        .bottom {
+                                                            border-top: 1px solid $secondary500;
+                                                            background: rgba(50, 208, 103, 0.10);
+                                                        }
+                                                    }
+                                                    .top {
+                                                        height: 11.8rem;
+                                                        @include flexbox(column, center, center);
+                                                        gap: 1rem;
+                                                    }
+                                                    .input-wrap {
+                                                        position: absolute;
+                                                        top: 1.2rem;
+                                                        left: 1.2rem;
+                                                        label {
+                                                            padding-left: 2rem;
+                                                        }
+                                                    }
+                                                    .face-icon {
+                                                        display: inline-block;
+                                                        width: 5.4rem;
+                                                        height: 5.4rem;
+                                                        border-radius: 50%;
+                                                        &.safe {
+                                                            background: url(@/assets/images/common/safe_face.svg) no-repeat center/contain;
+                                                        }
+                                                        &.caution {
+                                                            background: url(@/assets/images/common/caution_face.svg) no-repeat center/contain;
+                                                        }
+                                                        &.danger {
+                                                            background: url(@/assets/images/common/danger_face.svg) no-repeat center/contain;
+                                                        }
+                                                        &.critical {
+                                                            background: url(@/assets/images/common/critical_face.svg) no-repeat center/contain;
+                                                        }
+                                                    }
+                                                    .bottom {
+                                                        height: calc(100% - 11.8rem);
+                                                        border-top: 1px solid $gray100;
+                                                        @include flexbox(row, center, center);
+                                                        transition: all .25s;
+                                                        span {
+                                                            font-weight: 500;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        &.content02 {
+                            .step-conts {
+                                .write-wrap {
+                                    padding: 2.4rem 1.6rem;
+                                    .write-title {
+                                        margin-bottom: 2.2rem;
+                                    }
+                                }
+                                .tb-wrap {
+                                    padding: 0 1.2rem;
+                                    margin-bottom: 3.1rem;
+                                    table {
+                                        width: 100%;
+                                        table-layout: fixed;
+                                        thead {
+                                            background: $gray50;
+                                            tr {
+                                                th {
+                                                    padding: 1.2rem;
+                                                    &:first-of-type {
+                                                        width: 14.6rem;
+                                                        padding: 1.2rem 0 1.2rem 2rem;
+                                                        border-radius: .6rem 0 0 .6rem;
+                                                        text-align: left;
+                                                        font-weight: 500;
+                                                        color: $gray400;
+                                                    }
+                                                    &:not(:first-of-type) {
+                                                        width: calc((100% - 14.6rem) / 6);
+                                                        text-align: center;
+                                                        font-weight: 700;
+                                                        color: $gray500;
+                                                    }
+                                                    &:last-of-type {
+                                                        padding: 1.2rem 2rem 1.2rem 0;
+                                                        border-radius: 0 .6rem .6rem 0;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        tbody {
+                                            tr {
+                                                border-bottom: 1px solid $gray50;
+                                                th {
+                                                    box-sizing: content-box;
+                                                    padding: .9rem 0;
+                                                    height: 4.2rem;
+                                                    padding-left: 2rem;
+                                                    text-align: left;
+                                                    font-weight: 700;
+                                                    color: $gray800;
+                                                    &.new-th {
+                                                        padding-left: .7rem;
+                                                        .symptom-input-wrap {
+                                                            position: relative;
+                                                            width: 100%;
+                                                            .symptom-input {
+                                                                width: 100%;
+                                                                height: 3.8rem;
+                                                                padding: 0 1.2rem;
+                                                                font-family: $pretendard;
+                                                                font-size: 1.6rem;
+                                                                border-radius: .8rem;
+                                                                border: 1px solid $gray400;
+                                                                &::placeholder {
+                                                                    color: $gray400;
+                                                                }
+                                                                &.error {
+                                                                    border-color: #FF0606;
+                                                                }
+                                                            }
+                                                            .error-txt {
+                                                                font-family: $pretendard;
+                                                                font-size: 1.4rem;
+                                                                font-weight: 500;
+                                                                color: #FF0606;
+                                                                display: none;
+                                                                margin-top: .6rem;
+                                                                margin-left: .4rem;
+                                                            }
+                                                        }
+                                                        .input-completed {
+                                                            @include flexbox(row, flex-start, center);
+                                                            gap: 1rem;
+                                                            .remove-symptom {
+                                                                width: 3rem;
+                                                                height: 3rem;
+                                                                border-radius: 6px;
+                                                                border: 1px solid $gray100;
+                                                                background: url(@/assets/images/icon/minus.svg) no-repeat center/2.4rem $gray0;
+                                                                cursor: pointer;
+                                                            }
+                                                            span {
+                                                                font-size: 1.6rem;
+                                                                font-weight: 700;
+                                                                color: $gray800;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                td {
+                                                    .input-wrap {
+                                                        @include flexbox(row, center, center);
+                                                        label {
+                                                            padding-left: 2rem;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                .signs-add-btn {
+                                    width: 100%;
+                                    height: 5.2rem;
+                                    border-radius: .6rem;
+                                    background: rgba(239, 242, 243, 0.50);
+                                    span {
+                                        padding-left: 2.8rem;
+                                        position: relative;
+                                        font-weight: 700;
+                                        color: $gray400;
+                                        background: url(@/assets/images/icon/plus.svg) no-repeat center left/24px;
+                                    }
+                                }
+                            }
+                        }
+                        &.content04 {
+                            .step-conts {
+                                .write-wrap {
+                                    &:nth-of-type(2) {
+                                        margin-bottom: 2.4rem;
+                                    }
+                                }
+                            }
+                        }
+                        &.content09 {
+                            .tips {
+                                width: 100%;
+                                padding: 0 1.2rem;
+                                margin-bottom: 2.8rem;
+                                height: 4rem;
+                                border-radius: .8rem;
+                                background: rgba(217, 226, 230, 0.30);
+                                @include flexbox(row, flex-start, center);
+                                p {
+                                    font-size: 1.4rem;
+                                    font-weight: 500;
+                                    color: $gray600;
+                                }
+                            }
+                        }
+                        &:not(.content01 , .content02) {
+                            .step-conts {
+                                .write-wrap {
+                                    padding: 1.6rem 1.6rem .8rem;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.session-info-bar {
+    width: 100%;
+    margin-bottom: 3rem;
+    @include flexbox(row, space-between, center);
+    border-bottom: 1px solid $gray100;
+    .info {
+        @include flexbox(row, flex-start, center);
+        gap: 2.8rem;
+        strong {
+            position: relative;
+            font-size: 2.2rem;
+            font-weight: 700;
+            &::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                right: -1.4rem;
+                transform: translateY(-50%);
+                width: 1px;
+                height: 1.4rem;
+                background: #91A4AE;
+            }
+        }
+        p {
+            span {
+                font-weight: 500;
+                color: $gray400;
+            }
+        }
+    }
+    .panel-btn {
+        position: relative;
+        display: inline-block;
+        height: 4.2rem;
+        font-weight: 500;
+        color: $gray400;
+        @include flexbox(row, center, center);
+        gap: .4rem;
+        &::after {
+            content: "";
+            display: inline-block;
+            width: 2.4rem;
+            height: 2.4rem;
+            background: url(@/assets/images/icon/panel_open.svg) no-repeat center;
+        }
+    }
+}
+
+.support-panel {
+    > .inner {
+        .panel-tit {
+            padding: 2.8rem 2.4rem 1rem;
+            .tit-wrap {
+                @include flexbox(row, space-between, center);
+                strong {
+                    font-size: 2.2rem;
+                    font-weight: 700;
+                }
+                .close-btn {
+                    width: 2.4rem;
+                    height: 2.4rem;
+                    border: none;
+                    background: url(@/assets/images/icon/close.svg) no-repeat center/contain;
+                }
+            }
+            .info {
+                position: relative;
+                margin-top: 1.6rem;
+                padding: .65rem .8rem;
+                letter-spacing: -0.56px;
+                white-space: nowrap;
+                border-radius: .6rem;
+                background: rgba(239, 242, 243, 0.50);
+                p {
+                    font-size: 1.4rem;
+                    font-weight: 500;
+                    color: $gray400;
+                }
+            }
+        }
+    }
+    /* 탭 메뉴 */
+    .tab-menu {
+        position: relative;
+        width: 100%;
+        &::before {
+            content: '';
+            position: absolute;
+            top: 4.4rem;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: $gray100;
+        }
+        .tab-list-wrap {
+            position: relative;
+            .tab-list {
+                width: 100%;
+                padding: 0 3rem;
+                li {
+                    position: relative;
+                    height: 4.2rem;
+                    &.on {
+                        a {
+                            transition: all 0.25s;
+                            span {
+                                color: $gray950;
+                                &:first-child {
+                                    font-weight: 600;
+                                }
+                                &:last-child {
+                                    font-weight: 500;
+                                }
+                            }
+                        }
+                    }
+                    a {
+                        width: 100%;
+                        line-height: 4.2rem;
+                        white-space: nowrap;
+                        transition: all 0.25s;
+                        @include flexbox(row, center, center);
+                        gap: .2rem;
+                        span {
+                            color: $gray400;
+                            font-weight: 500;
+                            &:first-child {
+                                font-size: 1.8rem;
+                            }
+                            &:nth-child(2) {
+                                font-size: 1.4rem;
+                            }
+                        }
+                    }
+                }
+            }
+            .tab-indicator {
+                position: relative;
+                height: 3px;
+                background: $gray950;
+                left: 3rem;
+                transition: all 0.25s ease-in-out;
+            }
+        }
+        .tab-cont {
+            padding: 3rem 2.4rem;
+            .tab-panel {
+                width: 100%;
+                height: 100%;
+                display: none;
+                &.on {
+                    display: block;
+                }
+                &.empty {
+                    .empty-history {
+                        @include flexbox(column, center, center);
+                        gap: 1.2rem;
+                        img {
+                            width: 8.5rem;
+                            height: 7.9rem;
+                            object-fit: contain;
+                        }
+                        .empty-info {
+                            font-weight: 500;
+                            color: $gray400;
+                        }
+                    }
+                    &.on {
+                        @include flexbox(row, center, center);
+                    }
+                }
+                /* 탭 메뉴 내부 리스트 */
+                .list-tit {
+                    margin-bottom: .8rem;
+                    @include flexbox(row, flex-start, center);
+                    gap: .4rem;
+                    span {
+                        &:first-child {
+                            font-size: 1.8rem;
+                            font-weight: 600;
+                        }
+                        &:last-child {
+                            font-size: 1.4rem;
+                            font-weight: 500;
+                        }
+                    }
+                    strong {
+                        font-size: 1.8rem;
+                        font-weight: 600;
+                    }
+                }
+                .list-wrap {
+                    > ul {
+                        width: 100%;
+                        @include flexbox(column, flex-start, flex-start);
+                        gap: .8rem;
+                        > li {
+                            width: 100%;
+                            padding: 1rem 1.2rem;
+                            border-radius: .8rem;
+                            border: 1px solid $gray50;
+                            @include flexbox(row, flex-start, flex-start);
+                            gap: 1.6rem;
+                            &.risk-factor {
+                                > div {
+                                    &:nth-child(2) {
+                                        ul {
+                                            @include flexbox(column, flex-start, flex-start);
+                                            gap: .8rem;
+                                            li {
+                                                position: relative;
+                                                padding-left: 1.8rem;
+                                                white-space: nowrap;
+                                                &::before {
+                                                    content: '・';
+                                                    position: absolute;
+                                                    left: 0;
+                                                    top: 0;
+                                                    font-size: 1.6rem;
+                                                    font-weight: 500;
+                                                    color: #434547;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            &.risk-scale {
+                                @include flexbox(row, flex-start, center);
+                                > div {
+                                    &:nth-child(2) {
+                                        @include flexbox(row, flex-start, center);
+                                        gap: .8rem;
+                                    }
+                                }
+                            }
+                            &.symptom {
+                                @include flexbox(row, flex-start, center);
+                                > div {
+                                    &:nth-child(1) {
+                                        @include flexbox(column, center, flex-start);
+                                        span {
+                                            &:nth-child(1) {
+                                                font-size: 1.4rem;
+                                                color: $gray400;
+                                                font-weight: 700;
+                                            }
+                                            &:nth-child(2) {
+                                                font-size: 1.6rem;
+                                                font-weight: 700;
+                                                color: $gray900;
+                                            }
+                                        }
+                                    }
+                                }
+                                > div {
+                                    &:nth-child(2) {
+                                        @include flexbox(column, center ,flex-start);
+                                        gap: .4rem;
+                                        > span {
+                                            font-size: 1.4rem;
+                                            font-weight: 500;
+                                            color: $gray600;
+                                        }
+                                    }
+                                }
+                                .score-bar {
+                                    width: 100%;
+                                    height: 1.6rem;
+                                    @include flexbox(row, flex-start, flex-start);
+                                    gap: .1rem;
+                                    .bar {
+                                        width: calc(20% - .1rem);
+                                        height: 100%;
+                                        &:first-child {
+                                            border-radius: .4rem 0 0 .4rem;
+                                        }
+                                    }
+                                }
+                                &.level01, &.level02 {
+                                    .score-bar {
+                                        .bar {
+                                            &:nth-child(1) {
+                                                background: $red50;
+                                            }
+                                            &:nth-child(2) {
+                                                background: $red100;
+                                            }
+                                            &:nth-child(3) {
+                                                background: $red200;
+                                            }
+                                            &:nth-child(4) {
+                                                background: $red300;
+                                            }
+                                            &:nth-child(5) {
+                                                border-radius: 0 .4rem .4rem 0;
+                                                background: $red400;
+                                            }
+                                        }
+                                    }
+                                }
+                                &.level02 {
+                                    .score-bar {
+                                        .bar {
+                                            &:nth-child(4) {
+                                                border-radius: 0 .4rem .4rem 0;
+                                            }
+                                            &:nth-child(5) {
+                                                display: none;
+                                            }
+                                        }
+                                    }
+                                }
+                                &.level03, &.level04, &.level05 {
+                                    .score-bar {
+                                        .bar {
+                                            &:nth-child(1) {
+                                                background: $gray50;
+                                            }
+                                            &:nth-child(2) {
+                                                background: $gray100;
+                                            }
+                                            &:nth-child(3) {
+                                                background: $gray200;
+                                            }
+                                            &:nth-child(4) {
+                                                display: none;
+                                            }
+                                            &:nth-child(5) {
+                                                display: none;
+                                            }
+                                        }
+                                    }
+                                }
+                                &.level03 {
+                                    .score-bar {
+                                        .bar {
+                                            &:nth-child(3) {
+                                                border-radius: 0 .4rem .4rem 0;
+                                            }
+                                        }
+                                    }
+                                }
+                                &.level04 {
+                                    .score-bar {
+                                        .bar {
+                                            &:nth-child(2) {
+                                                border-radius: 0 .4rem .4rem 0;
+                                            }
+                                            &:nth-child(3) {
+                                                display: none;
+                                            }
+                                        }
+                                    }
+                                }
+                                &.level05 {
+                                    .score-bar {
+                                        .bar {
+                                            &:nth-child(1) {
+                                                border-radius: .4rem;
+                                            }
+                                            &:nth-child(2) {
+                                                display: none;
+                                            }
+                                            &:nth-child(3) {
+                                                display: none;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            > div {
+                                &:nth-child(1) {
+                                    width: 12rem;
+                                    font-weight: 700;
+                                    color: $gray900;
+                                }
+                                &:nth-child(2) {
+                                    width: calc(100% - 13.6rem);
+                                    font-weight: 500;
+                                    color: $gray600;
+                                }
+                            }
+                        }
+                    }
+                }
+                .write-tit {
+                    margin-bottom: .8rem;
+                    strong {
+                        font-size: 1.8rem;
+                        font-weight: 600;
+                    }
+                }
+                .write-wrap {
+                    padding: 1rem 1.2rem;
+                    color: $gray600;
+                    line-height: 1.5;
+                    font-weight: 500;
+                    border-radius: .8rem;
+                    border: 1px solid $gray50;
+                    .bullet-line {
+                        color: $gray600;
+                        line-height: 1.5;
+                        &::before {
+                            line-height: 1.5
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /* 위기 사례 구분 단계 평정 가이드 */
+    &.risk-guide {
+        .inner {
+            .tab-list-wrap {
+                .tab-list {
+                    @include flexbox(row, space-between, center);
+                }
+                .tab-indicator {
+                    width: 5.96rem;
+                }
+            }
+        }
+    }
+    /* 이전 회기 기록 */
+    &.session-history {
+        .inner {
+            .panel-cont {
+                height: calc(100vh - 17.1rem);
+                .tab-list-wrap {
+                    .tab-list {
+                        @include flexbox(row, flex-start, center);
+                        gap: 3.4rem;
+                        overflow-x: auto;
+                        -ms-overflow-style: none; /* 인터넷 익스플로러 */
+                        scrollbar-width: none; /* 파이어폭스 */
+                        &::-webkit-scrollbar {
+                            display: none;
+                        }
+                    }
+                    .tab-indicator {
+                        width: 4.8rem;
+                    }
+                }
+                .tab-menu {
+                    height: 100%;
+                    .tab-cont {
+                        padding: 3rem .6rem 3rem 2.4rem;
+                        height: calc(100% - 4.5rem);
+                        .tab-panel {
+                            padding-right: 1.6rem;
+                            overflow-y: auto;
+                            .inner {
+                                .step {
+                                    &:not(:last-child) {
+                                        margin-bottom: 4rem;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /* 상담일지 AI 생성하기 */
+    &.ai-create {
+        .inner {
+            .panel-tit {
+                .info {
+                    margin-top: .8rem;
+                    padding: 0;
+                    background: none;
+                    p {
+                        @include flexbox(row, flex-start, center);
+                        gap: .4rem;
+                        &::before {
+                            content: "";
+                            display: inline-block;
+                            width: 2.4rem;
+                            height: 2.4rem;
+                            background: url(@/assets/images/icon/ixi.svg) no-repeat center/2rem;
+                        }
+                    }
+                }
+            }
+            .panel-cont {
+                height: calc(100vh - 20.3rem);
+                padding: 1rem .6rem 3rem 2.4rem;
+                border-top: 1px solid $gray50;
+                /* 생성중 */
+                .creating {
+                    padding-left: 1rem;
+                    height: 4.1rem;
+                    @include flexbox(row, flex-start, center);
+                    gap: .8rem;
+                    border-radius: .6rem;
+                    background: #FCF5FF;
+                    img {
+                        width: 2rem;
+                        height: 2rem;
+                        object-fit: contain;
+                        animation: loading 1s linear infinite;
+                    }
+                    p {
+                        font-size: 1.4rem;
+                        font-weight: 500;
+                        color: #C53EFF;
+                    }
+                }
+                /* 분석중, 생성오류 */
+                .analyzing, .create-error {
+                    height: 100%;
+                    @include flexbox(column, center, center);
+                    gap: 1.2rem;
+                    img {
+                        width: 13.7rem;
+                        height: 12.6rem;
+                        object-fit: contain;
+                    }
+                    p {
+                        text-align: center;
+                        color: $gray400;
+                        font-weight: 500;
+                    }
+
+                }
+                /* 생성완료 */
+                .complete {
+                    padding-right: 1.6rem;
+                    height: 100%;
+                    overflow-x: hidden;
+                    overflow-y: auto;
+                    .top-info {
+                        margin-bottom: 4rem;
+                        p {
+                            text-align: left;
+                            font-size: 1.4rem;
+                            font-weight: 500;
+                            color: $gray300;
+                        }
+                    }
+                    .con-wrap {
+                        .complete-tit{
+                            margin-bottom: .8rem;
+                            strong {
+                                font-size: 1.8rem;
+                                font-weight: 600;
+                            }
+                        }
+                        .complete-cont {
+                            padding: 1rem 1.2rem;
+                            font-weight: 500;
+                            color: $gray600;
+                            line-height: 1.5;
+                            border: 1px solid $gray50;
+                            border-radius: .8rem;
+                            .bullet-line {
+                                font-weight: 500;
+                                color: $gray600;
+                                line-height: 1.5;
+                                &::before {
+                                    line-height: 1.5
+                                }
+                            }
+                        }
+                    }
+                    .btn-wrap {
+                        padding-top: 1.6rem;
+                        @include flexbox(row, center, center);
+                        gap: .6rem;
+                        .tooltip-wrap {
+                            position: relative;
+                            width: calc(50% - .3rem);
+                            button {
+                                width: 100%;
+                            }
+                            .tooltip {
+                                position: absolute;
+                                top: 7.6rem;
+                                padding: 1.2rem 1.6rem;
+                                color: $white;
+                                font-size: 1.4rem;
+                                font-weight: 500;
+                                text-align: left;
+                                border-radius: 1.4rem;
+                                white-space: nowrap;
+                                letter-spacing: -0.56px;
+                                background: $gray600;
+                                display: none;
+                                z-index: 10;
+                                &::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: -1.2rem;
+                                    width: 0;
+                                    height: 0;
+                                    border-left: 10px solid transparent;
+                                    border-right: 10px solid transparent;
+                                    border-bottom: 14px solid $gray600;
+                                }
+                            }
+                            &:nth-child(1) {
+                                .tooltip {
+                                    left: 0;
+                                    &::before {
+                                        left: 2rem;
+                                    }
+                                }
+                            }
+                            &:nth-child(2) {
+                                .tooltip {
+                                    right: 0;
+                                    &::before {
+                                        right: 2rem;
+                                    }
+                                    p {
+                                        &:nth-of-type(2) {
+                                            padding-top: 1rem;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .bottom-info {
+                        padding-top: 1.2rem;
+                        p {
+                            text-align: center;
+                            font-size: 1.2rem;
+                            font-weight: 500;
+                            color: $gray300;
+                        }
+                    }
+                    .skip-reason {
+                        display: none;
+                        .reason-tit {
+                            padding-top: 3.2rem;
+                            margin-bottom: 1.2rem;
+                            font-size: 1.4rem;
+                            font-weight: 700;
+                            color: $gray600;
+                        }
+                        .reason-wrap {
+                            ul {
+                                width: 100%;
+                                @include flexbox(row, flex-start, center);
+                                gap: .8rem;
+                                flex-wrap: wrap;
+                                li {
+                                    a {
+                                        display: inline-block;
+                                        padding: 0 1rem;
+                                        height: 3.2rem;
+                                        line-height: 3.2rem;
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        color: $gray400;
+                                        border-radius: .8rem;
+                                        border: 1px solid $gray100;
+                                        background: $gray0;
+                                        transition: all .25s;
+                                        &.on {
+                                            color: $secondary600;
+                                            border: 1px solid $secondary500;
+                                            background: $secondary50;
+                                        }
+                                    }
+                                }
+                            }
+                            .select-complete {
+                                padding-top: 1.2rem;
+                                font-size: 1.4rem;
+                                font-weight: 700;
+                                color: $gray600;
+                                display: none;
+                                &.on {
+                                    display: block;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* AI 생성하기 생략 사유 직접 입력 모달(팝업) */
+.modal {
+    &.direct-input {
+        .inner {
+            .editor-wrap {
+                .editor {
+                    height: 22.4rem;
+                }
+            }
+        }
+    }
+}
+
+.wrapper.notes.gray-bg .tooltip {
+    display: block !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.5s ease, visibility 0.2s !important;
+    &.show {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+}

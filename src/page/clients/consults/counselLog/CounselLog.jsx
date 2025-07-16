@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 import emptyFace from "@/assets/images/common/empty_face.svg";
 import TranscriptBox from "../transcript/TranscriptBox";
@@ -9,6 +10,7 @@ import ChartBarStacked from "./ChartBarStacked";
 
 function CounselLog() {
   const location = useLocation();
+  const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   const clients = useRecoilValue(clientsState);
@@ -33,7 +35,7 @@ function CounselLog() {
       <div className="tit-wrap">
         <strong>상담일지</strong>
         <div className="btn-wrap">
-          <button className="type05 h40" type="button">상담일지 상세</button>
+          <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 상세</button>
         </div>
       </div>
       {logData.length ? (

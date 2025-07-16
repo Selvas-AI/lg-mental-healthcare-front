@@ -67,6 +67,7 @@ const RootLayout = () => {
   // 경로에 따라 페이지별 클래스명 매칭
   const pageClass = (() => {
     if (location.pathname.startsWith("/clients/recordings")) return "recordings";
+    if (location.pathname.startsWith("/clients/consults/detail")) return "notes gray-bg";
     if (location.pathname.startsWith("/clients/consults")) return "consults";
     if (location.pathname.startsWith("/clients/sessions")) return "sessions";
     if (location.pathname.startsWith("/clients")) return "clients";
@@ -84,12 +85,16 @@ const RootLayout = () => {
     '/clients/consults': '상담관리',
     '/clients/sessions': '회기 목록',
     '/clients/recordings': '3회기 녹취록',
+    '/clients/consults/detail': '3회기 상담일지',
   };
   const pageTitle = pathTitleMap[location.pathname] || '';
 
   return (
     <div className={`wrapper ${pageClass}`}>
-      <Header scroll={scroll} title={pageTitle} fold={fold} />
+      {/* /clients/consults/detail 경로에서는 Header 렌더링 안함 */}
+      {location.pathname !== '/clients/consults/detail' && (
+        <Header scroll={scroll} title={pageTitle} fold={fold} />
+      )}
       <Sidebar fold={fold} onToggleFold={handleMenuClick} />
       <main className={getMainClass()}>
         <Outlet />

@@ -13,6 +13,7 @@ import Support from "./page/support/support.jsx";
 import Login from "./page/login/login.jsx";
 import SignUp from "./page/login/signUp.jsx";
 import ProtectedRedirect from "./ProtectedRedirect.jsx";
+import CounselLogDetail from "./page/clients/consults/counselLog/counsellogdetail/CounselLogDetail.jsx";
 
 const router = createBrowserRouter([
   {
@@ -32,8 +33,13 @@ const router = createBrowserRouter([
       { path: "schedule", element: <Schedule /> },
       // 내담자 관리
       { path: "clients", element: <Clients /> },
+      // 상담 관리
       { path: "clients/consults", element: <Consults /> },
+      // 상담 녹취록
       { path: "clients/recordings", element: <Recordings /> },
+      // 상담일지 상세
+      { path: "clients/consults/detail", element: <CounselLogDetail /> },
+      // 회기 목록
       { path: "clients/sessions", element: <Sessions/> },
       // 문서 관리
       { path: "document", element: <Document /> },
