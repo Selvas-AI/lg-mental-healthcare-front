@@ -1006,9 +1006,25 @@
     /* 위기 사례 구분 단계 평정 가이드 */
     &.risk-guide {
         .inner {
+            .panel-cont {
+                border-top: none;
+            }
+            .panel-tit {
+                .info {
+                    p {
+                        &::before {
+                            display: none;
+                        }
+                    }
+                }
+            }
             .tab-list-wrap {
                 .tab-list {
                     @include flexbox(row, space-between, center);
+                    gap: inherit;
+                }
+                a{
+                    color: #222222;
                 }
                 .tab-indicator {
                     width: 5.96rem;

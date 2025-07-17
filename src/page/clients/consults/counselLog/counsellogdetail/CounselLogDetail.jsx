@@ -8,6 +8,9 @@ import CounselLogStep from './components/CounselLogStep';
 import Header from '@/layouts/Header';
 import { useRecoilState } from 'recoil';
 import { foldState } from '@/recoil';
+import { useSetRecoilState } from 'recoil';
+import { supportPanelState } from '@/recoil';
+import GuidePanel from './components/GuidePanel';
 
 function CounselLogDetail() {
   const handleStepNavClick = (e, targetId) => {
@@ -56,6 +59,8 @@ function CounselLogDetail() {
   const [concern, setConcern] = useState(dummyData?.concern || '');
   const [caseConcept, setCaseConcept] = useState(dummyData?.caseConcept || '');
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showGuidePanel, setShowGuidePanel] = useState(false);
+  const setSupportPanel = useSetRecoilState(supportPanelState);
 
   const riskOptions = [
     { id: 'currentRisk01', value: '1', label: '해당 사항 없음' },
@@ -232,7 +237,12 @@ function CounselLogDetail() {
               <div className="write-wrap risk-scale">
                 <div className="write-title">
                   <p>4. 내담자의 위기 단계를 선택해 주세요.</p>
-                  <a className="panel-btn" href="">평정 가이드 보기</a>
+                  <a className="panel-btn" onClick={() => {
+                    setShowGuidePanel(true);
+                    setSupportPanel(true);
+                  }} style={{cursor:'pointer'}}>
+                    평정 가이드 보기
+                  </a>
                 </div>
                 <p>선택하신 내담자의 위기 단계는 위험도 뱃지에 반영됩니다.</p>
                 <div className="write-area">
@@ -389,6 +399,13 @@ function CounselLogDetail() {
           </div>
         </div>
       </div>
+      <GuidePanel 
+        open={showGuidePanel}
+        onClose={() => {
+          setShowGuidePanel(false);
+          setSupportPanel(false);
+        }}
+      />
     </>
   )
 }
