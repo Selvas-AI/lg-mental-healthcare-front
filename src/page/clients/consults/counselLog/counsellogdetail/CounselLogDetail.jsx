@@ -12,6 +12,7 @@ import { useSetRecoilState } from 'recoil';
 import { supportPanelState } from '@/recoil';
 import GuidePanel from './components/GuidePanel';
 import HistoryPanel from './components/HistoryPanel';
+import AiPanelCommon from '@/components/AiPanelCommon';
 
 function CounselLogDetail() {
   const handleStepNavClick = (e, targetId) => {
@@ -44,7 +45,40 @@ function CounselLogDetail() {
     concern: '상담 효과가 일시적일 수 있다는 우려가 있음',
     caseConcept: '내담자의 불안과 불면은 업무 스트레스와 대인관계에서 비롯된 것으로, 성장 과정에서의 완벽주의 경향과 연관됨.',
   }
-
+  // AI Panel 더미 데이터 
+  const aiPanelConfigs = {
+    mainProblem: {
+      title: '주호소 문제 AI 생성',
+      infoMessage: '주호소 문제의 내용이 생성 완료되었습니다.',
+      renderComplete: () => (
+        <div className="complete-cont">
+          <div className="bullet-line">최근 업무에 대한 자신감 저하와 대인관계 스트레스로 인해 불면과 식욕 저하가 지속되고 있음.</div>
+          <div className="bullet-line">상사의 평가에 민감하게 반응하며, “나는 늘 부족하다”는 생각에서 벗어나지 못함.</div>
+          <div className="bullet-line">특히 팀 회의 이후 무기력함이 심화되어 일상생활에도 영향을 줌.</div>
+        </div>
+      )
+    },
+    sessionContent: {
+      title: '상담내용 AI 생성',
+      infoMessage: '상담내용이 생성 완료되었습니다.',
+      renderComplete: () => (
+        <div className="complete-cont">
+          상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.
+        </div>
+      )
+    },
+    nextPlan: {
+      title: '차회기 상담 계획 AI 생성',
+      infoMessage: '차회기 상담 계획이 생성 완료되었습니다.',
+      renderComplete: () => (
+        <div className="complete-cont">
+          <div className="bullet-line">차회기에는 이완훈련 및 대인관계 기술 훈련을 진행할 예정입니다.</div>
+          <div className="bullet-line">내담자가 실생활에서 적용할 수 있는 구체적 전략을 안내하고, 실습 과제를 제시합니다.</div>
+        </div>
+      )
+    }
+  };
+  const [aiPanelKey, setAiPanelKey] = useState(null);
   const [currentRisk, setCurrentRisk] = useState(dummyData?.currentRisk || '');
   const [pastRisk, setPastRisk] = useState(dummyData?.pastRisk || '');
   const [riskFactors, setRiskFactors] = useState(dummyData?.riskFactors || []);
@@ -60,9 +94,36 @@ function CounselLogDetail() {
   const [concern, setConcern] = useState(dummyData?.concern || '');
   const [caseConcept, setCaseConcept] = useState(dummyData?.caseConcept || '');
   const [showTooltip, setShowTooltip] = useState(false);
-  const [showGuidePanel, setShowGuidePanel] = useState(false);
-  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [openedPanel, setOpenedPanel] = useState(null); // 'guide' | 'history' | 'ai' | null
+  const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
+  const [fold, setFold] = useRecoilState(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+
+  const handleOpenGuidePanel = () => {
+    setOpenedPanel('guide');
+    setSupportPanel(true);
+  };
+
+  const handleOpenHistoryPanel = () => {
+    setOpenedPanel('history');
+    setSupportPanel(true);
+  };
+
+  const handleOpenAiPanel = (key) => {
+    setAiPanelKey(key);
+    setOpenedPanel('ai');
+    setSupportPanel(true);
+  };
+
+  const handleClosePanel = () => {
+    setOpenedPanel(null);
+    setSupportPanel(false);
+    setAiPanelKey(null);
+  };
+
+  const handleSave = () => {
+    console.log('저장');
+  };
 
   const riskOptions = [
     { id: 'currentRisk01', value: '1', label: '해당 사항 없음' },
@@ -106,11 +167,6 @@ function CounselLogDetail() {
   const handleRiskScaleChange = e => setRiskScale(e.target.value);
   const handleSymptomChange = (field, score) => setSymptoms(prev => ({ ...prev, [field]: score }));
   const handleMainProblemChange = e => setMainProblem(e.target.value);
-  const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
-  const [fold, setFold] = useRecoilState(foldState);
-  const handleSave = () => {
-    console.log('저장');
-  };
 
   // 스크롤 이벤트
   useEffect(() => {
@@ -143,7 +199,7 @@ function CounselLogDetail() {
               <span>상담일시</span> : <span>2024.09.28(토) 오후 2시</span>
             </p>
           </div>
-          <a className="panel-btn cursor-pointer" onClick={() => {setShowHistoryPanel(true);setSupportPanel(true);}}>이전 회기 기록</a>
+          <a className="panel-btn cursor-pointer" onClick={handleOpenHistoryPanel}>이전 회기 기록</a>
         </div>
         <div className="form-section">
           <div className="step-nav">
@@ -239,10 +295,7 @@ function CounselLogDetail() {
               <div className="write-wrap risk-scale">
                 <div className="write-title">
                   <p>4. 내담자의 위기 단계를 선택해 주세요.</p>
-                  <a className="panel-btn" onClick={() => {
-                    setShowGuidePanel(true);
-                    setSupportPanel(true);
-                  }} style={{cursor:'pointer'}}>
+                  <a className="panel-btn" onClick={handleOpenGuidePanel} style={{cursor:'pointer'}}>
                     평정 가이드 보기
                   </a>
                 </div>
@@ -291,7 +344,12 @@ function CounselLogDetail() {
               </div>
             </CounselLogStep>
 
-            <CounselLogStep id="step03" title="주호소 문제">
+            <CounselLogStep
+              id="step03"
+              title="주호소 문제"
+              rightButton
+              onAiClick={() => handleOpenAiPanel('mainProblem')}
+            >
               <CustomTextareaBlock
                 placeholder="주호소 문제를 입력해 주세요."
                 value={mainProblem}
@@ -300,62 +358,53 @@ function CounselLogDetail() {
             </CounselLogStep>
 
             <div id="step04" className="content04">
-                <div className="step-title">
-                    <strong className="necessary">상담기록</strong>
-                </div>
-                <div className="step-conts">
-                    <div id="step04-1" className="step-title sub">
-                        <strong className="necessary">상담내용</strong>
-                        <button className="type01 h36" type="button">
-                            <span>AI 생성하기</span>
-                        </button>
-                    </div>
-                    <CustomTextareaBlock
-                      placeholder="본 회기에서 다룬 주요 주제와 상호작용 흐름을 기술하세요"
-                      className="editor-wrap"
-                      value={sessionContent}
-                    />
-                    <div id="step04-2" className="step-title sub">
-                      <strong className="necessary">상담사 소견</strong>
-                    </div>
-                    <CustomTextareaBlock
-                      placeholder="상담사가 내담자의 보고한 내용에 대한 해석이나 현재 상태에 대한 임상적 판단과 경과를 기술하세요."
-                      className="editor-wrap"
-                      value={sessionContent}
-                    />
-                </div>
-            </div>
-            <div id="step05" className="content05">
               <div className="step-title">
-                <strong className="necessary">객관적 관찰</strong>
+                  <strong className="necessary">상담기록</strong>
               </div>
               <div className="step-conts">
-                  <CustomTextareaBlock
-                    value={observation}
-                    placeholder="내담자의 외모, 관찰 가능한 증상, 검사 결과, 가능한 진단, 행동관찰 등 객관적으로 관찰된 특이사항을 기록하세요."
-                    className="editor-wrap"
-                  />
+                <div id="step04-1" className="step-title sub">
+                  <strong className="necessary">상담내용</strong>
+                  <button className="type01 h36" type="button" onClick={() => handleOpenAiPanel('sessionContent')}>
+                      <span>AI 생성하기</span>
+                  </button>
+                </div>
+                <CustomTextareaBlock
+                  placeholder="본 회기에서 다룬 주요 주제와 상호작용 흐름을 기술하세요"
+                  className="editor-wrap"
+                  value={sessionContent}
+                />
+                <div id="step04-2" className="step-title sub">
+                  <strong className="necessary">상담사 소견</strong>
+                </div>
+                <CustomTextareaBlock
+                  placeholder="상담사가 내담자의 보고한 내용에 대한 해석이나 현재 상태에 대한 임상적 판단과 경과를 기술하세요."
+                  className="editor-wrap"
+                  value={sessionContent}
+                />
               </div>
             </div>
-            <div id="step06" className="content06">
-              <div className="step-title">
-                <strong className="necessary">상담 목표</strong>
-              </div>
+            <CounselLogStep id="step05" title="객관적 관찰">
               <div className="step-conts">
-                  <CustomTextareaBlock
-                    value={goal}
-                    placeholder="내담자와 설정한 단기 또는 장기 상담 목표를 구체적으로 기술해주세요."
-                    className="editor-wrap"
-                  />
+                <CustomTextareaBlock
+                  value={observation}
+                  placeholder="내담자의 외모, 관찰 가능한 증상, 검사 결과, 가능한 진단, 행동관찰 등 객관적으로 관찰된 특이사항을 기록하세요."
+                  className="editor-wrap"
+                />
               </div>
-            </div>
-            <div id="step07" className="content07">
-              <div className="step-title">
-                <strong className="necessary">차회기 상담 계획</strong>
-                <button className="type01 h36" type="button">
-                  <span>AI 생성하기</span>
-                </button>
+            </CounselLogStep>
+            <CounselLogStep id="step06" title="상담 목표">
+              <div className="step-conts">
+                <CustomTextareaBlock
+                  value={goal}
+                  placeholder="내담자와 설정한 단기 또는 장기 상담 목표를 구체적으로 기술해주세요."
+                  className="editor-wrap"
+                />
               </div>
+            </CounselLogStep>
+            <CounselLogStep id="step07" title="차회기 상담 계획" 
+              rightButton
+              onAiClick={() => handleOpenAiPanel('nextPlan')}
+            >
               <div className="step-conts">
                 <CustomTextareaBlock
                   value={nextPlan}
@@ -363,7 +412,7 @@ function CounselLogDetail() {
                   className="editor-wrap"
                 />
               </div>
-            </div>
+            </CounselLogStep>
             <div id="step08" className="content08">
               <div className="step-title">
                 <strong>고민되는 점</strong>
@@ -402,18 +451,26 @@ function CounselLogDetail() {
         </div>
       </div>
       <GuidePanel 
-        open={showGuidePanel}
-        onClose={() => {
-          setShowGuidePanel(false);
-          setSupportPanel(false);
-        }}
+        open={openedPanel === 'guide'}
+        onClose={handleClosePanel}
       />
       <HistoryPanel
-        open={showHistoryPanel}
-        onClose={() => {
-          setShowHistoryPanel(false);
-          setSupportPanel(false);
-        }}
+        open={openedPanel === 'history'}
+        onClose={handleClosePanel}
+      />
+      <AiPanelCommon
+        isCounselLog={true}
+        open={openedPanel === 'ai'}
+        onClose={handleClosePanel}
+        status="complete"
+        title={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].title : 'AI 종합 의견 생성'}
+        description={'상담 녹취록을 바탕으로 AI가 생성한 내용입니다.'}
+        infoMessage={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].infoMessage : 'AI 종합 의견이 생성되었습니다.'}
+        keyInfo
+        keyInfoText={'AI 생성을 통해 상담일지 작성 시 도움 받을 수 있어요.'}
+        renderComplete={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].renderComplete : () => (
+          <div className="complete-cont"></div>
+        )}
       />
     </>
   )

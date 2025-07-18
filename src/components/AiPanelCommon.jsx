@@ -15,6 +15,7 @@ function AiPanelCommon({
   keyInfoText,
   renderComplete, // 완료시 결과 영역 렌더 함수
   isRecordings = false,
+  isCounselLog = false,
 }) {
   const [showSkipReason, setShowSkipReason] = useState(false);
   const [selectedReasons, setSelectedReasons] = useState([]);
@@ -117,6 +118,8 @@ function AiPanelCommon({
                 {renderComplete && <div className="con-wrap">
                   {isRecordings ? <div className="complete-tit">
                     <strong>AI 종합 의견 생성 결과</strong>
+                  </div> : isCounselLog ? <div className="complete-tit">
+                    <strong>AI 생성 결과</strong>
                   </div> : null}
                   {renderComplete()}
                 </div>}
