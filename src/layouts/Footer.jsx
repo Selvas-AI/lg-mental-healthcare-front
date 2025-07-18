@@ -1,8 +1,8 @@
 import React from "react";
 
-function Footer({ fold }) {
+function Footer({ fold, className }) {
   return (
-    <footer className={fold ? "on" : ""}>
+    <footer className={className ? className : fold ? "on" : ""}>
       <div className="inner">
         <p className="copyright">ⓒ 2025. Onshim Co., Ltd. All rights reserved.</p>
       </div>

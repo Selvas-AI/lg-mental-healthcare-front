@@ -88,7 +88,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       if (initialData.email && initialData.email.includes('@')) {
         [emailId, emailDomain] = initialData.email.split('@');
       }
-      let phoneNumber = initialData.phone || initialData.contact || '';
+      let phoneNumber = initialData.phone || '';
       let memo = initialData.memo || '';
       setForm({
         ...INITIAL_FORM,

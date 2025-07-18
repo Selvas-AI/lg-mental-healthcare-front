@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function SessionTable({ sessionDummyData }) {
+function SessionTable({ clientId, sessionDummyData }) {
+  const navigate = useNavigate();
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
+
 
   return (
     <div className="tb-wrap">
@@ -53,7 +56,7 @@ function SessionTable({ sessionDummyData }) {
           {sessionDummyData && sessionDummyData.map((row, idx) => (
             <tr key={idx}>
               <td>
-                <a href="#">{row.session}</a>
+                <a className="cursor-pointer" onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>{row.session}회기</a>
               </td>
               <td className={row.status.className}>{row.status.text.split(" ").map((t, i) => (
                 <span key={i}>
@@ -68,7 +71,7 @@ function SessionTable({ sessionDummyData }) {
               <td>
                 <div className="flex-wrap">
                   {row.todos.map((todo, i) => (
-                    <a href="#" key={i}>{todo}</a>
+                    <a className="cursor-pointer" key={i}>{todo}</a>
                   ))}
                 </div>
               </td>

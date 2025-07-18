@@ -46,12 +46,12 @@ const Sidebar = ({ fold, onToggleFold }) => {
                 ? pathname === "/home"
                 : pathname.startsWith(item.path);
               return (
-                <li className={isActive ? "on" : undefined} key={item.path} style={{ width: "100%", cursor: "pointer" }}>
+                <li className={isActive ? "on" : undefined} key={item.path} style={{ width: "100%", cursor: "pointer", position: "relative" }}>
                   <NavLink
                     to={item.path}
                     end={item.path === "/home"}
                     className={`sidebar-item ${item.path === "/home" ? "home" : item.path.replace("/", "")}`}
-                    style={{ display: "block", width: "100%", height: "100%" }}
+                    style={{ display: "block", width: "100%", height: "100%", position: "absolute", left: "1.2rem", top: "1.2rem", zIndex: 1}}
                   >
                     <span>{item.name}</span>
                   </NavLink>

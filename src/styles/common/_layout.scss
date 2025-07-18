@@ -104,7 +104,7 @@ header {
                 height: 4.4rem;
                 border-radius: 50%;
                 border: 1px solid $gray50;
-                background: url(../../assets/images/icon/back.svg) no-repeat center $gray0;
+                background: url(@/assets/images/icon/back.svg) no-repeat center $gray0;
                 box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
             }
             .page-title {
@@ -132,13 +132,13 @@ header {
                     border: 1px solid $gray50;
                     box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
                     &.search-btn {
-                        background: url(../../assets/images/icon/search.svg) no-repeat center $gray0;
+                        background: url(@/assets/images/icon/search.svg) no-repeat center $gray0;
                     }
                     &.alarm-btn {
-                        background: url(../../assets/images/icon/alarm.svg) no-repeat center $gray0;
+                        background: url(@/assets/images/icon/alarm.svg) no-repeat center $gray0;
                     }
                     &.mypage-btn {
-                        background: url(../../assets/images/icon/mypage.svg) no-repeat center $gray0;
+                        background: url(@/assets/images/icon/mypage.svg) no-repeat center $gray0;
                     }
                 }
             }
@@ -206,7 +206,7 @@ footer {
             .menu-btn {
                 width: 2rem;
                 height: 2rem;
-                background: url(../../assets/images/icon/menu.svg) no-repeat center;
+                background: url(@/assets/images/icon/menu.svg) no-repeat center;
             }
         }
         .menu {
@@ -234,32 +234,32 @@ footer {
                             }
                             &.home {
                                 &::before {
-                                    background: url(../../assets/images/icon/home_bk.svg) no-repeat center/contain;
+                                    background: url(@/assets/images/icon/home_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.schedule {
                                 &::before {
-                                    background: url(../../assets/images/icon/calendar_bk.svg) no-repeat center/contain;
+                                    background: url(@/assets/images/icon/calendar_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.clients {
                                 &::before {
-                                    background: url(../../assets/images/icon/clients_bk.svg) no-repeat center/contain;
+                                    background: url(@/assets/images/icon/clients_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.document {
                                 &::before {
-                                    background: url(../../assets/images/icon/document_bk.svg) no-repeat center/contain;
+                                    background: url(@/assets/images/icon/document_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.mypage {
                                 &::before {
-                                    background: url(../../assets/images/icon/mypage_bk.svg) no-repeat center/contain;
+                                    background: url(@/assets/images/icon/mypage_bk.svg) no-repeat center/contain;
                                 }
                             }
                             &.support {
                                 &::before {
-                                    background: url(../../assets/images/icon/info_bk.svg) no-repeat center/contain;
+                                    background: url(@/assets/images/icon/info_bk.svg) no-repeat center/contain;
                                 }
                             }
                         }
@@ -276,7 +276,7 @@ footer {
                         &::before {
                             content: '';
                             position: absolute;
-                            top: 50%;
+                            top: 1.2rem !important;
                             left: 0;
                             transform: translateY(-50%);
                             width: 2.4rem;
@@ -289,32 +289,32 @@ footer {
                         }
                         &.home {
                             &::before {
-                                background: url(../../assets/images/icon/home.svg) no-repeat center/contain;
+                                background: url(@/assets/images/icon/home.svg) no-repeat center/contain;
                             }
                         }
                         &.schedule {
                             &::before {
-                                background: url(../../assets/images/icon/calendar.svg) no-repeat center/contain;
+                                background: url(@/assets/images/icon/calendar.svg) no-repeat center/contain;
                             }
                         }
                         &.clients {
                             &::before {
-                                background: url(../../assets/images/icon/clients.svg) no-repeat center/contain;
+                                background: url(@/assets/images/icon/clients.svg) no-repeat center/contain;
                             }
                         }
                         &.document {
                             &::before {
-                                background: url(../../assets/images/icon/document.svg) no-repeat center/contain;
+                                background: url(@/assets/images/icon/document.svg) no-repeat center/contain;
                             }
                         }
                         &.mypage {
                             &::before {
-                                background: url(../../assets/images/icon/mypage.svg) no-repeat center/contain;
+                                background: url(@/assets/images/icon/mypage.svg) no-repeat center/contain;
                             }
                         }
                         &.support {
                             &::before {
-                                background: url(../../assets/images/icon/info.svg) no-repeat center/contain;
+                                background: url(@/assets/images/icon/info.svg) no-repeat center/contain;
                             }
                         }
                     }
@@ -397,7 +397,7 @@ footer {
                 width: 3.2rem;
                 height: 3.2rem;
                 border: none;
-                background: url(../../assets/images/icon/close.svg) no-repeat center/contain;
+                background: url(@/assets/images/icon/close.svg) no-repeat center/contain;
             }
         }
         > .btn-wrap {
@@ -410,3 +410,15 @@ footer {
         }
     }
 }
+
+// joy : main, footer의 className을 fold, supportPanel 상태별로 조합
+.main {
+    transition: width 0.3s, margin-left 0.3s;
+}
+.main.folded { width: calc(100% - 7.6rem); margin-left: 7.6rem; }
+.main.unfolded { width: calc(100% - 18rem); margin-left: 18rem; }
+.main.support-open.folded { width: calc(100% - 26.6rem - 36rem); margin-left: 26.6rem; }
+.main.support-open.unfolded { width: calc(100% - 73rem); margin-left: 37rem; }
+.main.support-open-consults { width: calc(100% - 54rem); margin-left: 18rem; }
+.footer.folded { width: calc(100% - 7.6rem); margin-left: 7.6rem; }
+.footer.support-open-consults { width: calc(100% - 54rem); margin-left: 18rem; }

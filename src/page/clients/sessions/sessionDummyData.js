@@ -2,7 +2,7 @@
 
 const sessionDummyData = [
   // {
-  //   session: "5회기",
+  //   session: "5",
   //   status: { text: "상담 완료", className: "completed" },
   //   date: "2025.05.04 (토) 오후 2시",
   //   summary: "5회기 상담을 통해 불안감을 개선하고 대인관계를 확장하는 등의 긍정적인 변화가 나타났음",
@@ -20,7 +20,7 @@ const sessionDummyData = [
   //   stress: 1
   // },
   // {
-  //   session: "4회기",
+  //   session: "4",
   //   status: { text: "일정 없음", className: "no-schedule" },
   //   date: "2025.04.26 (토) 오전 10시",
   //   summary: "자기 통제력에 대한 자신감을 표현하며 회복에 대한 기대를 언급함",
@@ -38,7 +38,7 @@ const sessionDummyData = [
   //   stress: 1
   // },
   {
-    session: "3회기",
+    session: "3",
     status: { text: "상담 예정", className: "scheduled" },
     date: "2025.05.03 (토) 오전 10시",
     summary: "가족과의 갈등 완화 시도가 시작되었고, 정서적 지지 확보를 위한 중재를 시도함",
@@ -58,7 +58,7 @@ const sessionDummyData = [
     stress: 1
   },
   {
-    session: "2회기",
+    session: "2",
     status: { text: "노쇼", className: "no-show" },
     date: "2025.05.10 (토) 오전 10시",
     summary: "항정신성 약물 복용을 시작했으며, 부작용으로 인한 신체 불편감을 토로함",
@@ -76,7 +76,7 @@ const sessionDummyData = [
     stress: 1
   },
   {
-    session: "1회기",
+    session: "1",
     status: { text: "상담 취소", className: "cancelled" },
     date: "2025.05.17 (토) 오전 10시",
     summary: "내담자는 심한 충동성, 자해 충동, 감정 기복을 호소하였음",

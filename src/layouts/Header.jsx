@@ -3,11 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import { maskingState } from "@/recoil";
 
-function Header({ scroll, title, fold }) {
+function Header({ scroll, title, fold, rightActions }) {
   const [masked, setMasked] = useRecoilState(maskingState);
   const location = useLocation();
   const navigate = useNavigate();
   const hideBackBtnPaths = ["/home","/schedule","/clients","/document","/mypage","/support"]; // 뒤로가기 버튼 미노출
+  const hideSwitchBtnPaths = ["/clients/recordings","/clients/consults/detail"]; // 개인정보 보호 버튼 미노출
 
   const fadeStyle = useMemo(() => ({
     opacity: scroll ? 1 : 0,
@@ -29,7 +30,8 @@ function Header({ scroll, title, fold }) {
           )}
         </div>
         <div className="right">
-          <div className="switch-wrap" style={fadeStyle}>
+          {rightActions}
+          <div className="switch-wrap" style={hideSwitchBtnPaths.includes(location.pathname) ? { display: 'none' } : fadeStyle}>
             <label>
               <span>개인정보 보호</span>
               <input

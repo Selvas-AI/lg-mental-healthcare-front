@@ -5,7 +5,7 @@ import EmptyClients from "./components/EmptyClients";
 import { clientsState } from "@/recoil";
 import { useState } from "react";
 import ClientRegisterModal from "./components/ClientRegisterModal";
-import ClientMemo from "./components/clientMemo";
+import EditorModal from "./components/EditorModal";
 
 function Clients() {
   const [memoClient, setMemoClient] = useState(null);
@@ -59,9 +59,15 @@ function Clients() {
         </div>
       </div>
       {memoClient && (
-        <ClientMemo
+        <EditorModal
+          open={true}
           onClose={handleCloseMemo}
-          initialMemo={memoClient.memo || ""}
+          onSave={() => handleCloseMemo()}
+          title="내담자 메모"
+          className="client-memo"
+          placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
+          maxLength={500}
+          initialValue={memoClient.memo || ""}
         />
       )}
       {registerOpen && (
