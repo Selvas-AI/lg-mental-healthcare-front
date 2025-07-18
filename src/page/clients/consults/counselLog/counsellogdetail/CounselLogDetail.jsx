@@ -11,6 +11,7 @@ import { foldState } from '@/recoil';
 import { useSetRecoilState } from 'recoil';
 import { supportPanelState } from '@/recoil';
 import GuidePanel from './components/GuidePanel';
+import HistoryPanel from './components/HistoryPanel';
 
 function CounselLogDetail() {
   const handleStepNavClick = (e, targetId) => {
@@ -60,6 +61,7 @@ function CounselLogDetail() {
   const [caseConcept, setCaseConcept] = useState(dummyData?.caseConcept || '');
   const [showTooltip, setShowTooltip] = useState(false);
   const [showGuidePanel, setShowGuidePanel] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
 
   const riskOptions = [
@@ -141,7 +143,7 @@ function CounselLogDetail() {
               <span>상담일시</span> : <span>2024.09.28(토) 오후 2시</span>
             </p>
           </div>
-          <a className="panel-btn" href="">이전 회기 기록</a>
+          <a className="panel-btn cursor-pointer" onClick={() => {setShowHistoryPanel(true);setSupportPanel(true);}}>이전 회기 기록</a>
         </div>
         <div className="form-section">
           <div className="step-nav">
@@ -403,6 +405,13 @@ function CounselLogDetail() {
         open={showGuidePanel}
         onClose={() => {
           setShowGuidePanel(false);
+          setSupportPanel(false);
+        }}
+      />
+      <HistoryPanel
+        open={showHistoryPanel}
+        onClose={() => {
+          setShowHistoryPanel(false);
           setSupportPanel(false);
         }}
       />

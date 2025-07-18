@@ -1037,6 +1037,7 @@
         .inner {
             .panel-cont {
                 height: calc(100vh - 17.1rem);
+                border-top: none;
                 .tab-list-wrap {
                     .tab-list {
                         @include flexbox(row, flex-start, center);
