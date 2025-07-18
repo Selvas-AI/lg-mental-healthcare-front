@@ -7,7 +7,7 @@ import SectionSummaryPanel from './SectionSummaryPanel';
 import { useSetRecoilState, useRecoilState } from 'recoil';
 import { supportPanelState, recordingsTabState } from '@/recoil';
 import AiAnalysis from "./AiAnalysis";
-import AiCreatePanel from "./AiCreatePanel";
+import AiTranscriptPanel from "./AiTranscriptPanel";
 
 // 화자별 녹취 더미데이터
 const transcriptDummyInit = [
@@ -199,7 +199,7 @@ function Recordings() {
         />
         <ToastPop message="변경사항이 녹취록에 저장 되었습니다." showToast={showToast} />
       </div>
-      <AiCreatePanel 
+      <AiTranscriptPanel 
         status="complete"
         AiSummaryData={AiSummaryData}
         open={showAiCreatePanel} 

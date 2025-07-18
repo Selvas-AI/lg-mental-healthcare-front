@@ -11,8 +11,8 @@ function SectionSummaryPanel({ open, onClose }) {
             <strong>구간요약</strong>
             <button className="close-btn" type="button" aria-label="닫기" onClick={onClose}></button>
           </div>
-          <div className="info">
-            <p>상담 녹취록을 바탕으로 AI가 요약한 내용입니다.</p>
+          <div className="info" style={{ background: "#FCF5FF" }}>
+            <p style={{ color: "#C53EFF" }}>상담 녹취록을 바탕으로 AI가 요약한 내용입니다.</p>
           </div>
         </div>
         <div className="panel-cont">
