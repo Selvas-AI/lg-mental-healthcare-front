@@ -12,10 +12,11 @@ import DocumentBox from './document/DocumentBox';
 import ClientRegisterModal from './../components/ClientRegisterModal';
 import UploadModal from './components/UploadModal';
 import AiPanelCommon from '@/components/AiPanelCommon';
+import SurveySendModal from './psychologicalTest/SurveySendModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
-  { label: '심리검사', component: PsychologicalTest, panelClass: 'test' },
+  { label: '심리검사', component: PsychologicalTest, panelClass: 'survey' },
   { label: '일상관리', component: DailyManagement, panelClass: 'daily' },
   { label: '문서함', component: DocumentBox, panelClass: 'document' },
 ];
@@ -35,8 +36,8 @@ function Consults() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAiSummary, setShowAiSummary] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  const [showSurveySendModal, setShowSurveySendModal] = useState(false);
 
-  // 탭 indicator 이동 효과
   useLayoutEffect(() => {
     const currentTab = tabListRef.current[activeTab];
     const indicator = tabIndicatorRef.current;
@@ -105,7 +106,7 @@ function Consults() {
           </div>
           <div className="tab-cont">
             <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
-              <ActiveComponent setShowUploadModal={setShowUploadModal}/>
+              <ActiveComponent setShowUploadModal={setShowUploadModal} onOpenSurveySendModal={() => setShowSurveySendModal(true)} />
             </div>
           </div>
         </div>
@@ -135,7 +136,7 @@ function Consults() {
         status="complete"
         title="AI 종합 의견 생성"
         description="AI가 심리 검사 종합 의견을 생성합니다."
-        infoMessage="AI 종합 의견이 생성되었습니다."
+        infoMessage="AI 종합 의견이 생성 완료되었습니다."
         keyInfo
         keyInfoText="재생성된 내용을 확정하면 원래의 내용은 사라지고<br />다시 복구할 수 없어요."
         renderComplete={() => (
@@ -151,6 +152,9 @@ function Consults() {
           </>
         )}
       />
+      {showSurveySendModal && (
+        <SurveySendModal modalOpen={showSurveySendModal} onClose={() => setShowSurveySendModal(false)} />
+      )}
     </>
   );
 }

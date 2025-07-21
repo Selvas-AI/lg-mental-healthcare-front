@@ -110,7 +110,7 @@ function AiPanelCommon({
                   {keyInfo && (
                     <p
                       className="key-info"
-                      style={{ display: "block" }}
+                      style={{ display: "block", fontWeight: "bold" }}
                       dangerouslySetInnerHTML={{ __html: keyInfoText }}
                     />
                   )}
