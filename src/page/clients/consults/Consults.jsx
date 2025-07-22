@@ -12,7 +12,7 @@ import DocumentBox from './document/DocumentBox';
 import ClientRegisterModal from './../components/ClientRegisterModal';
 import UploadModal from './components/UploadModal';
 import AiPanelCommon from '@/components/AiPanelCommon';
-import SurveySendModal from './psychologicalTest/SurveySendModal';
+import SurveySendModal from './psychologicalTest/components/SurveySendModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
