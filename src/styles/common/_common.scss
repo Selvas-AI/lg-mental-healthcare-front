@@ -176,7 +176,7 @@ button {
     &.type01 {
         padding: 0 .8rem;
         border: 1px solid $gray100;
-        background: url(../../assets/images/icon/ixi.svg) no-repeat center left 8px/20px $gray0;
+        background: url(@/assets/images/icon/ixi.svg) no-repeat center left 8px/20px $gray0;
         transition: border .25s;
         span {
             font-size: 1.4rem;
@@ -195,13 +195,13 @@ button {
         width: 3.6rem;
         height: 3.6rem;
         border: 1px solid $gray200;
-        background: url(../../assets/images/icon/file_upload.svg) no-repeat center $gray0;
+        background: url(@/assets/images/icon/file_upload.svg) no-repeat center $gray0;
     }
     &.type03 {
         padding: 0 4rem 0 1.4rem;
         color: $gray800;
         border: 1px solid $gray200;
-        background: url(../../assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/24px $gray0;
+        background: url(@/assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/24px $gray0;
         transition: border .25s;
         &:hover {
             border: 1px solid $gray400;
@@ -226,6 +226,16 @@ button {
         transition: background .25s;
         &:hover {
             background: $gray700;
+        }
+        &.white {
+            color: $gray800;
+            border: 1px solid $gray200;
+            background: $gray0;
+            transition: border .25s;
+            &:hover {
+                border: 1px solid #7A8A93;
+                background: $gray0;
+            }
         }
     }
     &.type06 {
@@ -326,20 +336,38 @@ button {
     &.type11 {
         padding: 0 3.8rem 0 1.4rem;
         color: $gray0;
-        background: url(../../assets/images/icon/plus_wt.svg) no-repeat center right 1.2rem/2.4rem $gray950;
+        background: url(@/assets/images/icon/plus_wt.svg) no-repeat center right 1.2rem/2.4rem $gray950;
         transition: background .25s;
         &:hover {
             background-color: $gray700;
+        }
+        &.white {
+            color: $gray800;
+            border: 1px solid $gray200;
+            background: url(@/assets/images/icon/plus_g800.svg) no-repeat center right 1.2rem/2.4rem $gray0;
+            transition: border .25s;
+            &:hover {
+                border: 1px solid #7A8A93;
+                background: url(@/assets/images/icon/plus_g800.svg) no-repeat center right 1.2rem/2.4rem $gray0;
+            }
         }
     }
     &.type12 {
         padding: 0 4rem 0 1.4rem;
         color: $gray800;
         border: 1px solid $gray200;
-        background: url(../../assets/images/icon/arrow_right_bk.svg) no-repeat center right 1.2rem/24px $gray0;
+        background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center right 1.2rem/24px $gray0;
         transition: border .25s;
         &:hover {
             border: 1px solid $gray400;
+        }
+        &:disabled {
+            opacity: 0.5;
+            background-color: $gray50;
+            cursor: default;
+            &:hover {
+                border: 1px solid $gray200;
+            }
         }
     }
 }
@@ -390,7 +418,7 @@ button {
             width: 2.4rem;
             height: 2.4rem;
             border: none;
-            background: url(../../assets/images/icon/search.svg) no-repeat center/contain;
+            background: url(@/assets/images/icon/search.svg) no-repeat center/contain;
         }
         &.word-move {
             input[type="text"], input[type="password"] {
@@ -416,11 +444,11 @@ button {
                         border: 1px solid $gray200;
                         &.up-btn {
                             border-radius: .4rem 0 0 .4rem;
-                            background: url(../../assets/images/icon/arrow_up.svg) no-repeat center/2rem $gray0;
+                            background: url(@/assets/images/icon/arrow_up.svg) no-repeat center/2rem $gray0;
                         }
                         &.down-btn {
                             border-radius: 0 .4rem .4rem 0;
-                            background: url(../../assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
+                            background: url(@/assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
                             border-left: 0;
                         }
                     }
@@ -488,12 +516,43 @@ button {
                 }
             }
             &:disabled {
+                cursor: default;
                 + label {
+                    cursor: default;
                     &::before{
                         border-color: $gray200;
                         background: $gray50;
                     }
                     &::after{background:$gray200;}
+                }
+            }
+        }
+    }
+    /* 심리 검사 라디오 버튼 */
+    &.radio {
+        &.type01 {
+            input[type="radio"]{
+                + label{
+                    width: 6rem;
+                    height: 6rem;
+                    padding: 0;
+                    font-size: 2rem;
+                    font-weight: 500;
+                    color: #5A5C63;
+                    border: 2px solid #D9DEE2;
+                    border-radius: 50%;
+                    background: $gray0;
+                    @include flexbox(row, center, center);
+                    &::before, &::after{
+                        content: none;
+                    }
+                }
+                &:checked{
+                    + label{
+                        color: $secondary600;
+                        border-color: $secondary500;
+                        background: rgba(50, 208, 116, 0.1);
+                    }
                 }
             }
         }
@@ -507,7 +566,7 @@ button {
                     height: 2rem;
                     border-radius: 3px;
                     opacity: 0;
-                    background: url(../../assets/images/icon/check.svg) no-repeat center/1.7rem $secondary500;
+                    background: url(@/assets/images/icon/check.svg) no-repeat center/1.7rem $secondary500;
                 }
             }
             &:checked{
@@ -578,7 +637,7 @@ button {
             height: 5.2rem;
             border-radius: .8rem;
             border: 1px solid $gray100;
-            background: url(../../assets/images/icon/minus.svg) no-repeat center/2.4rem $gray0;
+            background: url(@/assets/images/icon/minus.svg) no-repeat center/2.4rem $gray0;
             cursor: pointer;
         }
         & + .add-btn {
@@ -591,12 +650,13 @@ button {
                 position: relative;
                 font-weight: 700;
                 color: $gray400;
-                background: url(../../assets/images/icon/plus.svg) no-repeat center left/24px;
+                background: url(@/assets/images/icon/plus.svg) no-repeat center left/24px;
             }
         }
     }
 }
 
+/* 라디오 토글 */
 .raido-toggle {
     position: relative;
     @include flexbox(row, center, center);
@@ -627,6 +687,21 @@ button {
                 + label {
                     color: $gray0;
                     background: $secondary500;
+                }
+            }
+        }
+    }
+    &.type01 {
+        width: 100%;
+        gap: .4rem;
+        .toggle-btn {
+            width: calc(50% - .2rem);
+            input[type="radio"] {
+                + label  {
+                    width: 100%;
+                    height: 4rem;
+                    font-size: 1.6rem;
+                    font-weight: 500;
                 }
             }
         }
@@ -732,7 +807,7 @@ span {
                 right: 1.4rem;
                 top: 50%;
                 transform: translateY(-50%);
-                background: url(../../assets/images/icon/arrow_down.svg) no-repeat center;
+                background: url(@/assets/images/icon/arrow_down.svg) no-repeat center;
                 transition: all .25s;
             }
             &.on{
@@ -772,29 +847,32 @@ span {
                     width: 100%;
                     height: 100%;
                     @include flexbox(row, flex-start, center);
-                    gap: 2.8rem;
-                    span {
-                        position: relative;
-                        &:first-of-type {
-                            font-size: 1.8rem;
-                            font-weight: 500;
-                            color: $gray800;
-                            &::before {
-                                content: "";
-                                position: absolute;
-                                top: 50%;
-                                transform: translateY(-50%);
-                                right: -1.4rem;
-                                width: 1px;
-                                height: 1.4rem;
-                                background: $gray100;
-                            }
-                        }
-                        &:last-of-type {
-                            font-weight: 500;
-                            color: $gray400;
-                        }
-                    }
+                    font-size: 1.8rem;
+                    font-weight: 500;
+                    color: $gray800;
+                    // gap: 2.8rem;
+                    // span {
+                    //     position: relative;
+                    //     &:first-of-type {
+                    //         font-size: 1.8rem;
+                    //         font-weight: 500;
+                    //         color: $gray800;
+                    //         &::before {
+                    //             content: "";
+                    //             position: absolute;
+                    //             top: 50%;
+                    //             transform: translateY(-50%);
+                    //             right: -1.4rem;
+                    //             width: 1px;
+                    //             height: 1.4rem;
+                    //             background: $gray100;
+                    //         }
+                    //     }
+                    //     &:last-of-type {
+                    //         font-weight: 500;
+                    //         color: $gray400;
+                    //     }
+                    // }
                 }
                 &:hover{
                     background: $gray50;
@@ -806,60 +884,41 @@ span {
                         color: $gray800;
                     }
                 }
+                &.disabled {
+                    &:hover {
+                        background: $gray0;
+                    }
+                }
             }
         }
     }
     &.type01 {
         .select-box {
-            width: 54.4rem;
+            width: 12rem;
             .select-item {
                 height: 4rem;
-                border: 1px solid transparent;
-                span {
-                    position: relative;
-                    &:first-of-type {
-                        font-size: 1.8rem;
-                        font-weight: 600;
-                        color: $gray800;
-                        &::before {
-                            content: "";
-                            position: absolute;
-                            top: 50%;
-                            transform: translateY(-50%);
-                            right: -1.4rem;
-                            width: 1px;
-                            height: 1.4rem;
-                            background: $gray100;
-                        }
-                    }
-                    &:last-of-type {
-                        font-size: 1.6rem;
-                        font-weight: 500;
-                        color: $gray400;
-                    }
-                }
-                &.on{
-                    border: 1px solid $gray800;
-                    border-bottom: none;
+                padding: 0 1.2rem 0 1.4rem;
+                color: $gray800;
+                font-size: 1.8rem;
+                font-weight: 600;
+                &::after {
+                    right: 1.2rem;
                 }
             }
             .option-list {
                 top: 4rem;
-                max-height: 20rem;
-                li {
+                max-height: 20.1rem;
+                > li {
                     height: 4rem;
                     &.on {
                         a {
-                            span {
-                                &:first-of-type {
-                                    font-weight: 700;
-                                }
-                                &:last-of-type {
-                                    font-weight: 700;
-                                    color: $gray800;
-                                }
-                            }
+                            font-weight: 700;
                         }
+                    }
+                    a {
+                        font-size: 1.8rem;
+                        color: $gray800;
+                        font-weight: 500;
                     }
                 }
             }
@@ -869,6 +928,14 @@ span {
         .select-box {
             .select-item.selected-custom {
                 color: $gray950;
+            }
+        }
+    }
+    &.disabled {
+        .select-box {
+            .select-item {
+                background: $gray50;
+                cursor: default;
             }
         }
     }
@@ -964,7 +1031,7 @@ span {
         display: inline-block;
         width: 1.2rem;
         height: 1.2rem;
-        background: url(../../assets/images/icon/arrow_right.svg) no-repeat center/contain;
+        background: url(@/assets/images/icon/arrow_right.svg) no-repeat center/contain;
     }
 }
 
@@ -1038,7 +1105,7 @@ span {
     width: 8rem;
     height: 8rem;
     border-radius: 50%;
-    background: url(../../assets/images/common/ixi_btn.svg) no-repeat center/contain;
+    background: url(@/assets/images/common/ixi_btn.svg) no-repeat center/contain;
     box-shadow: 0px 4px 12px 0px rgba(185, 122, 255, 0.60);
     z-index: 10;
     cursor: pointer;
@@ -1061,4 +1128,144 @@ span {
         line-height: 1.8;
         color: $gray800;
     }
+}
+
+/* 달력(데이트피커) */
+.datepicker-wrap {
+    .datepicker {
+        width: 100%;
+        height: 5.2rem;
+        padding: 0 1.4rem;
+        font-family: $pretendard;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray950;
+        border-radius: .8rem;
+        border: 1px solid $gray100;
+        background: $gray0;
+        &::placeholder {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: $gray400;
+        }
+    }
+}
+
+.ui-widget.ui-widget-content {
+    width: 35.8rem;
+    padding: 2.4rem 2.4rem 1.6rem;
+    border: 1px solid $gray800;
+    border-radius: .8rem;
+    background: $gray0;
+    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+}
+.ui-widget-header {
+    border: none;
+    background: transparent;
+    .ui-datepicker-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #50575D;
+        .ui-datepicker-month {
+            display: inline-block;
+            text-indent: -0.2em;
+        }
+    }
+}
+.ui-datepicker .ui-datepicker-prev,
+.ui-datepicker .ui-datepicker-next {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.4rem;
+    height: 2.4rem;
+    cursor: pointer;
+}
+.ui-datepicker .ui-datepicker-prev span,
+.ui-datepicker .ui-datepicker-next span {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center/contain;
+}
+.ui-datepicker .ui-datepicker-prev span {
+    transform: translate(-50%, -50%) rotate(180deg);
+}
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus, .ui-button:hover, .ui-button:focus {
+    border: 0;
+    background: transparent;
+}
+.ui-datepicker .ui-datepicker-prev-hover,
+.ui-datepicker .ui-datepicker-next-hover {
+    top: 50%;
+}
+.ui-datepicker .ui-datepicker-prev-hover {
+    left: 0;
+}
+.ui-datepicker .ui-datepicker-prev {
+    left: 0;
+}
+.ui-datepicker .ui-datepicker-next {
+    right: 0;
+}
+.ui-datepicker .ui-datepicker-next-hover {
+    right: 0;
+}
+.ui-datepicker .ui-datepicker-header {
+    padding: 0;
+    margin-bottom: 2.4rem;
+}
+.ui-datepicker .ui-datepicker-title {
+    font-family: $pretendard;
+    margin: 0;
+    line-height: 2.7rem;
+}
+.ui-datepicker table {
+    margin: 0;
+}
+.ui-datepicker th {
+    font-family: $pretendard;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: $gray600;
+    padding: 0;
+}
+.ui-datepicker th a, .ui-datepicker th span {
+    display: block;
+    margin-bottom: .8rem;
+}
+.ui-datepicker td {
+    padding: 0;
+}
+.ui-state-disabled, .ui-widget-content .ui-state-disabled, .ui-widget-header .ui-state-disabled {
+    opacity: 0;
+}
+.ui-datepicker td span, .ui-datepicker td a {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: auto;
+    padding: 0;
+    margin-bottom: .8rem;
+    font-family: $pretendard;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: $gray950;
+    text-align: center;
+}
+.ui-state-default, 
+.ui-widget-content .ui-state-default, 
+.ui-widget-header .ui-state-default, 
+.ui-button, 
+html .ui-button.ui-state-disabled:hover, 
+html .ui-button.ui-state-disabled:active {
+    border: none;
+    background: transparent;
+    font-weight: 500;
+    color: $gray950;
+}
+.ui-state-active, .ui-widget-content .ui-state-active {
+    position: relative;
+    font-weight: 700;
+    border-radius: 50%;
+    background: $secondary200;
 }

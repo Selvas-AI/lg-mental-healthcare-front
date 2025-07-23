@@ -16,8 +16,19 @@
         main {
             .tab-panel {
                 &.counsel {
-                    .select-wrap {
+                    .top-info {
                         margin-bottom: 4rem;
+                        @include flexbox(row, flex-start, center);
+                        .select-wrap {
+                            margin-right: 1.4rem;
+                        }
+                        .datetime-info {
+                            margin-right: 1rem;
+                            font-size: 2rem;
+                            font-weight: 700;
+                            letter-spacing: -0.4px;
+                            color: $gray800;
+                        }
                     }
                     .tit-wrap {
                         @include flexbox(row, space-between, center);
@@ -33,6 +44,11 @@
                     }
                     .transcript {
                         margin-bottom: 18rem;
+                        .file-delete-btn {
+                            font-weight: 500;
+                            color: $gray400;
+                            text-decoration: underline;
+                        }
                         .dashboard {
                             width: 100%;
                             @include flexbox(row, flex-start, flex-start);
@@ -230,6 +246,50 @@
                             }
                         }
                     }
+                    .noshow {
+                        width: 100%;
+                        height: 71.8rem;
+                        padding: 3.6rem 3rem;
+                        @include flexbox(column, center, center);
+                        background: $gray0;
+                        border-radius: 2rem;
+                        border: 1px solid $gray50;
+                        box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                        img {
+                            width: 8.5rem;
+                            height: 7.9rem;
+                            margin-bottom: 2rem;
+                            object-fit: contain;
+                        }
+                        strong {
+                            display: inline-block;
+                            margin-bottom: 4.6rem;
+                            font-size: 2.2rem;
+                            font-weight: 700;
+                        }
+                        .explain {
+                            text-align: center;
+                            font-weight: 500;
+                            color: $gray400;
+                        }
+                        ul {
+                            margin: 1.2rem 0 4.6rem;
+                            padding: 1.4rem 1.6rem;
+                            @include flexbox(row, center, center);
+                            gap: 1.4rem;
+                            border-radius: .8rem;
+                            background: $gray50;
+                            li {
+                                font-size: 1.8rem;
+                                font-weight: 600;
+                                color: $gray600;
+                            }
+                        }
+                        .noshow-release-btn {
+                            height: 4.4rem;
+                            margin-top: 4.6rem;
+                        }
+                    }
                 }
             }
         }
@@ -240,10 +300,13 @@
 .wrapper {
     &.survey-detail {
         header {
-            width: 100%;
-            left: 0;
-            .inner {
-                justify-content: flex-end;
+            // width: 100%;
+            // left: 0;
+            // .inner {
+            //     justify-content: flex-end;
+            // }
+            .page-title {
+                display: none !important;
             }
         }
         main {
@@ -702,7 +765,7 @@
 }
 
 /* 대시보드 */
-.dashboard {
+.consults .dashboard {
     .box, .txt-box {
         position: relative;
         width: calc(50% - 0.6rem);
@@ -946,6 +1009,9 @@
                 .type05 {
                     height: 4.4rem;
                 }
+                .url-wrap {
+                    margin-top: 3rem;
+                }
             }
             > div {
                 .tit-wrap {
@@ -960,6 +1026,34 @@
             .total-opinion {
                 padding-top: 2rem;
                 margin-bottom: 18rem;
+                .survey-create {
+                    width: 100%;
+                    margin-bottom: 6rem;
+                    padding: 1rem 1rem 1rem 1.6rem;
+                    @include flexbox(row, space-between, center);
+                    border-radius: 1.6rem;
+                    border: 1px solid $gray50;
+                    background: $gray0;
+                    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    strong {
+                        font-size: 2rem;
+                        font-weight: 700;
+                    }
+                    button {
+                        height: 4.4rem;
+                    }
+                    &.type01 {
+                        .txt-wrap  {
+                            @include flexbox(row, flex-start, center);
+                            gap: 1rem;
+                            p {
+                                font-size: 1.6rem;
+                                font-weight: 500;
+                                color: $gray400;
+                            }
+                        }
+                    }
+                }
                 .txt-box {
                     padding: 3rem;
                     line-height: 1.8;
@@ -1121,17 +1215,9 @@
     }
 }
 
-/* 심리 검사지 전송 모달(팝업) */
+/* 심리 검사지 생성 모달(팝업) */
 .modal {
-    &.survey-send {
-        .step01,
-        .step02 {
-            .inner {
-                box-shadow: inherit;
-                padding: inherit;
-                width: inherit;
-            }
-        }
+    &.survey-create {
         > .inner {
             .modal-hd {
                 margin-bottom: 5rem;
@@ -1146,20 +1232,45 @@
             }
             .step01 {
                 .item-wrap {
-                    margin-bottom: 4.6rem;
-                    ul {
+                    min-height: 44.2rem;
+                    > ul {
                         width: 100%;
                         @include flexbox(column, flex-start, center);
                         gap: 1.2rem;
-                        li {
+                        > li {
                             width: 100%;
-                            padding: 0 1.4rem;
-                            height: 5.2rem;
-                            border-radius: .8rem;
-                            border: 1px solid $gray100;
                             background: $gray0;
                             @include flexbox(row, flex-start, center);
-                            gap: 1rem;
+                            gap: 1.2rem;
+                            &.flex-wrap {
+                                > div {
+                                    width: calc(50% - .6rem);
+                                }
+                                .select-wrap {
+                                    .select-box {
+                                        width: 100%;
+                                    }
+                                }
+                            }
+                            > .input-wrap {
+                                width: 100%;
+                                padding: 0 1.4rem;
+                                height: 5.2rem;
+                                border-radius: .8rem;
+                                border: 1px solid $gray100;
+                                @include flexbox(row, flex-start, center);
+                                label {
+                                    width: 100%;
+                                    height: 100%;
+                                    @include flexbox(row, flex-start, center);
+                                    gap: 1rem;
+                                    span {
+                                        &:not(.complete) {
+                                            font-weight: 500;
+                                        }
+                                    }
+                                }
+                            }
                             .complete {
                                 display: inline-block;
                                 padding: .15rem .5rem;
@@ -1168,6 +1279,28 @@
                                 color: $secondary500;
                                 border-radius: .5rem;
                                 background: #E2F8EB;
+                            }
+                            .select-wrap {
+                                .select-box {
+                                    .option-list {
+                                        > li {
+                                            a {
+                                                @include flexbox(row, flex-start, center);
+                                                gap: 1rem;
+                                            }
+                                            &.disabled {
+                                                a {
+                                                    cursor: default;
+                                                    span {
+                                                        &:not(.complete) {
+                                                            color: $gray300;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1210,6 +1343,70 @@
                     gap: .8rem;
                     button {
                         width: calc(50% - .4rem);
+                    }
+                }
+            }
+            .step03 {
+                display: none;
+                .inner {
+                    .url-wrap {
+                        width: 100%;
+                        margin-bottom: 2.4rem;
+                        .url-box {
+                            width: calc(100% - 5rem);
+                        }
+                    }
+                    .survey-info {
+                        width: 100%;
+                        height: 33.8rem;
+                        padding: 3rem;
+                        margin-bottom: 3.6rem;
+                        border-radius: .8rem;
+                        background: $gray50;
+                        @include flexbox(column, flex-start, flex-start);
+                        gap: 2rem;
+                        .info-tit {
+                            font-size: 2.4rem;
+                            font-weight: 700;
+                            color: $gray900;
+                        }
+                        .detail-info {
+                            width: 100%;
+                            @include flexbox(column, flex-start, center);
+                            gap: 1.6rem;
+                            > li {
+                                width: 100%;
+                                @include flexbox(row, flex-start, flex-start);
+                                gap: 1.2rem;
+                                .list-tit {
+                                    width: 10rem;
+                                    font-size: 1.6rem;
+                                    font-weight: 700;
+                                    color: $gray400;
+                                }
+                                .list-cont {
+                                    width: calc(100% - 11.2rem);
+                                    font-size: 1.6rem;
+                                    font-weight: 500;
+                                    color: $gray800;
+                                    .detail-item {
+                                        @include flexbox(row, flex-start, center);
+                                        gap: .8rem 1.2rem;
+                                        flex-wrap: wrap;
+                                        > li {
+                                            position: relative;
+                                            &.necessary {
+                                                &::before {
+                                                    content: "*";
+                                                    font-weight: 700;
+                                                    color: #FF0606;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1388,7 +1585,6 @@
     &.ai-create {
         .inner {
             .panel-tit {
-                padding: 2.8rem 2.4rem 1rem;
                 .info {
                     margin-top: .8rem;
                     padding: 0;
@@ -1595,5 +1791,38 @@
                 }
             }
         }
+    }
+}
+
+/* url 복사 */
+.url-wrap {
+    @include flexbox(row, flex-start, center);
+    gap: .6rem;
+    .url-box {
+        width: 40rem;
+        height: 4.4rem;
+        padding: 0 1.4rem;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray400;
+        border: 1px solid $gray100;
+        border-radius: .8rem;
+        background: $gray0;
+        @include ellipsis(1);
+        cursor: pointer;
+    }
+    .copy-btn {
+        width: 4.4rem;
+        height: 4.4rem;
+        border: 1px solid $gray200;
+        border-radius: .8rem;
+        background: url(@/assets/images/icon/copy.svg) no-repeat center/2.4rem $gray0;
+    }
+    .remove-btn {
+        width: 4.4rem;
+        height: 4.4rem;
+        border: 1px solid $gray200;
+        border-radius: .8rem;
+        background: url(@/assets/images/icon/remove.svg) no-repeat center/2.4rem $gray0;
     }
 }

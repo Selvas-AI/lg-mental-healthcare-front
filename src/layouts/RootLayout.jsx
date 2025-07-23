@@ -68,6 +68,7 @@ const RootLayout = () => {
   const pageClass = (() => {
     if (location.pathname.startsWith("/clients/recordings")) return "recordings";
     if (location.pathname.startsWith("/clients/consults/detail")) return "notes gray-bg";
+    if (location.pathname.startsWith("/clients/consults/psychologicalTestDetail")) return "survey-detail gray-bg";
     if (location.pathname.startsWith("/clients/consults")) return "consults";
     if (location.pathname.startsWith("/clients/sessions")) return "sessions";
     if (location.pathname.startsWith("/clients")) return "clients";
@@ -86,6 +87,7 @@ const RootLayout = () => {
     '/clients/sessions': '회기 목록',
     '/clients/recordings': '3회기 녹취록',
     '/clients/consults/detail': '3회기 상담일지',
+    '/clients/consults/psychologicalTestDetail': 'PHQ-9 우울 검사 결과',
   };
   const pageTitle = pathTitleMap[location.pathname] || '';
 

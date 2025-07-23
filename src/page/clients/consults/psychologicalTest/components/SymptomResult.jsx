@@ -1,6 +1,28 @@
 import SymptomBarChart from './SymptomBarChart';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const SymptomResult = ({ id, title, caption, canvas, table }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    const handleDetailClick = (rowIndex) => {
+        // 현재 스크롤 위치 저장
+        const currentScrollY = window.scrollY;
+        
+        // 현재 URL에서 쿼리 파라미터 가져오기
+        const currentQuery = new URLSearchParams(location.search);
+        const clientId = currentQuery.get('clientId');
+        const currentTab = currentQuery.get('tab') || 'counsel';
+        
+        // 상세 페이지로 이동 후 뒤로가기 시 현재 탭과 스크롤 위치로 돌아오도록 설정
+        const detailQuery = new URLSearchParams();
+        if (clientId) detailQuery.set('clientId', clientId);
+        detailQuery.set('returnTab', currentTab);
+        detailQuery.set('scrollY', currentScrollY.toString());
+        detailQuery.set('targetRow', rowIndex.toString()); // 클릭한 행 인덱스도 저장
+        
+        navigate(`/clients/consults/psychologicalTestDetail?${detailQuery.toString()}`);
+    };
     return (
       <div id={id} className="result-wrap">
         <div className="result-tit">
@@ -40,7 +62,7 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
                       <td>{row.session}</td>
                       <td>{row.score !== '' && row.score !== null ? `${row.score}점` : '-'}</td>
                       <td className={row.levelClass}>{row.level !== '' && row.level !== null ? row.level : '-'}</td>
-                      <td>{row.memo && <button className="type12 h40" type="button">결과 상세</button>}</td>
+                      <td>{row.memo && <button className="type12 h40" type="button" onClick={() => handleDetailClick(i)} >결과 상세</button>}</td>
                     </tr>
                   ))}
                 </tbody>

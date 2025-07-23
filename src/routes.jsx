@@ -14,6 +14,7 @@ import Login from "./page/login/login.jsx";
 import SignUp from "./page/login/signUp.jsx";
 import ProtectedRedirect from "./ProtectedRedirect.jsx";
 import CounselLogDetail from "./page/clients/consults/counselLog/counsellogdetail/CounselLogDetail.jsx";
+import PsychologicalTestDetail from "./page/clients/consults/psychologicalTest/components/PsychologicalTestDetail.jsx";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,8 @@ const router = createBrowserRouter([
       { path: "clients", element: <Clients /> },
       // 상담 관리
       { path: "clients/consults", element: <Consults /> },
+      // 심리검사지 상세 
+      { path: "clients/consults/psychologicalTestDetail", element: <PsychologicalTestDetail /> },
       // 상담 녹취록
       { path: "clients/recordings", element: <Recordings /> },
       // 상담일지 상세
