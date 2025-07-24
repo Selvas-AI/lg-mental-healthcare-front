@@ -1,7 +1,7 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { maskingState, clientsState, supportPanelState } from "@/recoil";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './consults.scss';
 
 import ClientProfile from './../components/ClientProfile';
@@ -12,22 +12,37 @@ import DocumentBox from './document/DocumentBox';
 import ClientRegisterModal from './../components/ClientRegisterModal';
 import UploadModal from './components/UploadModal';
 import AiPanelCommon from '@/components/AiPanelCommon';
+import SurveySendModal from './psychologicalTest/components/SurveySendModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
-  { label: '심리검사', component: PsychologicalTest, panelClass: 'test' },
+  { label: '심리검사', component: PsychologicalTest, panelClass: 'survey' },
   { label: '일상관리', component: DailyManagement, panelClass: 'daily' },
   { label: '문서함', component: DocumentBox, panelClass: 'document' },
 ];
 
 function Consults() {
   const location = useLocation();
+  const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
+  const tabParam = query.get('tab');
   const clients = useRecoilValue(clientsState);
   const client = clients.find(c => String(c.id) === String(clientId));
   const [masked, setMasked] = useRecoilState(maskingState);
-  const [activeTab, setActiveTab] = useState(0);
+  
+  // URL 쿼리 파라미터에서 탭 인덱스 가져오기 (기본값: 0)
+  const getTabIndexFromParam = (tabParam) => {
+    const tabMap = {
+      'counsel': 0,
+      'survey': 1, 
+      'daily': 2,
+      'document': 3
+    };
+    return tabMap[tabParam] !== undefined ? tabMap[tabParam] : 0;
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabIndexFromParam(tabParam));
   const tabListRef = useRef([]);
   const tabIndicatorRef = useRef(null);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -35,8 +50,28 @@ function Consults() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAiSummary, setShowAiSummary] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  const [showSurveySendModal, setShowSurveySendModal] = useState(false);
+  
+  // 스크롤 위치 복원 처리
+  useLayoutEffect(() => {
+    const restoreScrollY = query.get('restoreScrollY');
+    if (restoreScrollY) {
+      // 히스토리 상태를 직접 조작하여 URL에서 스크롤 복원 파라미터 제거
+      const newQuery = new URLSearchParams(location.search);
+      newQuery.delete('restoreScrollY');
+      newQuery.delete('targetRow');
+      const cleanUrl = `${location.pathname}?${newQuery.toString()}`;
+      
+      // pushState로 현재 히스토리 엔트리를 직접 수정 (새 엔트리 생성하지 않음)
+      window.history.replaceState(window.history.state, '', cleanUrl);
+      
+      // 스크롤 위치 복원 (지연 실행으로 DOM 렌더링 완료 후 실행)
+      setTimeout(() => {
+        window.scrollTo({ top: parseInt(restoreScrollY), behavior: 'instant' });
+      }, 100);
+    }
+  }, [location.search]);
 
-  // 탭 indicator 이동 효과
   useLayoutEffect(() => {
     const currentTab = tabListRef.current[activeTab];
     const indicator = tabIndicatorRef.current;
@@ -94,7 +129,13 @@ function Consults() {
                   ref={el => tabListRef.current[idx] = el}
                   className={activeTab === idx ? 'on' : ''}
                   tabIndex={0}
-                  onClick={() => setActiveTab(idx)}
+                  onClick={() => {
+                    const tabNames = ['counsel', 'survey', 'daily', 'document'];
+                    const newQuery = new URLSearchParams(location.search);
+                    newQuery.set('tab', tabNames[idx]);
+                    navigate(`${location.pathname}?${newQuery.toString()}`, { replace: true });
+                    setActiveTab(idx);
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   <a>{tab.label}</a>
@@ -105,7 +146,7 @@ function Consults() {
           </div>
           <div className="tab-cont">
             <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
-              <ActiveComponent setShowUploadModal={setShowUploadModal}/>
+              <ActiveComponent setShowUploadModal={setShowUploadModal} onOpenSurveySendModal={() => setShowSurveySendModal(true)} />
             </div>
           </div>
         </div>
@@ -135,7 +176,7 @@ function Consults() {
         status="complete"
         title="AI 종합 의견 생성"
         description="AI가 심리 검사 종합 의견을 생성합니다."
-        infoMessage="AI 종합 의견이 생성되었습니다."
+        infoMessage="AI 종합 의견이 생성 완료되었습니다."
         keyInfo
         keyInfoText="재생성된 내용을 확정하면 원래의 내용은 사라지고<br />다시 복구할 수 없어요."
         renderComplete={() => (
@@ -151,6 +192,9 @@ function Consults() {
           </>
         )}
       />
+      {showSurveySendModal && (
+        <SurveySendModal modalOpen={showSurveySendModal} onClose={() => setShowSurveySendModal(false)} />
+      )}
     </>
   );
 }
