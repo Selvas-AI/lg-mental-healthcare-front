@@ -23,7 +23,7 @@ function Header({ scroll, title, fold, rightActions }) {
       <div className="inner">
         <div className="left">
           {!hideBackBtnPaths.includes(location.pathname) && (
-            <button className="back-btn" type="button" aria-label="뒤로가기" onClick={() => navigate(-1)} style={location.pathname === "/clients/consults/psychologicalTestDetail" ? fadeStyle : {opacity: 0}}></button>
+            <button className="back-btn" type="button" aria-label="뒤로가기" onClick={() => navigate(-1)} style={location.pathname === "/clients/consults/psychologicalTestDetail" ? fadeStyle : {}}></button>
           )}
           {title && (
             <strong className="page-title" style={fadeStyle}>{title}</strong>

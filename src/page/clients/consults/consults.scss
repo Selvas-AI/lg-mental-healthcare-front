@@ -1218,6 +1218,14 @@
 /* 심리 검사지 생성 모달(팝업) */
 .modal {
     &.survey-create {
+        .step01,
+        .step02 {
+            .inner {
+                box-shadow: inherit;
+                padding: inherit;
+                width: inherit;
+            }
+        }
         > .inner {
             .modal-hd {
                 margin-bottom: 5rem;
