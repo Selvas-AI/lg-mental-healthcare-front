@@ -1269,3 +1269,212 @@ html .ui-button.ui-state-disabled:active {
     border-radius: 50%;
     background: $secondary200;
 }
+
+/* React DatePicker 스타일 */
+.react-datepicker-wrapper {
+    width: 100%;
+}
+
+.react-datepicker__input-container {
+    width: 100%;
+    
+    .datepicker {
+        width: 100%;
+        height: 5.2rem;
+        padding: 0 1.4rem;
+        font-family: $pretendard;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray950;
+        border-radius: .8rem;
+        border: 1px solid $gray100;
+        background: $gray0;
+        
+        &::placeholder {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: $gray400;
+        }
+        
+        &:focus {
+            outline: none;
+            // border-color: $secondary500;
+        }
+    }
+}
+
+.react-datepicker {
+    width: 35.8rem;
+    padding: 2.4rem 2.4rem 2.3rem;
+    border: 1px solid $gray800;
+    border-radius: .8rem;
+    background: $gray0;
+    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+    font-family: $pretendard;
+}
+
+.react-datepicker__header {
+    padding: 0;
+    margin-bottom: 1.4rem;
+    border: none;
+    background: transparent;
+}
+
+.react-datepicker__current-month {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #50575D;
+    margin: 0;
+    line-height: 2.7rem;
+}
+
+/* 커스텀 헤더 스타일 */
+.custom-datepicker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    margin-bottom: 2.4rem;
+    
+    .custom-month-year {
+        font-family: $pretendard;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #50575D;
+        line-height: 2.7rem;
+    }
+    
+    .custom-nav-btn {
+        width: 2.4rem;
+        height: 2.4rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        span {
+            width: 2.4rem;
+            height: 2.4rem;
+            background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center/contain;
+        }
+        
+        &.prev span {
+            transform: rotate(180deg);
+        }
+        
+        &:hover {
+            background: transparent;
+        }
+    }
+}
+
+/* 기본 네비게이션 숨김 (커스텀 헤더 사용) */
+.react-datepicker__navigation {
+    display: none;
+}
+
+.react-datepicker__navigation-icon {
+    display: none;
+}
+
+/* 기본 헤더 숨김 */
+.react-datepicker__current-month {
+    display: none;
+}
+
+.react-datepicker__month {
+    margin: 0;
+}
+
+.react-datepicker__day-names {
+    // margin-bottom: 1.6rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.react-datepicker__day-name {
+    width: 4.4rem;
+    height: 2.4rem;
+    margin: 0;
+    font-family: $pretendard;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: $gray600;
+    line-height: 2.4rem;
+    text-align: center;
+}
+
+.react-datepicker__week {
+    margin-bottom: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.react-datepicker__day {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: 0;
+    padding: 0;
+    font-family: $pretendard;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: $gray950;
+    line-height: 2.4rem;
+    border-radius: 50%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+        background: transparent;
+        border-radius: 50%;
+    }
+    
+    &--selected {
+        font-weight: 700;
+        background: $secondary200;
+        color: $gray950;
+        
+        &:hover {
+            background: $secondary200;
+        }
+    }
+    
+    &--keyboard-selected {
+        background: $secondary200;
+        color: $gray950;
+    }
+    
+    &--outside-month {
+        opacity: 0;
+    }
+    
+    &--disabled {
+        opacity: 0;
+    }
+}
+
+.react-datepicker__triangle {
+    display: none;
+}
+
+.react-datepicker__month-container {
+    float: inherit;
+    width: 100%;
+}
+
+.custom-datepicker-popper {
+    transform: translate(0px, 118px) !important;
+}
+
+.react-datepicker__day:not([aria-disabled=true]):hover, .react-datepicker__month-text:not([aria-disabled=true]):hover, .react-datepicker__quarter-text:not([aria-disabled=true]):hover, .react-datepicker__year-text:not([aria-disabled=true]):hover {
+    background-color: transparent;
+}

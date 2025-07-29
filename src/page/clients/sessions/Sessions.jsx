@@ -10,6 +10,7 @@ import ClientRegisterModal from "../components/ClientRegisterModal";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 import TimelinePanel from "./TimelinePanel";
 import SessionTable from "./SessionTable";
+import RecordSelectModal from "./RecordSelectModal";
 //! 회기 더미 데이터
 import sessionDummyData from "./sessionDummyData";
 
@@ -28,6 +29,7 @@ function Sessions() {
   const [editClient, setEditClient] = useState(null);
   const [isEmpty, setIsEmpty] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [recordSelectOpen, setRecordSelectOpen] = useState(false);
   const fold = useRecoilValue(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
 
@@ -42,6 +44,12 @@ function Sessions() {
 
   const handleSelectClient = (client) => {
     navigate(`/clients/sessions?clientId=${client.id}`, { replace: true });
+  };
+
+  const handleRecordSelect = (recordData) => {
+    // TODO: 선택된 녹음파일로 회기 등록 처리
+    console.log('선택된 녹음파일:', recordData);
+    setRecordSelectOpen(false);
   };
 
   // TODO: 실제 데이터 fetch 및 렌더링 구현
@@ -77,11 +85,21 @@ function Sessions() {
         />
         {isEmpty ? null : (
           <div className="btn-wrap">
+            <div className="left">
+              <button 
+                className="type11 h40 white" 
+                type="button"
+                onClick={() => setRecordSelectOpen(true)}
+              >
+                회기 등록
+              </button>
+              <button className="type05 white" type="button">종결</button>
+            </div>
             <button className="type05" type="button" onClick={() => {
               setTimelineOpen(true);
               setSupportPanel(true);
               }}>타임라인 보기</button>
-            </div>
+          </div>
         )}
         <div className={isEmpty ? "con-wrap empty" : "con-wrap"}>
           {isEmpty ? (
@@ -113,6 +131,11 @@ function Sessions() {
         }}
         isEmpty={isEmpty}
         sessionDummyData={sessionDummyData}
+      />
+      <RecordSelectModal
+        open={recordSelectOpen}
+        onClose={() => setRecordSelectOpen(false)}
+        onSave={handleRecordSelect}
       />
     </>
   );

@@ -9,27 +9,62 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
   const [clients] = useRecoilState(clientsState);
   const [searchValue, setSearchValue] = useState("");
   const [filteredClients, setFilteredClients] = useState(clients);
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc': 오름차순, 'desc': 내림차순
 
   const handleSearch = () => {
     const keyword = searchValue.trim();
+    let result;
     if (!keyword) {
-      setFilteredClients(clients);
-      return;
+      result = clients;
+    } else {
+      result = clients.filter(client => client.name.includes(keyword));
     }
-    const result = clients.filter(client => client.name.includes(keyword));
-    setFilteredClients(result);
+    // 검색 결과도 현재 정렬 순서에 따라 정렬
+    const sortedResult = sortClientsByName(result, sortOrder);
+    setFilteredClients(sortedResult);
   };
 
   const handleInputChange = e => {
     setSearchValue(e.target.value);
     if (!e.target.value) {
-      setFilteredClients(clients);
+      const sortedClients = sortClientsByName(clients, sortOrder);
+      setFilteredClients(sortedClients);
     }
   };
 
+  // 정렬 함수
+  const sortClientsByName = (clientList, order) => {
+    return [...clientList].sort((a, b) => {
+      if (order === 'asc') {
+        return a.name.localeCompare(b.name);
+      } else {
+        return b.name.localeCompare(a.name);
+      }
+    });
+  };
+
+  // 전화번호 포맷팅 함수 (01012345678 -> 010-1234-5678)
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return '';
+    const cleaned = phone.replace(/\D/g, ''); // 숫자만 추출
+    if (cleaned.length === 11) {
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+    }
+    return phone; // 11자리가 아니면 원본 반환
+  };
+
+  // To-Do 클릭 시 정렬 토글
+  const handleSortToggle = () => {
+    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newOrder);
+    const sortedClients = sortClientsByName(filteredClients, newOrder);
+    setFilteredClients(sortedClients);
+  };
+
   useEffect(() => {
-    setFilteredClients(clients);
-  }, [clients]);
+    const sortedClients = sortClientsByName(clients, sortOrder);
+    setFilteredClients(sortedClients);
+  }, [clients, sortOrder]);
 
   return (
     <>
@@ -135,7 +170,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
               <thead>
                 <tr>
                   <th className="sorting">
-                    <span>이름</span>
+                    <span onClick={handleSortToggle}>이름</span>
                   </th>
                   <th>전화번호</th>
                   <th>회기</th>
@@ -181,12 +216,14 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                         {client.name}{client.nickname && `(${client.nickname})`}
                       </Link>
                     </td>
-                    <td>{client.phone}</td>
+                    <td>{formatPhoneNumber(client.phone)}</td>
                     <td>
                       {client.session === "신규" ? (
                         "신규"
                       ) : (
-                        <a>{client.session}</a>
+                        <Link to={`/clients/consults?clientId=${client.id}`}>
+                          {client.session}
+                        </Link>
                       )}
                     </td>
                     <td>

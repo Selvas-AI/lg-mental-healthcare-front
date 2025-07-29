@@ -30,7 +30,7 @@ function SessionTable({ clientId, sessionDummyData }) {
                   <div className="info-icon" aria-label="툴팁 안내 아이콘" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}></div>
                   <div className={`tooltip${showTooltip ? " show" : ""}`}>
                     <p>녹취록을 기반으로 AI가 생성한<br />해당회차 상담 요약입니다.</p>
-                    <p>약녹취록이 없거나, 생성중인 경우에는<br />제공이 어려울 수 있어요.</p>
+                    <p>녹취록이 없거나, 생성중인 경우에는<br />제공이 어려울 수 있어요.</p>
                   </div>
                 </div>
               </div>
@@ -53,6 +53,7 @@ function SessionTable({ clientId, sessionDummyData }) {
           </tr>
         </thead>
         <tbody>
+          {/* //! 상태에 따른 class : 작성전,정보없음 : no-schedule / 노쇼 : no-show */}
           {sessionDummyData && sessionDummyData.map((row, idx) => (
             <tr key={idx}>
               <td>

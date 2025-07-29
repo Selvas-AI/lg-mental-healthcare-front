@@ -163,7 +163,49 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
 
   if (!open) return null;
 
-  // TODO: 핸들러 및 기타 세부 구현
+  // 필수 입력값 검증 함수
+  const validateRequiredFields = () => {
+    const missingFields = [];
+    // 이름 검증
+    if (!form.name || form.name.trim().length === 0) {
+      missingFields.push('이름');
+    }
+    // 생년월일 검증
+    if (!form.birthYear || !form.birthMonth || !form.birthDay) {
+      missingFields.push('생년월일');
+    }
+    // 성별 검증
+    if (!form.gender) {
+      missingFields.push('성별');
+    }
+    // 연락처 검증
+    if (!form.phoneNumber || form.phoneNumber.trim().length === 0) {
+      missingFields.push('연락처');
+    }
+    return missingFields;
+  };
+
+  // 저장 처리 함수
+  const handleSave = () => {
+    const missingFields = validateRequiredFields();
+    if (missingFields.length > 0) {
+      const fieldText = missingFields.join(', ');
+      //? joy : fieldText 사용하여 alert에 포함시킬 때 아래 코드 사용 
+      // alert(`${fieldText} - 필수입력 값을 확인해 주세요.`);
+      alert(`필수입력 값을 확인해 주세요.`);
+      return;
+    }
+    // 저장 시 editorRef에서 memo 읽기
+    const memo = editorRef.current ? editorRef.current.innerText : '';
+    const safeForm = {
+      ...form,
+      memo,
+      guardians: Array.isArray(form.guardians) && form.guardians.every(g => typeof g === 'object')
+        ? form.guardians
+        : [{ relation: '', name: '', phone: '' }]
+    };
+    onSave(safeForm);
+  };
 
   return (
     <div className="modal client-register on">
@@ -389,18 +431,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
         </div>
         <div className="btn-wrap">
           <button className="type08" type="button" onClick={onClose}>취소</button>
-          <button className="type08 black" type="button" onClick={() => {
-            // 저장 시 editorRef에서 memo 읽기
-            const memo = editorRef.current ? editorRef.current.innerText : '';
-            const safeForm = {
-              ...form,
-              memo,
-              guardians: Array.isArray(form.guardians) && form.guardians.every(g => typeof g === 'object')
-                ? form.guardians
-                : [{ relation: '', name: '', phone: '' }]
-            };
-            onSave(safeForm);
-          }}>{mode === "edit" ? "수정" : "저장"}</button>
+          <button className="type08 black" type="button" onClick={handleSave}>{mode === "edit" ? "수정" : "저장"}</button>
         </div>
       </div>
     </div>

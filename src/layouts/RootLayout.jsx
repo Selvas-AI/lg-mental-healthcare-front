@@ -64,6 +64,21 @@ const RootLayout = () => {
     setFold((prev) => !prev);
   };
 
+  useEffect(() => {
+    // 특정 경로에서는 스크롤 이동하지 않음
+    const excludePaths = [
+      '/clients/consults/detail', // 상담일지 상세
+      '/clients/consults/psychologicalTestDetail', // 심리검사 상세
+    ];
+    
+    const shouldScrollToTop = !excludePaths.some(path => location.pathname.startsWith(path));
+    
+    if (shouldScrollToTop) {
+      // 즉시 상단으로 이동 (smooth 애니메이션 무시)
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [location.pathname]);
+
   // 경로에 따라 페이지별 클래스명 매칭
   const pageClass = (() => {
     if (location.pathname.startsWith("/clients/recordings")) return "recordings";

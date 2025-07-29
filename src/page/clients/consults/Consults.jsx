@@ -15,7 +15,7 @@ import AiPanelCommon from '@/components/AiPanelCommon';
 import SurveySendModal from './psychologicalTest/components/SurveySendModal';
 
 const TAB_LIST = [
-  { label: '상담관리', component: CounselManagement, panelClass: 'counsel' },
+  { label: '상담관리', component: CounselManagement, panelClass: 'counsel'},
   { label: '심리검사', component: PsychologicalTest, panelClass: 'survey' },
   { label: '일상관리', component: DailyManagement, panelClass: 'daily' },
   { label: '문서함', component: DocumentBox, panelClass: 'document' },

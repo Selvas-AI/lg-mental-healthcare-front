@@ -22,7 +22,11 @@
                 padding-bottom: 2rem;
                 > .btn-wrap {
                     margin-bottom: 2rem;
-                    @include flexbox(row, flex-end, center);
+                    @include flexbox(row, space-between, center);
+                    .left {
+                        @include flexbox(row, flex-start, center);
+                        gap: .8rem;
+                    }
                 }
                 .con-wrap {
                     min-height: calc(100vh - 34.6rem);
@@ -162,15 +166,18 @@
                                         &:last-child {
                                             padding: 0 0 0 1rem;
                                         }
+                                        &:nth-child(2) {
+                                            color: $gray950;
+                                            font-weight: 700;
+                                        }
                                         /* 상태 */
                                         &.no-schedule {
-                                            color: $gray300;
-                                        }
-                                        &.scheduled {
-                                            color: $secondary500;
+                                            color: $gray200;
+                                            font-weight: 700;
                                         }
                                         &.no-show {
                                             color: $orange500;
+                                            font-weight: 700;
                                         }
                                         &.cancelled {
                                             color: $orange500;
@@ -197,6 +204,14 @@
                                                 width: 2rem;
                                                 height: 2rem;
                                                 background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center/2rem;
+                                            }
+                                        }
+                                    }
+                                    &:has(td.no-schedule, td.no-show) {
+                                        td {
+                                            &:nth-child(4) {
+                                                color: $gray200;
+                                                font-weight: 700;
                                             }
                                         }
                                     }
@@ -318,10 +333,10 @@
     }
     .input-wrap {
         &.search {
-            margin-bottom: 1rem;
+            margin-bottom: .6rem;
             input {
                 width: 100%;
-                padding: 0 3.3rem 0 .8rem !important;
+                padding: 0 3.3rem 0 .8rem;
                 background: $gray50;
             }
             .search-btn {
@@ -329,23 +344,28 @@
             }
         }
     }
+    .raido-toggle {
+        margin-bottom: 1rem;
+    }
     .list-wrap {
         ul {
             width: 100%;
+            max-height: calc(100vh - 24.2rem);
             @include flexbox(column, flex-start, flex-start);
             gap: .4rem;
+            overflow-y: auto;
             li {
                 width: 100%;
-                height: 3.8rem;
                 border-radius: .8rem;
                 transition: all .25s;
+                @include flexbox(row, flex-start, center);
                 a {
                     display: inline-block;
                     width: 100%;
-                    height: 100%;
                     padding: .8rem;
                     color: $gray600;
                     font-weight: 500;
+                    line-height: 22px;
                     @include ellipsis(1);
                 }
                 &:hover {
@@ -699,6 +719,127 @@
                                 color: $gray400;
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 녹음 파일 선택 모달(팝업) */
+.sessions .modal {
+    &.select-record {
+        > .inner {
+            padding: 3.6rem 1rem 3.6rem 3.6rem;
+            .modal-hd {
+                padding-right: 2.6rem;
+            }
+            .list-wrap {
+                width: 100%;
+                padding-right: 2.6rem;
+                max-height: 51rem;
+                overflow-y: auto;
+                ul {
+                    width: 100%;
+                    padding: 3rem 0;
+                    @include flexbox(column, flex-start, flex-start);
+                    gap: 1.2rem;
+                    li {
+                        width: 100%;
+                        padding: 1.2rem 1.4rem;
+                        border: 1px solid $gray100;
+                        border-radius: .8rem;
+                        background: $gray0;
+                        .input-wrap {
+                            @include flexbox(column, flex-start, flex-start);
+                            label {
+                                width: 100%;
+                                > span {
+                                    font-size: 1.6rem;
+                                    font-weight: 700;
+                                    color: $gray950;
+                                }
+                                .datetime-wrap {
+                                    margin-top: .4rem;
+                                    @include flexbox(row, flex-start, center);
+                                    gap: 2.4rem;
+                                    span {
+                                        position: relative;
+                                        font-size: 1.4rem;
+                                        font-weight: 500;
+                                        color: $gray300;
+                                        &:first-child {
+                                            &::after {
+                                                content: "";
+                                                position: absolute;
+                                                right: -1.2rem;
+                                                top: 50%;
+                                                transform: translateY(-50%);
+                                                width: 1px;
+                                                height: 1.1rem;
+                                                background: $gray200;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 상담일시 선택 모달(팝업) */
+.sessions .modal {
+    &.select-datetime {
+        > .inner {
+            .con-wrap {
+                width: 100%;
+                min-height: 50vh;
+                @include flexbox(column, flex-start, flex-start);
+                gap: 1.2rem;
+                .setting {
+                    position: relative;
+                    width: 100%;
+                    padding-top: 3rem;
+                    @include flexbox(row, center, flex-start);
+                    gap: 1.2rem;
+                    > div {
+                        width: calc(50% - .6rem);
+                        @include flexbox(column, flex-start, flex-start);
+                        gap: 1.2rem;
+                        > label, > span {
+                            position: relative;
+                            font-size: 1.6rem;
+                            font-weight: 700;
+                            color: $gray950;
+                            &.necessary {
+                                &::after {
+                                    content: "*";
+                                    font-size: 1.6rem;
+                                    font-weight: 700;
+                                    color: #FF0606;
+                                }
+                            }
+                        }
+                        .select-wrap {
+                            width: 100%;
+                            .select-box {
+                                width: 100%;
+                            }
+                        }
+                    }
+                }
+                .warning {
+                    padding-left: .8rem;
+                    font-size: 1.4rem;
+                    font-weight: 500;
+                    color: #FF0606;
+                    display: none;
+                    &.on {
+                        display: block;
                     }
                 }
             }
