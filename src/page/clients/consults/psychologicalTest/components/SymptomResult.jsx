@@ -62,7 +62,7 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
                       <td>{row.session}</td>
                       <td>{row.score !== '' && row.score !== null ? `${row.score}점` : '-'}</td>
                       <td className={row.levelClass}>{row.level !== '' && row.level !== null ? row.level : '-'}</td>
-                      <td>{row.memo && <button className="type12 h40" type="button" onClick={() => handleDetailClick(i)} >결과 상세</button>}</td>
+                      <td>{row.memo && <button className="type12 h40" type="button" onClick={() => handleDetailClick(i)} disabled={!row.level}>결과 상세</button>}</td>
                     </tr>
                   ))}
                 </tbody>

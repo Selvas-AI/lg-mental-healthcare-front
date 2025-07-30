@@ -192,7 +192,7 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
   return (
     <div className="tab-panel record-content on" role="tabpanel">
       <div className="inner">
-        <div className="record-area">
+        <div className={`record-area ${editMode ? 'edit-mode' : ''}`}>
           <div className="speak-wrap">
             <div className="inner" ref={speakWrapRef}>
               {transcript.map((item, idx) => (
@@ -204,7 +204,7 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
                     <span className="speaker-id">{item.name}</span>
                     <span className="time">{item.time}</span>
                   </div>
-                  <div className="content">
+                  <div className={`content ${(!item.content || item.content.trim() === '') ? 'delete' : ''}`}>
                     {editMode && idx === editingIdx ? (
                       <div className="editor-wrap">
                         <div
@@ -234,39 +234,43 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
                       </div>
                     ) : (
                       <div onClick={() => editMode && setEditingIdx(idx)} style={{ cursor: editMode ? 'pointer' : 'default' }}>
-                        {item.content.split('\n').map((line, lineIdx) => {
-                          const isDanger = dangerKeywords.some(word => line.includes(word));
-                          if (isDanger) {
-                            return <p key={lineIdx} className="dangerous-remark">{line}</p>;
-                          }
-                          if (searchKeyword && searchKeyword.length > 0 && highlightInfo) {
-                            const highlights = highlightInfo.filter(
-                              h => h.speakerIdx === idx && h.lineIdx === lineIdx
-                            );
-                            if (highlights.length === 0) {
+                        {(!item.content || item.content.trim() === '') ? (
+                          <p>녹취록 STT 변환된 본문을 모두 삭제하셨습니다.</p>
+                          ) : (
+                            item.content.split('\n').map((line, lineIdx) => {
+                            const isDanger = dangerKeywords.some(word => line.includes(word));
+                            if (isDanger) {
+                              return <p key={lineIdx} className="dangerous-remark">{line}</p>;
+                            }
+                            if (searchKeyword && searchKeyword.length > 0 && highlightInfo) {
+                              const highlights = highlightInfo.filter(
+                                h => h.speakerIdx === idx && h.lineIdx === lineIdx
+                              );
+                              if (highlights.length === 0) {
+                                return <React.Fragment key={lineIdx}>{line}<br /></React.Fragment>;
+                              }
+                              let result = [];
+                              let lastIdx = 0;
+                              highlights.forEach((h, hi) => {
+                                if (h.start > lastIdx) {
+                                  result.push(
+                                    <React.Fragment key={hi + '-n'}>{line.slice(lastIdx, h.start)}</React.Fragment>
+                                  );
+                                }
+                                result.push(
+                                  <span key={hi + '-h'} className="txt-hlight">{line.slice(h.start, h.end)}</span>
+                                );
+                                lastIdx = h.end;
+                              });
+                              if (lastIdx < line.length) {
+                                result.push(<React.Fragment key={lastIdx + '-rest'}>{line.slice(lastIdx)}</React.Fragment>);
+                              }
+                              return <React.Fragment key={lineIdx}>{result}<br /></React.Fragment>;
+                            } else {
                               return <React.Fragment key={lineIdx}>{line}<br /></React.Fragment>;
                             }
-                            let result = [];
-                            let lastIdx = 0;
-                            highlights.forEach((h, hi) => {
-                              if (h.start > lastIdx) {
-                                result.push(
-                                  <React.Fragment key={hi + '-n'}>{line.slice(lastIdx, h.start)}</React.Fragment>
-                                );
-                              }
-                              result.push(
-                                <span key={hi + '-h'} className="txt-hlight">{line.slice(h.start, h.end)}</span>
-                              );
-                              lastIdx = h.end;
-                            });
-                            if (lastIdx < line.length) {
-                              result.push(<React.Fragment key={lastIdx + '-rest'}>{line.slice(lastIdx)}</React.Fragment>);
-                            }
-                            return <React.Fragment key={lineIdx}>{result}<br /></React.Fragment>;
-                          } else {
-                            return <React.Fragment key={lineIdx}>{line}<br /></React.Fragment>;
-                          }
-                        })}
+                          })
+                        )}
                       </div>
                     )}
                   </div>

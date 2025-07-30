@@ -146,7 +146,12 @@ function Consults() {
           </div>
           <div className="tab-cont">
             <div className={`tab-panel ${TAB_LIST[activeTab].panelClass} on`} role="tabpanel">
-              <ActiveComponent setShowUploadModal={setShowUploadModal} onOpenSurveySendModal={() => setShowSurveySendModal(true)} />
+              <ActiveComponent 
+                setShowUploadModal={setShowUploadModal} 
+                onOpenSurveySendModal={() => setShowSurveySendModal(true)}
+                setShowAiSummary={setShowAiSummary}
+                setSupportPanel={setSupportPanel}
+              />
             </div>
           </div>
         </div>

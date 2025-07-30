@@ -1,8 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SymptomResult from './SymptomResult';
 
 function SymptomChangePanel({ onOpenSurveySendModal }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  
+  const navigationItems = [
+    { id: 'result01', label: '우울장애' },
+    { id: 'result02', label: '범불안장애' },
+    { id: 'result03', label: '스트레스' },
+    { id: 'result04', label: '알코올 사용장애' },
+    { id: 'result05', label: '불면증' },
+    { id: 'result06', label: 'PTSD' },
+    { id: 'result07', label: '공황장애' },
+    { id: 'result08', label: 'ADHD' },
+    { id: 'result09', label: '강박장애' },
+    { id: 'result10', label: '자살사고' },
+  ];
   const SYMPTOM_DATA = [
     {
       id: 'result01',
@@ -10,7 +23,7 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
       caption: '우울장애',
       canvas: {
         values: [8, 8, 27, 20, null],
-        labels: ['사전', '1회기', '2회기', '3회기', '4회기'],
+        labels: ['사전 문진', '1회기', '2회기', '3회기', '4회기'],
         min: 0,
         max: 30,
       },
@@ -19,7 +32,7 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
         { session: '3회기', score: '20', level: '경도', levelClass: 'level-mid', memo: true },
         { session: '2회기', score: '27', level: '고도', levelClass: 'level-high', memo: true },
         { session: '1회기', score: '8', level: '경미', levelClass: 'level-low', memo: true },
-        { session: '사전', score: '8', level: '경미', levelClass: 'level-low', memo: true },
+        { session: '사전 문진', score: '8', level: '경미', levelClass: 'level-low', memo: true },
       ]
     },
     {
@@ -28,7 +41,7 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
       caption: '범불안장애',
       canvas: {
         values: [5, 10, 15, 20, 25],
-        labels: ['사전', '1회기', '2회기', '3회기', '4회기'],
+        labels: ['사전 문진', '1회기', '2회기', '3회기', '4회기'],
         min: 0,
         max: 25,
       },
@@ -37,7 +50,7 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
         { session: '3회기', score: '20', level: '중등도', levelClass: 'level-high', memo: true },
         { session: '2회기', score: '15', level: '중등도', levelClass: 'level-high', memo: true },
         { session: '1회기', score: '10', level: '경미', levelClass: 'level-low', memo: true },
-        { session: '사전', score: '5', level: '경미', levelClass: 'level-low', memo: true },
+        { session: '사전 문진', score: '5', level: '경미', levelClass: 'level-low', memo: true },
       ]
     },
     {
@@ -46,7 +59,7 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
       caption: '스트레스',
       canvas: {
         values: [10, 10, 20, 20, null],
-        labels: ['사전', '1회기', '2회기', '3회기', '4회기'],
+        labels: ['사전 문진', '1회기', '2회기', '3회기', '4회기'],
         min: 0,
         max: 40,
       },
@@ -55,11 +68,45 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
         { session: '3회기', score: '20', level: '높은 수준', levelClass: 'level-high', memo: true },
         { session: '2회기', score: '20', level: '높은 수준', levelClass: 'level-high', memo: true },
         { session: '1회기', score: '10', level: '낮은 수준', levelClass: 'level-low', memo: true },
-        { session: '사전', score: '10', level: '낮은 수준', levelClass: 'level-low', memo: true },
+        { session: '사전 문진', score: '10', level: '낮은 수준', levelClass: 'level-low', memo: true },
       ]
     },
     // ...다른 증상들
   ];
+
+  // 스크롤 위치에 따른 selectedIndex 자동 업데이트
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const elementId = entry.target.id;
+            const index = navigationItems.findIndex(item => item.id === elementId);
+            if (index !== -1) {
+              setSelectedIndex(index);
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-50% 0px -50% 0px', // 요소가 화면 중앙에 올 때 트리거
+        threshold: 0
+      }
+    );
+
+    // 모든 섹션 요소들을 관찰
+    navigationItems.forEach(item => {
+      const element = document.getElementById(item.id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <div className="changes">
@@ -69,18 +116,7 @@ function SymptomChangePanel({ onOpenSurveySendModal }) {
       </div>
       <div className="move-control">
         <ul>
-          {[
-            { id: 'result01', label: '우울장애' },
-            { id: 'result02', label: '범불안장애' },
-            { id: 'result03', label: '스트레스' },
-            { id: 'result04', label: '알코올 사용장애' },
-            { id: 'result05', label: '불면증' },
-            { id: 'result06', label: 'PTSD' },
-            { id: 'result07', label: '공황장애' },
-            { id: 'result08', label: 'ADHD' },
-            { id: 'result09', label: '강박장애' },
-            { id: 'result10', label: '자살사고' },
-          ].map((item, idx) => (
+          {navigationItems.map((item, idx) => (
             <li key={item.id}>
               <a
                 className={`cursor-pointer${selectedIndex === idx ? ' on' : ''}`}
