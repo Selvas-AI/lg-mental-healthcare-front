@@ -106,7 +106,6 @@ function PsychologicalTest({ onOpenSurveySendModal, setShowAiSummary, setSupport
           <SymptomChangePanel onOpenSurveySendModal={onOpenSurveySendModal} />
         </>
       )}
-
     </div>
   );
 }

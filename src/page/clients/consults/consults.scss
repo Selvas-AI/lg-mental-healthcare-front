@@ -305,8 +305,13 @@
             // .inner {
             //     justify-content: flex-end;
             // }
-            .page-title {
-                display: none !important;
+            // .page-title {
+            //     display: none !important;
+            // }
+            width: calc(100% - 18rem) !important;
+            left: 18rem !important;
+            .inner {
+                justify-content: space-between !important;
             }
         }
         main {
@@ -1835,4 +1840,11 @@
         border-radius: .8rem;
         background: url(@/assets/images/icon/remove.svg) no-repeat center/2.4rem $gray0;
     }
+}
+
+// joy : 스타일링 추가
+.wrapper.survey-detail header.on {
+    left: 7.6rem !important;
+    width: calc(100% - 7.6rem) !important;
+    transition: all .3s;
 }

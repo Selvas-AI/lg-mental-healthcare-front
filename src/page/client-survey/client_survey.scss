@@ -1,0 +1,365 @@
+@import "@/styles/common/common.scss";
+@import "@/styles/common/layout.scss";
+
+.wrapper {
+    &.client-survey {
+        background: $gray0;
+        &::before {
+            content: none;
+        }
+        &::after {
+            content: none;
+        }
+    }
+}
+
+/* 개인정보 수집 · 이용 동의 */
+.wrapper {
+    &.privacy-policy {
+        main {
+            width: 100%;
+            margin: 0 auto;
+            min-height: 100vh;
+            @include notebook {
+                margin: 0 auto;
+                width: 100%;
+                min-height: 100vh;
+            }
+            .inner {
+                .hd-wrap {
+                    padding-top: 4rem;
+                    margin-bottom: 2rem;
+                    .back-btn {
+                        width: 4.4rem;
+                        height: 4.4rem;
+                        border-radius: 50%;
+                        border: 1px solid $gray50;
+                        background: url(@/assets/images/icon/back.svg) no-repeat center $gray0;
+                        box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    }
+                }
+                .tit-wrap {
+                    margin-bottom: 3rem;
+                    strong {
+                        font-size: 3rem;
+                        font-weight: 700;
+                    }
+                }
+                .con-wrap {
+                    margin-bottom: 10rem;
+                    &.type01 {
+                        margin-bottom: 0;
+                        .item {
+                            &:first-of-type {
+                                margin-bottom: 0;
+                            }
+                            .con-info {
+                                padding: 3rem;
+                                .top-info {
+                                    padding-bottom: 1.8rem;
+                                    font-weight: 700;
+                                    color: $gray950;
+                                }
+                            }
+                        }
+                    }
+                    .item {
+                        &:first-of-type {
+                            margin-bottom: 8rem;
+                        }
+                        .con-tit {
+                            margin-bottom: 1.6rem;
+                            &.necessary {
+                                strong {
+                                    &::after {
+                                        content: "*";
+                                        font-size: 2.4rem;
+                                        color: #FF0606;
+                                        font-weight: 700;
+                                    }
+                                }
+                            }
+                            strong {
+                                position: relative;
+                                font-size: 2.4rem;
+                                font-weight: 700;
+                            }
+                        }
+                        .con-info {
+                            padding: 3.2rem 3rem 1.6rem;
+                            border-radius: 1.4rem;
+                            background: $gray0;
+                            .top-info {
+                                padding-bottom: 1.6rem;
+                                font-weight: 500;
+                                color: $gray600;
+                                border-bottom: 1px solid $gray50;
+                            }
+                            .input-wrap {
+                                margin-top: 1.6rem;
+                                margin-left: .2rem;
+                                height: 3.8rem;
+                                @include flexbox(row, flex-start, center);
+                                .detail-btn {
+                                    position: relative;
+                                    margin-left: 1rem;
+                                    font-size: 1.4rem;
+                                    color: $gray400;
+                                    @include flexbox(row, center, center);
+                                    gap: .2rem;
+                                    &::after {
+                                        content: "";
+                                        width: 1.2rem;
+                                        height: 1.2rem;
+                                        background: url(@/assets/images/icon/arrow_right.svg) no-repeat center/contain;
+                                    }
+                                }
+                            }
+                            .detail-info {
+                                margin-top: 1.8rem;
+                                > ul {
+                                    width: 100%;
+                                    @include flexbox(column, flex-start, flex-start);
+                                    gap: 2.4rem;
+                                    > li {
+                                        @include flexbox(column, flex-start, flex-start);
+                                        gap: .4rem;
+                                        > span {
+                                            font-weight: 700;
+                                            color: $gray900;
+                                        }
+                                        p {
+                                            font-weight: 500;
+                                            color: $gray600;
+                                        }
+                                        ul {
+                                            li {
+                                                position: relative;
+                                                font-weight: 500;
+                                                color: $gray600;
+                                                @include flexbox(row, flex-start, center);
+                                                &::before {
+                                                    content: "";
+                                                    display: inline-block;
+                                                    margin: 0 .8rem;
+                                                    width: 4px;
+                                                    height: 4px;
+                                                    border-radius: 50%;
+                                                    background: $gray600;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .btn-wrap {
+                    padding-bottom: 11rem;
+                    @include flexbox(row, center, center);
+                    button {
+                        width: 36rem;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 심리검사 상세 */
+.wrapper {
+    &.survey-detail {
+        header.survey-form {
+            width: 100% !important;
+            left: 0 !important;
+            .inner {
+                justify-content: flex-end;
+            }
+        }
+        main {
+            width: 100%;
+            margin: 8rem auto 0;
+            .inner {
+                > .title-wrap {
+                    margin-bottom: 6rem;
+                    @include flexbox(row, flex-start, center);
+                    gap: 2rem;
+                    .back-btn {
+                        width: 4.4rem;
+                        height: 4.4rem;
+                        border-radius: 50%;
+                        border: 1px solid $gray50;
+                        background: url(@/assets/images/icon/back.svg) no-repeat center $gray0;
+                        box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    }
+                    strong {
+                        font-size: 2.2rem;
+                        font-weight: 700;
+                    }
+                }
+                > .con-wrap {
+                    .survey-list {
+                        .top-info {
+                            margin-bottom: 4rem;
+                            > div {
+                                margin-bottom: 1.2rem;
+                                @include flexbox(row, space-between, center);
+                                .tit-wrap {
+                                    @include flexbox(row, flex-start, center);
+                                    gap: 1.2rem;
+                                    strong {
+                                        font-size: 3.6rem;
+                                        font-weight: 700;
+                                    }
+                                    .total {
+                                        display: inline-block;
+                                        padding: .4rem 1.2rem;
+                                        font-size: 1.8rem;
+                                        font-weight: 500;
+                                        color: $gray400;
+                                        border: 1px solid $gray400;
+                                        border-radius: .6rem;
+                                    }
+                                }
+                                .btn-wrap {
+                                    @include flexbox(row, flex-end, center);
+                                    gap: .8rem;
+                                    button {
+                                        &:first-child {
+                                            border: 1px solid $gray200;
+                                            background: $gray0;
+                                            transition: border .25s;
+                                            &:hover {
+                                                border: 1px solid $gray400;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            > p {
+                                font-size: 1.8rem;
+                                font-weight: 500;
+                                color: $gray600;
+                            }
+                        }
+                        .list-wrap {
+                            > ul {
+                                width: 100%;
+                                @include flexbox(column, flex-start, flex-start);
+                                gap: 8rem;
+                                > li {
+                                    width: 100%;
+                                    .question {
+                                        padding-bottom: 1.6rem;
+                                        font-size: 2.4rem;
+                                        font-weight: 700;
+                                    }
+                                    .answer {
+                                        padding: 4rem 1.6rem;
+                                        border-radius: 1.4rem;
+                                        border: 1px solid $gray50;
+                                        background: $gray0;
+                                        ul {
+                                            @include flexbox(row, center, center);
+                                            gap: 12rem;
+                                            li {
+                                                @include flexbox(column, center, center);
+                                                gap: 1.6rem;
+                                                > span {
+                                                    font-size: 1.6rem;
+                                                    font-weight: 500;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    &.template01 {
+                                        .answer-wrap {
+                                            @include flexbox(column, flex-start, flex-start);
+                                            gap: 1.6rem;
+                                            .answer {
+                                                width: 100%;
+                                                padding: 2.4rem 1.6rem;
+                                                .sub-question {
+                                                    margin-bottom: 1.8rem;
+                                                    font-size: 1.6rem;
+                                                    font-weight: 700;
+                                                    color: $gray950; 
+                                                }
+                                                > ul {
+                                                    padding: 2.8rem 1.6rem 2.4rem;
+                                                    border-radius: 1.4rem;
+                                                    border: 1px solid $gray50;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    &.template02 {
+                                        .answer {
+                                            padding: 3rem;
+                                            > ul {
+                                                @include flexbox(column, center, flex-start);
+                                                gap: 1.6rem;
+                                                li {
+                                                    @include flexbox(row, flex-start, center);
+                                                    gap: 1.6rem;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        footer {
+            width: 100%;
+            margin: 0 auto;
+        }
+    }
+}
+
+/* 심리검사 이어서 시작 모달(팝업) */
+.modal {
+    background: rgba(0, 0, 0, 0.30);
+    &.client-survey {
+        .modal-info {
+            min-height: 12rem;
+            p {
+                font-size: 2.2rem;
+                font-weight: 500;
+                color: $gray400;
+            }
+        }
+        &.type01 {
+            .btn-wrap {
+                button {
+                    width: 100%;
+                }
+            }
+        }
+    }
+}
+
+// joy : 스타일링 추가
+.wrapper.survey-detail main .inner > .con-wrap .survey-list .list-wrap > ul > li .question {
+    padding-left: 0 !important;
+}
+header .inner .left .page-title {
+    display: block !important;
+}
+.wrapper.survey-detail header .inner .right .btn-wrap button {
+    width: 10.4rem;
+    height: 4.8rem;
+    border-radius: 0.8rem;
+    &:first-child {
+        border: 1px solid $gray200;
+        background: $gray0;
+        transition: border .25s;
+        &:hover {
+            border: 1px solid $gray400;
+        }
+    }
+}
