@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CustomSelect from '@/components/CustomSelect';
 
 function SurveySendModal({ onClose, modalOpen }) {
   // step: 1, 2, 3
@@ -7,7 +8,6 @@ function SurveySendModal({ onClose, modalOpen }) {
   // step01: 문진 종류 선택
   const [selectedSurveyType, setSelectedSurveyType] = useState('');
   const [selectedSession, setSelectedSession] = useState('3회기');
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
   
   // 회기 목록 (경과 문진용)
   const sessionOptions = [
@@ -45,19 +45,7 @@ function SurveySendModal({ onClose, modalOpen }) {
     setSelectedSurveyType(e.target.id);
   };
   
-  // step01: 회기 선택 드롭다운
-  const handleSelectToggle = () => {
-    if (selectedSurveyType === 'session04') {
-      setIsSelectOpen(!isSelectOpen);
-    }
-  };
-  
-  const handleSessionSelect = (session) => {
-    if (!session.disabled) {
-      setSelectedSession(session.value);
-      setIsSelectOpen(false);
-    }
-  };
+
   
   // step02: 필수 체크박스 해제 방지
   const handleNecessaryClick = (e) => {
@@ -103,7 +91,6 @@ function SurveySendModal({ onClose, modalOpen }) {
       setSelectedSurveyType('');
       setSelectedSession('3회기');
       setExtraChecked({});
-      setIsSelectOpen(false);
     }, 300);
   };
   
@@ -181,38 +168,25 @@ function SurveySendModal({ onClose, modalOpen }) {
                         <span>경과 문진</span>
                       </label>
                     </div>
-                    <div className={`select-wrap ${selectedSurveyType !== 'session04' ? 'disabled' : ''}`}>
-                      <div className="select-box">
-                        <button 
-                          className="select-item" 
-                          type="button"
-                          onClick={handleSelectToggle}
-                          disabled={selectedSurveyType !== 'session04'}
-                        >
-                          {selectedSession}
-                        </button>
-                        <ul className={`option-list ${isSelectOpen ? 'on' : ''}`}>
-                          {sessionOptions.map(option => (
-                            <li 
-                              key={option.value} 
-                              className={option.disabled ? 'disabled' : ''}
-                              onClick={() => handleSessionSelect(option)}
-                            >
-                              <a href="javascript:void(0)">
-                                {option.complete ? (
-                                  <>
-                                    <span>{option.label}</span>
-                                    <span className="complete">문진 완료</span>
-                                  </>
-                                ) : (
-                                  option.label
-                                )}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
+                    <CustomSelect
+                      options={sessionOptions}
+                      value={selectedSession}
+                      onChange={setSelectedSession}
+                      disabled={selectedSurveyType !== 'session04'}
+                      className={selectedSurveyType !== 'session04' ? 'disabled' : ''}
+                      getOptionValue={(option) => option.value}
+                      getOptionLabel={(option) => option.label}
+                      renderOption={(option) => (
+                        option.complete ? (
+                          <>
+                            <span>{option.label}</span>
+                            <span className="complete">문진 완료</span>
+                          </>
+                        ) : (
+                          option.label
+                        )
+                      )}
+                    />
                   </li>
                   <li>
                     <div className="input-wrap radio">
@@ -244,7 +218,7 @@ function SurveySendModal({ onClose, modalOpen }) {
         
         {/* step02: 검사지 선택 */}
         {step === 2 && (
-          <div className="step02">
+          <div className="step02" style={{ display: step === 2 ? 'block' : 'none' }}>
             <div className="inner">
               <div className="tit-wrap">
                 <strong>내담자에게 요청할 검사지를 선택해 주세요.</strong>
@@ -302,7 +276,7 @@ function SurveySendModal({ onClose, modalOpen }) {
         
         {/* step03: 생성 완료 및 정보 */}
         {step === 3 && (
-          <div className="step03">
+          <div className="step03" style={{ display: step === 3 ? 'block' : 'none' }}>
             <div className="inner">
               <div className="tit-wrap">
                 <strong>생성한 심리 검사지는 <span>{expirationTime}</span>시간 뒤에 만료됩니다.</strong>

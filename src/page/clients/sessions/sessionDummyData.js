@@ -61,7 +61,7 @@ const sessionDummyData = [
     session: "2",
     status: { text: "노쇼", className: "no-show" },
     date: "2025.05.10 (토) 오전 10시",
-    summary: "항정신성 약물 복용을 시작했으며, 부작용으로 인한 신체 불편감을 토로함",
+    summary: "-",
     todos: ["사례개념화 최초 작성", "사례개념화 AI추천"],
     topics: ["약물 부작용", "불편감"],
     summaryList: [

@@ -15,6 +15,7 @@ import SignUp from "./page/login/signUp.jsx";
 import ProtectedRedirect from "./ProtectedRedirect.jsx";
 import CounselLogDetail from "./page/clients/consults/counselLog/counsellogdetail/CounselLogDetail.jsx";
 import PsychologicalTestDetail from "./page/clients/consults/psychologicalTest/components/PsychologicalTestDetail.jsx";
+import ClientSurvey from "./page/client-survey/clientSurvey.jsx";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,11 @@ const router = createBrowserRouter([
   {
     path: "/signUp",
     element: <SignUp />,
+  },
+  // 내담자 심리검사지 
+  {
+    path: "/client-survey",
+    element: <ClientSurvey />,
   },
   {
     path: "/",
@@ -51,6 +57,7 @@ const router = createBrowserRouter([
       // 고객지원
       { path: "support", element: <Support /> },
     ],
+
   },
 ]);
 

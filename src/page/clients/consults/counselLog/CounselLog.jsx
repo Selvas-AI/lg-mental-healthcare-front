@@ -8,37 +8,39 @@ import { clientsState } from "@/recoil";
 import { useLocation } from "react-router-dom";
 import ChartBarStacked from "./ChartBarStacked";
 
-function CounselLog() {
+function CounselLog({ setIsNoshow }) {
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   const clients = useRecoilValue(clientsState);
   const client = clients.find(c => String(c.id) === String(clientId));
-  const logData = {
-    mainIssue: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-    content: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-    opinion: "내담자의 완벽주의적 사고와 인정 욕구가 핵심 스트레스 요인이라 판단하였음.",
-    observation: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-    goals: [
-      "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
-      "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
-      "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
-    ],
-    nextPlan: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-    mind: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-    caseConcept: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  };
+  // const logData = [{
+  //   mainIssue: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
+  //   content: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
+  //   opinion: "내담자의 완벽주의적 사고와 인정 욕구가 핵심 스트레스 요인이라 판단하였음.",
+  //   observation: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
+  //   goals: [
+  //     "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
+  //     "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
+  //     "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
+  //   ],
+  //   nextPlan: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
+  //   mind: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
+  //   caseConcept: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
+  // }];
+  const logData = [];
 
   return (
     <div className="counsel-log">
       <div className="tit-wrap">
         <strong>상담일지</strong>
         <div className="btn-wrap">
-          <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 상세</button>
+          <button className="type05 white h40" type="button" onClick={() => setIsNoshow(true)}>노쇼 처리</button>
+          <button className="type05 h40" type="button">상담일지 작성</button>
         </div>
       </div>
-      {logData.length ? (
+      {logData.length === 0 ? (
         <div className="empty-board">
           <img src={emptyFace} alt="empty" />
           <p className="empty-tit">해당 회기 상담일지 작성 내역이 없습니다. 상담일지를 작성해주세요.</p>
@@ -111,7 +113,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.mainIssue}
+                {logData[0]?.mainIssue}
               </div>
             </TranscriptBox>
             {/* 2. 상담 내용 */}
@@ -122,7 +124,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.content}
+                {logData[0]?.content}
               </div>
             </TranscriptBox>
             {/* 3. 상담사 소견 */}
@@ -133,7 +135,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.opinion}
+                {logData[0]?.opinion}
               </div>
             </TranscriptBox>
             {/* 4. 객관적 관찰 */}
@@ -144,7 +146,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.observation}
+                {logData[0]?.observation}
               </div>
             </TranscriptBox>
             {/* 5. 상담 목표 */}
@@ -155,9 +157,9 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                <div className="bullet-line">{logData.goals[0]}</div>
-                <div className="bullet-line">{logData.goals[1]}</div>
-                <div className="bullet-line">{logData.goals[2]}</div>
+                <div className="bullet-line">{logData[0]?.goals[0]}</div>
+                <div className="bullet-line">{logData[0]?.goals[1]}</div>
+                <div className="bullet-line">{logData[0]?.goals[2]}</div>
               </div>
             </TranscriptBox>
             {/* 6. 다음 상담 계획 */}
@@ -168,7 +170,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.nextPlan}
+                {logData[0]?.nextPlan}
               </div>
             </TranscriptBox>
           </div>
@@ -184,7 +186,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.mind}
+                {logData[0]?.mind}
               </div>
             </TranscriptBox>
             {/* 8. 사례개념화 */}
@@ -195,7 +197,7 @@ function CounselLog() {
               toggleable={true}
             >
               <div className="save-txt">
-                {logData.caseConcept}
+                {logData[0]?.caseConcept}
               </div>
             </TranscriptBox>
           </div>

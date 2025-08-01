@@ -22,6 +22,16 @@ function ClientList({ clients, onSelect, fold }) {
           />
           <button className="search-btn" type="button" aria-label="검색"></button>
         </div>
+        <div className="raido-toggle type01">
+          <div className="toggle-btn">
+            <input id="ongoing" type="radio" name="clientToggle" defaultChecked/>
+            <label htmlFor="ongoing">진행중</label>
+          </div>
+          <div className="toggle-btn">
+            <input id="closed" type="radio" name="clientToggle"/>
+            <label htmlFor="closed">종결</label>
+          </div>
+        </div>
         <div className="list-wrap">
           <ul>
             {filtered.length > 0 ? (

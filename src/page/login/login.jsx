@@ -17,15 +17,43 @@ function Login() {
     return /^[\w-.]+@[\w-]+\.[\w-.]+$/.test(value);
   };
 
+  // 비밀번호: 8~16자, 영문 대/소문자, 숫자, 특수문자 포함 여부만 체크 (input 실시간)
+  const validatePassword = (value) => {
+    const lengthValid = value.length >= 8 && value.length <= 16;
+    const hasAlpha = /[A-Za-z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasSpecial = /[~!@#$%^()\*_\-=\{\}\[\];:<>.,?/]/.test(value);
+    return lengthValid && hasAlpha && hasNumber && hasSpecial;
+  };
+
   const handleIdChange = (e) => {
     const value = e.target.value;
     setId(value);
+    // 입력 중에는 에러 상태를 초기화
+    if (idError) {
+      setIdError(false);
+    }
+  };
+
+  const handleIdBlur = (e) => {
+    const value = e.target.value;
+    // 포커스 아웃 시 이메일 형식 검증
     setIdError(value.length > 0 && !validateEmail(value));
   };
 
   const handlePwChange = (e) => {
-    setPw(e.target.value);
-    // 입력 중에는 에러 판단하지 않음
+    const value = e.target.value;
+    setPw(value);
+    // 입력 중에는 에러 상태를 초기화
+    if (pwError) {
+      setPwError(false);
+    }
+  };
+
+  const handlePwBlur = (e) => {
+    const value = e.target.value;
+    // 포커스 아웃 시 비밀번호 형식 검증
+    setPwError(value.length > 0 && !validatePassword(value));
   };
 
   const handleLogin = () => {
@@ -38,7 +66,7 @@ function Login() {
       localStorage.setItem("isLoggedIn", "true");
       //! 로그아웃시에는 아래 적용
       //! localStorage.removeItem("isLoggedIn");
-      navigate('/home');
+      navigate('/clients');
     }
     // TODO: 로그인 로직 추가
   };
@@ -62,7 +90,7 @@ function Login() {
               {/* 아이디 입력 오류 시 error 클래스 추가 */}
               <div className={`input-wrap id-wrap${idError ? ' error' : ''}`}>
                 <label htmlFor="idInput">아이디</label>
-                <input id="idInput" type="text" placeholder="abc@email.com" value={id} onChange={handleIdChange} />
+                <input id="idInput" type="text" placeholder="abc@email.com" value={id} onChange={handleIdChange} onBlur={handleIdBlur} />
                 {idError && (
                   <p className="error-txt">이메일 형식을 확인해주세요.</p>
                 )}
@@ -76,8 +104,12 @@ function Login() {
                   placeholder="8자 이상의 비밀번호" 
                   value={pw}
                   onChange={handlePwChange}
+                  onBlur={handlePwBlur}
                 />
-                {loginTried && pwError && (
+                {pwError && (
+                  <p className="error-txt">8~16자의 영문 대/소문자, 숫자, 특수문자로 구성되어 있습니다.</p>
+                )}
+                {loginTried && !validatePassword(pw) && pw.length > 0 && (
                   <p className="error-txt">비밀번호가 올바르지 않습니다.</p>
                 )}
               </div>

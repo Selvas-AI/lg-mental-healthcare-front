@@ -6,6 +6,7 @@ import { clientsState } from "@/recoil";
 import { useState } from "react";
 import ClientRegisterModal from "./components/ClientRegisterModal";
 import EditorModal from "./components/EditorModal";
+import ToastPop from "@/components/ToastPop";
 
 function Clients() {
   const [memoClient, setMemoClient] = useState(null);
@@ -17,9 +18,14 @@ function Clients() {
   const handleSaveRegister = () => {
     // TODO: 저장 처리
     setRegisterOpen(false);
+    setToastMessage('신규 내담자가 등록 되었습니다.');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
   }
 
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   return (
     <>
@@ -57,12 +63,18 @@ function Clients() {
             </div>
           </div>
         </div>
+        <ToastPop message={toastMessage} showToast={showToast} />
       </div>
       {memoClient && (
         <EditorModal
           open={true}
           onClose={handleCloseMemo}
-          onSave={() => handleCloseMemo()}
+          onSave={() => {
+            handleCloseMemo(); 
+            setToastMessage('내담자 메모가 저장 되었습니다.');
+            setShowToast(true); 
+            setTimeout(() => setShowToast(false), 2000);
+          }}
           title="내담자 메모"
           className="client-memo"
           placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"

@@ -6,6 +6,7 @@ function TranscriptBox({
   editable, 
   onEdit, 
   toggleable = false, 
+  onAIGenerate,
   children 
   }) {
   // before-create 클래스가 있으면 토글/애니메이션 비활성화
@@ -52,20 +53,26 @@ function TranscriptBox({
         <strong>{title}</strong>
         {editable && <a className="edit-btn" onClick={onEdit}>수정</a>}
       </div>
-      {toggleable ? (
+      {isBeforeCreate ? (
+        <div className="create-wrap">
+          <p>
+            [AI 생성하기]를 선택하면<br />
+            AI가 생성한 분석 자료를 확인 할 수 있어요!
+          </p>
+          <button className="type01 h40" type="button" onClick={onAIGenerate}>
+            <span>AI 생성하기</span>
+          </button>
+        </div>
+      ) : toggleable ? (
         <>
           <div
-            className={`box-explain${!isBeforeCreate && expanded ? " expanded" : !isBeforeCreate ? " clamped" : ""}`}
+            className={`box-explain${expanded ? " expanded" : " clamped"}`}
             ref={boxExplainRef}
-            style={
-              !isBeforeCreate
-                ? { maxHeight: expanded ? boxExplainRef.current?.scrollHeight : "8.7rem", transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)" }
-                : { minHeight: 'unset', maxHeight: 'unset', overflow: 'unset', transition: 'none' }
-            }
+            style={{ maxHeight: expanded ? boxExplainRef.current?.scrollHeight : "8.7rem", transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)" }}
           >
             {children}
           </div>
-          {!isBeforeCreate && showToggle && (
+          {showToggle && (
             <button
               className={`toggle-btn${expanded ? " rotate" : ""}`}
               type="button"
@@ -75,7 +82,6 @@ function TranscriptBox({
           )}
         </>
       ) : (
-        // box-explain 구조 없이 바로 children만 노출
         children
       )}
     </div>
