@@ -15,7 +15,7 @@ import SignUp from "./page/login/signUp.jsx";
 import ProtectedRedirect from "./ProtectedRedirect.jsx";
 import CounselLogDetail from "./page/clients/consults/counselLog/counsellogdetail/CounselLogDetail.jsx";
 import PsychologicalTestDetail from "./page/clients/consults/psychologicalTest/components/PsychologicalTestDetail.jsx";
-import ClientSurvey from "./page/client-survey/clientSurvey.jsx";
+import ClientSurvey from "./page/client-survey/ClientSurvey.jsx";
 
 const router = createBrowserRouter([
   {
