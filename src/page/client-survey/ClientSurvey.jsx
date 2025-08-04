@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import './client_survey.scss'
-import PrivacyPolicy from './privacyPolicy'
+import PrivacyPolicy from './PrivacyPolicy'
 import SurveyForm from './SurveyForm'
 import { surveyData } from './surveyData'
 
