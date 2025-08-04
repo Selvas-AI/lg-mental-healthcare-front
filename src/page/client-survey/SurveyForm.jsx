@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 
-function SurveyForm({ surveyData, onBack, onScrollChange, answers, onAnswersChange }) {
+function SurveyForm({ surveyData, onBack, onScrollChange, answers, onAnswersChange, onSave, onComplete }) {
 
   // 컴포넌트 렌더링 시 스크롤을 맨 위로 이동
   useEffect(() => {
@@ -31,13 +31,8 @@ function SurveyForm({ surveyData, onBack, onScrollChange, answers, onAnswersChan
     }
   }
 
-  const handleSave = () => {
-    console.log('중간저장:', answers)
-  }
-
-  const handleComplete = () => {
-    console.log('완료:', answers)
-  }
+  //! 중간저장과 완료 핸들러는 props로 받아서 사용
+  //! onSave와 onComplete를 직접 사용
 
   // Default 템플릿 렌더링
   const renderDefaultQuestion = (question, index) => (
@@ -154,8 +149,8 @@ function SurveyForm({ surveyData, onBack, onScrollChange, answers, onAnswersChan
                 <span className="total">총 {surveyData.totalQuestions}문항</span>
               </div>
               <div className="btn-wrap">
-                <button className="type07" type="button" onClick={handleSave}>중간저장</button>
-                <button className="type07 black" type="button" onClick={handleComplete}>완료</button>
+                <button className="type07" type="button" onClick={onSave}>중간저장</button>
+                <button className="type07 black" type="button" onClick={onComplete}>완료</button>
               </div>
             </div>
             <p style={{ paddingTop: '0' }}>{surveyData.description}</p>
