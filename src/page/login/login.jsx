@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import imgLogo from '@/assets/images/logo.svg';
 import txtLogo from '@/assets/images/onshim.svg';
 import './login.scss';
@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const navigate = useNavigate();
-  const [id, setId] = React.useState("");
-  const [idError, setIdError] = React.useState(false);
-  const [pw, setPw] = React.useState("");
-  const [pwError, setPwError] = React.useState(false);
-  const [loginTried, setLoginTried] = React.useState(false);
+  const [id, setId] = useState("test@selvas.com");
+  const [idError, setIdError] = useState(false);
+  const [pw, setPw] = useState("test1234!");
+  const [pwError, setPwError] = useState(false);
+  const [loginTried, setLoginTried] = useState(false);
 
   // 이메일 형식 체크
   const validateEmail = (value) => {
@@ -58,8 +58,8 @@ function Login() {
 
   const handleLogin = () => {
     setLoginTried(true);
-    const isIdValid = id === "joy.h.joe@selvas.com";
-    const isPwValid = pw === "1234";
+    const isIdValid = id === "test@selvas.com";
+    const isPwValid = pw === "test1234!";
     setPwError(!isPwValid);
     if (isIdValid && isPwValid) {
       // 로그인 성공 시 localStorage에 저장 (임시)

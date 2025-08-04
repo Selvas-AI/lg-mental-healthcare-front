@@ -169,7 +169,7 @@
 
 /* 심리검사 상세 */
 .wrapper {
-    &.survey-detail {
+    &.survey-detail.client-survey {
         header.survey-form {
             width: 100% !important;
             left: 0 !important;
@@ -344,13 +344,13 @@
 }
 
 // joy : 스타일링 추가
-.wrapper.survey-detail main .inner > .con-wrap .survey-list .list-wrap > ul > li .question {
+.wrapper.client-survey main .inner > .con-wrap .survey-list .list-wrap > ul > li .question {
     padding-left: 0 !important;
 }
-header .inner .left .page-title {
+header.survey-form .inner .left .page-title {
     display: block !important;
 }
-.wrapper.survey-detail header .inner .right .btn-wrap button {
+.wrapper.client-survey header .inner .right .btn-wrap button {
     width: 10.4rem;
     height: 4.8rem;
     border-radius: 0.8rem;
