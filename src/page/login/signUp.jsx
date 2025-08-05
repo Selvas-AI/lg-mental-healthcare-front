@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { register } from '../../api/auth';
 import imgLogo from '@/assets/images/logo.svg';
 import txtLogo from '@/assets/images/onshim.svg';
 import './signup.scss';
+import ToastPop from '@/components/ToastPop';
 
 function SignUp() {
   const handleClosePwInfo = () => setPwInfoOpen(false);
@@ -14,6 +16,10 @@ function SignUp() {
   const [chkPw, setChkPw] = useState("");
   const [chkError, setChkError] = useState(false);
   const [pwInfoOpen, setPwInfoOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [duplicateEmailError, setDuplicateEmailError] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // 이메일 형식 체크
   const validateEmail = (value) => {
@@ -67,6 +73,7 @@ function SignUp() {
     const value = e.target.value;
     setId(value);
     setIdError(value.length > 0 && !validateEmail(value));
+    setDuplicateEmailError(false); // 이메일 변경 시 중복 에러 초기화
   };
 
   const handlePwChange = (e) => {
@@ -82,16 +89,55 @@ function SignUp() {
     setChkError(value.length > 0 && value !== pw);
   };
 
-  const handleSignUp = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
     if (!validatePasswordDetail(pw, id)) {
       setPwInfoOpen(true);
       return;
     }
-    // TODO: 실제 회원가입 로직 추가
-    navigate('/login');
-  };
 
+    setIsLoading(true);
+    setDuplicateEmailError(false);
+
+    try {
+      const userData = {
+        email: id,
+        password: pw,
+        // userName: '',
+        // phoneNumber: ''
+      };
+
+      const response = await register(userData);
+      
+      if (response.code === 200) {
+        // 회원가입 성공
+        setToastMessage('회원가입이 완료되었습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (response.code === 302) {
+        // 중복 이메일 에러
+        setDuplicateEmailError(true);
+        setToastMessage('이미 사용 중인 이메일입니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      } else {
+        // 기타 에러
+        setToastMessage(response.message || '회원가입에 실패했습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      }
+    } catch (error) {
+      console.error('회원가입 에러:', error);
+      
+      // 네트워크 에러 등 예외 상황
+      setToastMessage('회원가입 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="wrapper signup">
@@ -113,10 +159,14 @@ function SignUp() {
             </div>
             <div className="form-content">
               {/* 아이디 입력 오류 시 error 클래스 추가 */}
-              <div className={`input-wrap id-wrap${idError ? ' error' : ''}`}>
-                <label className="necessary" htmlFor="idInput">아이디{idError ? <span className="text-[#FF0606]"> *</span> : ''}</label>
+              <div className={`input-wrap id-wrap${(idError || duplicateEmailError) ? ' error' : ''}`}>
+                <label className="necessary" htmlFor="idInput">아이디{(idError || duplicateEmailError) ? <span className="text-[#FF0606]"> *</span> : ''}</label>
                 <input id="idInput" type="text" placeholder="abc@email.com" value={id} onChange={handleIdChange} />
-                <p className="error-txt">{idError ? '이메일 형식으로 입력해 주세요.' : '사용하고 계신 이메일을 ID로 사용할 수 있어요.'}</p>
+                <p className="error-txt">
+                  {duplicateEmailError ? '이미 사용 중인 이메일입니다.' : 
+                    idError ? '이메일 형식으로 입력해 주세요.' : 
+                    '사용하고 계신 이메일을 ID로 사용할 수 있어요.'}
+                </p>
               </div>
               {/* 비밀번호 입력 오류 시 error 클래스 추가 */}
               <div className={`input-wrap pw-wrap${pwError ? ' error' : ''}`}>
@@ -130,9 +180,17 @@ function SignUp() {
                 <input id="chkPwInput" type="password" placeholder="8자 이상의 비밀번호" value={chkPw} onChange={handleChkPwChange} />
                 <p className="error-txt">{chkError ? '입력한 비밀번호와 같지 않습니다.' : '앞서 입력한 비밀번호를 한번 더 입력해 주세요.'}</p>
               </div>
-              <button className="type10" type="button" disabled={!id || !pw || !chkPw || idError || pwError || chkError} onClick={handleSignUp}>가입하기</button>
+              <button 
+                className="type10" 
+                type="button" 
+                disabled={!id || !pw || !chkPw || idError || pwError || chkError || duplicateEmailError || isLoading} 
+                onClick={handleSignUp}
+              >
+                {isLoading ? '가입 중...' : '가입하기'}
+              </button>
             </div>
           </div>
+          <ToastPop message={toastMessage} showToast={showToast} />
         </div>
       </main>
       {/* 비밀번호 입력 조건 안내 모달(팝업) - on 클래스 추가 시 오픈 */}
