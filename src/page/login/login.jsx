@@ -1,17 +1,17 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login } from '../../api/auth';
 import imgLogo from '@/assets/images/logo.svg';
 import txtLogo from '@/assets/images/onshim.svg';
 import './login.scss';
-import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const navigate = useNavigate();
-  const [id, setId] = useState("test@selvas.com");
+  const [id, setId] = useState("test@mail.com");
   const [idError, setIdError] = useState(false);
-  const [pw, setPw] = useState("test1234!");
+  const [pw, setPw] = useState("selvas1!");
   const [pwError, setPwError] = useState(false);
-  const [loginTried, setLoginTried] = useState(false);
-
+  const [loginError, setLoginError] = useState(false);
   // 이메일 형식 체크
   const validateEmail = (value) => {
     return /^[\w-.]+@[\w-]+\.[\w-.]+$/.test(value);
@@ -56,19 +56,47 @@ function Login() {
     setPwError(value.length > 0 && !validatePassword(value));
   };
 
-  const handleLogin = () => {
-    setLoginTried(true);
-    const isIdValid = id === "test@selvas.com";
-    const isPwValid = pw === "test1234!";
-    setPwError(!isPwValid);
-    if (isIdValid && isPwValid) {
-      // 로그인 성공 시 localStorage에 저장 (임시)
-      localStorage.setItem("isLoggedIn", "true");
-      //! 로그아웃시에는 아래 적용
-      //! localStorage.removeItem("isLoggedIn");
-      navigate('/clients');
+  const handleLogin = async () => {
+    setLoginError(true);
+    
+    // 기본 유효성 검사
+    if (!validateEmail(id)) {
+      setIdError(true);
+      return;
     }
-    // TODO: 로그인 로직 추가
+    
+    if (!validatePassword(pw)) {
+      setPwError(true);
+      return;
+    }
+
+    try {
+      const credentials = {
+        email: id,
+        password: pw
+      };
+
+      const response = await login(credentials);
+      
+      if (response.code === 200) {
+        // 로그인 성공
+        const token = response.data.token;
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('isLoggedIn', 'true');
+        navigate('/clients');
+      } else {
+        setLoginError(true);
+      }
+    } catch (error) {
+      console.error('로그인 에러:', error);
+      
+      // 인증 실패 또는 네트워크 에러
+      if (error.response?.status === 301) {
+        setLoginError(true);
+      } else {
+        setLoginError(true);
+      }
+    }
   };
 
   return (
@@ -109,18 +137,21 @@ function Login() {
                 {pwError && (
                   <p className="error-txt">8~16자의 영문 대/소문자, 숫자, 특수문자로 구성되어 있습니다.</p>
                 )}
-                {loginTried && !validatePassword(pw) && pw.length > 0 && (
-                  <p className="error-txt">비밀번호가 올바르지 않습니다.</p>
-                )}
               </div>
               <button 
                 className="type10" 
                 type="button" 
                 onClick={handleLogin}
                 disabled={!id || !pw}
-              >
+                >
                 로그인
               </button>
+              {/* 로그인 에러 메시지 */}
+              {loginError && (
+                <div className="text-center text-red-500 !text-[14px] !mt-2">
+                  아이디 또는 비밀번호를 확인해주세요.
+                </div>
+              )}
             </div>
             <div className="sign-up">
               <p>아직 온쉼 회원이 아니신가요?</p>

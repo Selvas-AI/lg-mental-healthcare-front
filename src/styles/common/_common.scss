@@ -716,6 +716,7 @@ button {
         gap: .6rem;
         cursor: pointer;
         input[type="checkbox"] {
+            margin: 3px 3px 3px 4px;
             appearance: none;
             position: relative;
             background: $gray200;
@@ -738,7 +739,6 @@ button {
             }
             &:checked {
                 background-color: $gray800;
-                margin: 3px 3px 3px 4px;
                 &::before {
                     left: calc(100% - 1.6rem);
                 }

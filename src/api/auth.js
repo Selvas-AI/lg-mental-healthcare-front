@@ -7,7 +7,7 @@ export const register = async (userData) => {
 
 // 로그인
 export const login = async (credentials) => {
-    return await axiosIns.post('/auth/login', credentials)
+    return await axiosIns.post('/api/auth/login', credentials)
 }
 
 // 로그아웃
