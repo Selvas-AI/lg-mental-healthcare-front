@@ -57,7 +57,7 @@ function Login() {
   };
 
   const handleLogin = async () => {
-    setLoginError(true);
+    setLoginError(false);  // 로그인 시작 시 에러 상태 초기화
     
     // 기본 유효성 검사
     if (!validateEmail(id)) {
