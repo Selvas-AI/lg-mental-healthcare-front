@@ -16,7 +16,6 @@ function SignUp() {
   const [chkPw, setChkPw] = useState("");
   const [chkError, setChkError] = useState(false);
   const [pwInfoOpen, setPwInfoOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [duplicateEmailError, setDuplicateEmailError] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -96,7 +95,6 @@ function SignUp() {
       return;
     }
 
-    setIsLoading(true);
     setDuplicateEmailError(false);
 
     try {
@@ -134,8 +132,6 @@ function SignUp() {
       setToastMessage('회원가입 중 오류가 발생했습니다. 다시 시도해 주세요.');
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -183,10 +179,10 @@ function SignUp() {
               <button 
                 className="type10" 
                 type="button" 
-                disabled={!id || !pw || !chkPw || idError || pwError || chkError || duplicateEmailError || isLoading} 
+                disabled={!id || !pw || !chkPw || idError || pwError || chkError || duplicateEmailError} 
                 onClick={handleSignUp}
               >
-                {isLoading ? '가입 중...' : '가입하기'}
+                가입하기
               </button>
             </div>
           </div>

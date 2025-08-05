@@ -1,9 +1,7 @@
 import axios from 'axios'
 
 const axiosIns = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' 
-        ? 'http://52.78.24.168:8080'  // 운영환경: 실제 서버 URL
-        : '',  // 개발환경: 프록시 사용
+    baseURL: 'http://52.78.24.168:8080',
     withCredentials: false,
     responseType: 'json',
 })
@@ -29,7 +27,7 @@ axiosIns.interceptors.response.use(
         const { config } = response
         if (response.data) {
             switch (response.data.code) {
-                case '401':
+                case 401:
                     try {
                         const originalRequest = config
                         const refreshToken = localStorage.getItem('refreshToken')
@@ -46,7 +44,7 @@ axiosIns.interceptors.response.use(
                             }
                         })
                         
-                        if (res.data.code !== '200') throw new Error(res.data.code)
+                        if (res.data.code !== 200) throw new Error(res.data.code)
                         
                         localStorage.setItem('accessToken', res.data.result.accessToken)
                         localStorage.setItem('refreshToken', res.data.result.refreshToken)
