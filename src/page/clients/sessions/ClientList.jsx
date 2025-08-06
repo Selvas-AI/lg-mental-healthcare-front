@@ -2,9 +2,11 @@ import React, { useState } from "react";
 
 function ClientList({ clients, onSelect, fold }) {
   const [search, setSearch] = useState("");
-  const filtered = clients.filter(client =>
-    client.name.includes(search) || (client.engName && client.engName.includes(search))
-  );
+  const filtered = clients.filter(client => {
+    const clientName = client.clientName || '';
+    const nickname = client.nickname || '';
+    return clientName.includes(search) || nickname.includes(search);
+  });
 
   return (
     <div className={"client-list" + (fold ? " on" : "")}>
@@ -36,7 +38,7 @@ function ClientList({ clients, onSelect, fold }) {
           <ul>
             {filtered.length > 0 ? (
               filtered.map(client => (
-                <li key={client.id}>
+                <li key={client.clientSeq}>
                   <a
                     href="#"
                     onClick={e => {
@@ -44,8 +46,7 @@ function ClientList({ clients, onSelect, fold }) {
                       onSelect && onSelect(client);
                     }}
                   >
-                    {client.name}{client.nickname ? ` (${client.nickname})` : ""}
-                    {client.engName ? ` (${client.engName})` : ""}
+                    {client.clientName}{client.nickname ? ` (${client.nickname})` : ""}
                   </a>
                 </li>
               ))

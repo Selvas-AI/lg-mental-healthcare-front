@@ -17,7 +17,10 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     if (!keyword) {
       result = clients;
     } else {
-      result = clients.filter(client => client.name.includes(keyword));
+      result = clients.filter(client => {
+        const clientName = client.clientName || '';
+        return clientName.includes(keyword);
+      });
     }
     // 검색 결과도 현재 정렬 순서에 따라 정렬
     const sortedResult = sortClientsByName(result, sortOrder);
@@ -35,10 +38,14 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
   // 정렬 함수
   const sortClientsByName = (clientList, order) => {
     return [...clientList].sort((a, b) => {
+      // undefined 값 안전 처리
+      const nameA = a.clientName || '';
+      const nameB = b.clientName || '';
+      
       if (order === 'asc') {
-        return a.name.localeCompare(b.name);
+        return nameA.localeCompare(nameB);
       } else {
-        return b.name.localeCompare(a.name);
+        return nameB.localeCompare(nameA);
       }
     });
   };
@@ -94,6 +101,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                 />
                 <button className="search-btn" type="button" aria-label="검색" onClick={handleSearch}></button>
               </div>
+              {/* 필터 (기획상 삭제, 필요시 구현) */}
               {/* <div className="filter-wrap">
                 <button className="filter-btn" type="button">
                   필터<span className="chk-num">(2)</span>
@@ -202,26 +210,26 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
               <tbody>
                 {filteredClients.map((client, idx) => (
                   <tr
-                    key={client.id || idx}
+                    key={client.clientSeq || idx}
                     className={
-                      [client.isNew ? "new" : "", selectedClientId === client.id ? "selected" : ""].join(" ").trim()
+                      [client.isNew ? "new" : "", selectedClientId === client.clientSeq ? "selected" : ""].join(" ").trim()
                     }
-                    onClick={() => onSelectClient && onSelectClient(client.id)}
+                    onClick={() => onSelectClient && onSelectClient(client.clientSeq)}
                     style={{ cursor: onSelectClient ? "pointer" : undefined }}
                   >
                     <td>
                       <Link
-                        to={`/clients/sessions?clientId=${client.id || client.name}`}
+                        to={`/clients/sessions?clientId=${client.clientSeq}`}
                       >
-                        {client.name}{client.nickname && `(${client.nickname})`}
+                        {client.clientName}{client.nickname && `(${client.nickname})`}
                       </Link>
                     </td>
-                    <td>{formatPhoneNumber(client.phone)}</td>
+                    <td>{formatPhoneNumber(client.contactNumber)}</td>
                     <td>
                       {client.session === "신규" ? (
                         "신규"
                       ) : (
-                        <Link to={`/clients/consults?clientId=${client.id}`}>
+                        <Link to={`/clients/consults?clientId=${client.clientSeq}`}>
                           {client.session}
                         </Link>
                       )}

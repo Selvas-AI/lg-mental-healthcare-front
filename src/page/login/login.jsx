@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../api/auth';
+import { authLogin } from '@/api/apiCaller';
 import imgLogo from '@/assets/images/logo.svg';
 import txtLogo from '@/assets/images/onshim.svg';
 import './login.scss';
@@ -76,7 +76,7 @@ function Login() {
         password: pw
       };
 
-      const response = await login(credentials);
+      const response = await authLogin(credentials);
       
       if (response.code === 200) {
         // 로그인 성공

@@ -7,13 +7,19 @@ const axiosIns = axios.create({
 })
 
 axiosIns.interceptors.request.use(
-  async config => {
+  config => {
     const accessToken = localStorage.getItem('accessToken')
-    const refreshToken = localStorage.getItem('refreshToken')
-    if (accessToken && refreshToken) {
-      config.headers['Sh-Auth-Token'] = `${accessToken}`
-      config.headers['Sh-Refresh-Token'] = `${refreshToken}`
+    // const refreshToken = localStorage.getItem('refreshToken')
+    
+    if (accessToken) {
+      // 표준 Authorization Bearer
+      config.headers['Authorization'] = `Bearer ${accessToken}`
+      
+      // 기존 Sh-Auth-Token 방식
+      // config.headers['Sh-Auth-Token'] = `${accessToken}`
+      // config.headers['Sh-Refresh-Token'] = `${refreshToken}`
     }
+    
     return config
   },
   error => {
@@ -28,38 +34,48 @@ axiosIns.interceptors.response.use(
     if (response.data) {
       switch (response.data.code) {
         case 401:
-          try {
-            const originalRequest = config
-            const refreshToken = localStorage.getItem('refreshToken')
-            
-            // 무한 루프 방지
-            if (originalRequest._retry) {
-              throw new Error('Token refresh failed')
-            }
-            originalRequest._retry = true
-            
-            const res = await axios.get(`${axiosIns.defaults.baseURL}/tokenRefresh`, {
-              headers: {
-                'Sh-Refresh-Token': refreshToken
-              }
-            })
-            
-            if (res.data.code !== 200) throw new Error(res.data.code)
-            
-            localStorage.setItem('accessToken', res.data.result.accessToken)
-            localStorage.setItem('refreshToken', res.data.result.refreshToken)
-            
-            return axiosIns(originalRequest)
-          } catch (err) {
-            console.warn('Token refresh error:', err)
-            localStorage.removeItem('accessToken')
-            localStorage.removeItem('refreshToken')
-            
-            // 로그인 페이지로 리다이렉트 (필요시 구현)
-            // window.location.href = '/login'
-            
-            return Promise.reject(err)
-          }
+          // RefreshToken 로직 주석처리
+          console.warn('401 Unauthorized - 토큰이 만료되었거나 유효하지 않습니다.')
+          localStorage.removeItem('accessToken')
+          // localStorage.removeItem('refreshToken')
+          
+          // 로그인 페이지로 리다이렉트 (필요시 구현)
+          // window.location.href = '/login'
+          
+          return Promise.reject(new Error('Unauthorized'))
+          
+          // try {
+          //   const originalRequest = config
+          //   const refreshToken = localStorage.getItem('refreshToken')
+          //   
+          //   // 무한 루프 방지
+          //   if (originalRequest._retry) {
+          //     throw new Error('Token refresh failed')
+          //   }
+          //   originalRequest._retry = true
+          //   
+          //   const res = await axios.get(`${axiosIns.defaults.baseURL}/tokenRefresh`, {
+          //     headers: {
+          //       'Sh-Refresh-Token': refreshToken
+          //     }
+          //   })
+          //   
+          //   if (res.data.code !== 200) throw new Error(res.data.code)
+          //   
+          //   localStorage.setItem('accessToken', res.data.result.accessToken)
+          //   localStorage.setItem('refreshToken', res.data.result.refreshToken)
+          //   
+          //   return axiosIns(originalRequest)
+          // } catch (err) {
+          //   console.warn('Token refresh error:', err)
+          //   localStorage.removeItem('accessToken')
+          //   localStorage.removeItem('refreshToken')
+          //   
+          //   // 로그인 페이지로 리다이렉트 (필요시 구현)
+          //   // window.location.href = '/login'
+          //   
+          //   return Promise.reject(err)
+          // }
           default:
             return response.data
         }

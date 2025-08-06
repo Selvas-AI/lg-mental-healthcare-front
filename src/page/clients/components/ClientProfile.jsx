@@ -42,6 +42,8 @@ function maskValue(label, value) {
   if (value == null) return '**'
   switch (label) {
     case '연락처': {
+      // null 안전 처리
+      if (!value) return '***-****-****';
       // 하이픈이 있든 없든 모두 처리
       const digits = value.replace(/\D/g, ''); // 숫자만 추출
       if (digits.length === 11) {
@@ -54,8 +56,10 @@ function maskValue(label, value) {
     case '직업':
       return '*'.repeat(value.length);
     case '생년월일':
+      if (!value) return '19**.**.**';
       return value.replace(/\d{4}\.\d{2}\.\d{2}/, '19**.**.**').replace(/\(.*?\)/, '(만 **세)');
     case '주소': {
+      if (!value) return '****';
       const parts = value.trim().split(/\s+/);
       if (parts.length === 0) return '****';
       const first = parts[0];
@@ -63,10 +67,12 @@ function maskValue(label, value) {
       return `${first} ${restMasked}`;
     }
     case '이메일':
+      if (!value) return '*******@****.***';
       return value.replace(/^[^@]+/, '*******');
     case '보호자':
+      if (!value) return '** (****)';
       return value
-        .replace(/([가-힣]+)\s*\((.*?)\)/g, '** ($2)')
+        .replace(/([\uac00-\ud7a3]+)\s*\((.*?)\)/g, '** ($2)')
         .replace(/(\d{3})-(\d{4})-(\d{4})/g, '$1-****-$3');
     default:
       return '*'.repeat(value.length);
@@ -75,8 +81,8 @@ function maskValue(label, value) {
 
   if (!profileData) return null;
 
-  const name = masked ? maskName(profileData.name) : profileData.name;
-  const phone = masked ? maskValue('연락처', profileData.phone) : profileData.phone;
+  const name = masked ? maskName(profileData.clientName) : profileData.clientName;
+  const phone = masked ? maskValue('연락처', profileData.contactNumber) : profileData.contactNumber;
   const address = masked ? maskValue('주소', profileData.address) : profileData.address;
   function getKoreanAge(birthStr) {
   // 'YYYY.MM.DD' 형식에서 만 나이 계산
@@ -107,6 +113,7 @@ const age = masked ? maskValue('나이', profileData.age) : profileData.age;
 const gender = masked ? '**' : getKoreanGender(profileData.gender);
   const job = masked ? maskValue('직업', profileData.job) : profileData.job;
   function formatPhoneNumber(phone) {
+  if (!phone) return '';
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 11) {
     return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7,11)}`;
@@ -133,6 +140,7 @@ const guardians = Array.isArray(profileData.guardians) ? profileData.guardians.m
 
 // 전화번호 하이픈 추가
 function formatPhoneNumber(phone) {
+  if (!phone) return '';
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 11) {
     return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7,11)}`;
@@ -140,7 +148,7 @@ function formatPhoneNumber(phone) {
   return phone; // fallback
 }
 
-  const memo = masked ? profileData.memo.replace(/[^\s]/g, '*') : profileData.memo;
+  const memo = masked ? (profileData.memo ? profileData.memo.replace(/[^\s]/g, '*') : '') : (profileData.memo || '');
 
   const handleEdit = () => {
     onEdit && onEdit(profileData);

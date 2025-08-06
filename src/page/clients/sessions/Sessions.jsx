@@ -24,7 +24,7 @@ function Sessions() {
   const clientId = query.get("clientId");
   const navigate = useNavigate();
   const clients = useRecoilValue(clientsState);
-  const client = clients.find(c => String(c.id) === String(clientId));
+  const client = clients.find(c => String(c.clientSeq) === String(clientId));
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
   const [isEmpty, setIsEmpty] = useState(false);
@@ -43,7 +43,7 @@ function Sessions() {
   };
 
   const handleSelectClient = (client) => {
-    navigate(`/clients/sessions?clientId=${client.id}`, { replace: true });
+    navigate(`/clients/sessions?clientId=${client.clientSeq}`, { replace: true });
   };
 
   const handleRecordSelect = (recordData) => {
