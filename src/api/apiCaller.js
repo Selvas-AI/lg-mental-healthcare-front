@@ -36,5 +36,10 @@ export const clientUpdate = async (clientData) => {
     return await axiosIns.post('/api/client/update', clientData)
 }
 
+// 특정 내담자 정보 조회
+export const clientFind = async (params) => {
+    return await axiosIns.get('/api/client/find', { params })
+}
+
 
 //! ===== 상담 세션 관리 =====
