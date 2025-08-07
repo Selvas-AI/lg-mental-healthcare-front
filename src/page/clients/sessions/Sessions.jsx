@@ -4,7 +4,7 @@ import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { maskingState, clientsState, foldState, supportPanelState } from "@/recoil";
-import { clientSearch, clientUpdate, clientCreate, clientFind, sessionList, clientUpdateMemo } from '../../../api/apiCaller';
+import { clientSearch, clientUpdate, clientCreate, clientFind, sessionList, clientUpdateMemo, sessionCreate } from '../../../api/apiCaller';
 import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
 
@@ -151,48 +151,32 @@ function Sessions() {
       if (editClient) {
         // 내담자 정보 수정 - 변경된 필드만 전송
         const updateData = { clientSeq: editClient.clientSeq };
-        
-        // 변경된 필드만 포함
-        if (clientData.name !== editClient.clientName) {
-          updateData.clientName = clientData.name;
-        }
-        if ((clientData.nickname || '') !== (editClient.nickname || '')) {
-          updateData.nickname = clientData.nickname || '';
-        }
-        
+        // 필드 매핑 및 변환
         const newBirthDate = `${clientData.birthYear}${clientData.birthMonth.padStart(2, '0')}${clientData.birthDay.padStart(2, '0')}`;
-        if (newBirthDate !== editClient.birthDate) {
-          updateData.birthDate = newBirthDate;
-        }
-        
         const newGender = clientData.gender === 'female' ? 'F' : clientData.gender === 'male' ? 'M' : clientData.gender;
-        if (newGender !== editClient.gender) {
-          updateData.gender = newGender;
-        }
-        
-        if (clientData.phoneNumber !== editClient.contactNumber) {
-          updateData.contactNumber = clientData.phoneNumber;
-        }
-        if ((clientData.address || '') !== (editClient.address || '')) {
-          updateData.address = clientData.address || '';
-        }
-        
         const newEmail = clientData.emailId && clientData.emailDomain ? `${clientData.emailId}@${clientData.emailDomain}` : '';
-        if (newEmail !== (editClient.email || '')) {
-          updateData.email = newEmail;
-        }
+        // 변경된 필드만 추가
+        const fieldMappings = [
+          { key: 'clientName', newVal: clientData.name, oldVal: editClient.clientName },
+          { key: 'nickname', newVal: clientData.nickname || '', oldVal: editClient.nickname || '' },
+          { key: 'birthDate', newVal: newBirthDate, oldVal: editClient.birthDate },
+          { key: 'gender', newVal: newGender, oldVal: editClient.gender },
+          { key: 'contactNumber', newVal: clientData.phoneNumber, oldVal: editClient.contactNumber },
+          { key: 'address', newVal: clientData.address || '', oldVal: editClient.address || '' },
+          { key: 'email', newVal: newEmail, oldVal: editClient.email || '' },
+          { key: 'job', newVal: clientData.job || '', oldVal: editClient.job || '' },
+          { key: 'memo', newVal: clientData.memo || '', oldVal: editClient.memo || '' }
+        ];
         
-        if ((clientData.job || '') !== (editClient.job || '')) {
-          updateData.job = clientData.job || '';
-        }
-        if ((clientData.memo || '') !== (editClient.memo || '')) {
-          updateData.memo = clientData.memo || '';
-        }
-        
+        fieldMappings.forEach(({ key, newVal, oldVal }) => {
+          if (newVal !== oldVal) {
+            updateData[key] = newVal;
+          }
+        });
         // 보호자 정보 변경 확인 (의미있는 데이터만 비교)
         const hasValidGuardianData = (guardians) => {
           if (!Array.isArray(guardians) || guardians.length === 0) return false;
-          return guardians.some(g => g.relation || g.name || g.phone);
+          return guardians.some(g => g.guardianRelation || g.guardianName || g.guardianContact);
         };
         
         const currentHasGuardians = hasValidGuardianData(editClient.guardian);
@@ -202,10 +186,7 @@ function Sessions() {
         if (currentHasGuardians !== newHasGuardians || 
             (newHasGuardians && JSON.stringify(editClient.guardian || []) !== JSON.stringify(clientData.guardians || []))) {
           updateData.guardian = newHasGuardians ? clientData.guardians : null;
-        }
-        
-
-        
+        }        
         const response = await clientUpdate(updateData);
         if (response.code === 200) {
           // 내담자 정보 수정 후 clientFind로 해당 내담자만 최신 데이터로 동기화
@@ -220,7 +201,6 @@ function Sessions() {
                     : client
                 )
               );
-              
               // ClientList 데이터도 동시에 업데이트
               setClientListData(prevListData => 
                 prevListData.map(client => 
@@ -295,10 +275,39 @@ function Sessions() {
     navigate(`/clients/sessions?clientId=${client.clientSeq}`, { replace: true });
   };
 
-  const handleRecordSelect = (recordData) => {
-    // TODO: 선택된 녹음파일로 회기 등록 처리
-    console.log('선택된 녹음파일:', recordData);
-    setRecordSelectOpen(false);
+  const handleRecordSelect = async (recordData) => {
+    try {
+      const sessionData = {
+        clientSeq: parseInt(clientId),
+        sessionDate: recordData.sessionDate,
+      };
+      
+      const response = await sessionCreate(sessionData);
+      
+      if (response.code === 200) {
+        // 회기 등록 성공 시 회기 목록 다시 불러오기
+        const sessionResponse = await sessionList(parseInt(clientId));
+        if (sessionResponse.code === 200 && Array.isArray(sessionResponse.data)) {
+          setSessionData(sessionResponse.data);
+          setIsEmpty(sessionResponse.data.length === 0);
+        }
+        
+        setToastMessage('회기가 등록되었습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      } else {
+        setToastMessage(response.message || '회기 등록에 실패했습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      }
+    } catch (error) {
+      console.error('회기 등록 오류:', error);
+      setToastMessage('회기 등록 중 오류가 발생했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } finally {
+      setRecordSelectOpen(false);
+    }
   };
 
   // 메모 수정 모달 열기

@@ -81,19 +81,19 @@ function SessionTable({ clientId, sessionData}) {
               
               // TODO 목록 생성
               const todos = [];
-              if (!session.todo_transcript_creation) todos.push('녹취록 생성');
-              if (!session.todo_ai_analysis_done) todos.push('녹취록 AI 분석');
-              if (!session.todo_ai_analysis_check) todos.push('AI 분석 확인');
-              if (!session.todo_counsel_note) todos.push('상담일지 작성');
-              if (!session.todo_case_concept_initial) todos.push('사례개념화 최초 작성');
-              if (!session.todo_case_concept_ai) todos.push('사례개념화 AI추천');
-              if (!session.todo_psych_test_request) todos.push('심리검사 요청');
+              if (!session.todoTranscriptCreation) todos.push('녹취록 생성');
+              if (!session.todoAiAnalysisDone) todos.push('녹취록 분석');
+              if (!session.todoAiAnalysisCheck) todos.push('AI 분석 확인');
+              if (!session.todoCounselNote) todos.push('상담일지 작성');
+              if (!session.todoCaseConceptInitial) todos.push('사례개념화 최초 작성');
+              if (!session.todoCaseConceptAi) todos.push('사례개념화 AI추천');
+              if (!session.todoPsychTestRequest) todos.push('심리검사 요청');
               
               return (
-                <tr key={session.session_seq || idx}>
+                <tr key={session.sessionSeq || idx}>
                   <td>
                     <a className="cursor-pointer" onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>
-                      {session.session_order || session.session_no}회기
+                      {session.sessionOrder || session.sessionNo}회기
                     </a>
                   </td>
                   <td className={statusClass}>
@@ -104,7 +104,7 @@ function SessionTable({ clientId, sessionData}) {
                       </span>
                     ))}
                   </td>
-                  <td>{formatDate(session.session_date)}</td>
+                  <td>{formatDate(session.sessionDate)}</td>
                   <td>
                     <div className="summary-wrap">{session.memo || '-'}</div>
                   </td>

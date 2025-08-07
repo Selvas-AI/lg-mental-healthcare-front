@@ -24,7 +24,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     emailId: "",
     emailDomain: "",
     job: "",
-    guardians: [{ relation: "", name: "", phone: "" }],
+    guardians: [{ guardianRelation: "", guardianName: "", guardianContact: "" }],
     memo: ""
   };
   const [form, setForm] = useState(INITIAL_FORM);
@@ -74,9 +74,10 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
 
   useEffect(() => {
     if (open && initialData) {
-      let guardians = initialData.guardians;
-      if (!Array.isArray(guardians) || !guardians.every(g => typeof g === 'object' && g !== null && 'relation' in g && 'name' in g && 'phone' in g)) {
-        guardians = [{ relation: '', name: '', phone: '' }];
+      // API 응답에서 guardian 필드를 guardians로 매핑
+      let guardians = initialData.guardian || initialData.guardians;
+      if (!Array.isArray(guardians) || !guardians.every(g => typeof g === 'object' && g !== null && 'guardianRelation' in g && 'guardianName' in g && 'guardianContact' in g)) {
+        guardians = [{ guardianRelation: '', guardianName: '', guardianContact: '' }];
       }
       let birthYear = '', birthMonth = '', birthDay = '';
       // API 응답에서 birthDate는 'YYYYMMDD' 형식
@@ -169,7 +170,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
   // 보호자 드롭다운 높이 동기화
   useEffect(() => {
     setGuardianListHeights(
-      (Array.isArray(form.guardians) ? form.guardians : [{relation:'',name:'',phone:''}])
+      (Array.isArray(form.guardians) ? form.guardians : [{guardianRelation:'',guardianName:'',guardianContact:''}])
         .map((_, idx) =>
           openGuardianSelect[idx] && guardianOptionListRefs.current[idx]
             ? guardianOptionListRefs.current[idx].scrollHeight
@@ -219,7 +220,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       memo,
       guardians: Array.isArray(form.guardians) && form.guardians.every(g => typeof g === 'object')
         ? form.guardians
-        : [{ relation: '', name: '', phone: '' }]
+        : [{ guardianRelation: '', guardianName: '', guardianContact: '' }]
     };
     onSave(safeForm);
   };
@@ -368,7 +369,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                   <label>보호자 정보</label>
                   {/* 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
                   {(Array.isArray(form.guardians) ? form.guardians : []).map((g, idx) => {
-                    const guardian = (g && typeof g === 'object') ? g : { relation: '', name: '', phone: '' };
+                    const guardian = (g && typeof g === 'object') ? g : { guardianRelation: '', guardianName: '', guardianContact: '' };
 
                     const indexStr = String(idx + 1).padStart(2, '0');
                     return (
@@ -384,19 +385,19 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                                 setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? !v : false));
                               }}
                             >
-                              {guardian.relation || '선택'}
+                              {guardian.guardianRelation || '선택'}
                             </button>
                               <ul 
                                 ref={el => guardianOptionListRefs.current[idx] = el}
                                 className={`option-list${openGuardianSelect[idx] ? ' open' : ''}`}
                                 style={dropdownStyle(openGuardianSelect[idx])}>
                                   {["부","모","조부","조모","형(오빠)","누나(언니)","동생","선생님","사회복지사","담당자","기타"].map(opt => (
-                                    <li key={opt} className={guardian.relation === opt ? 'on' : ''}>
+                                    <li key={opt} className={guardian.guardianRelation === opt ? 'on' : ''}>
                                       <a href="#" onClick={e => {
                                         e.preventDefault();
                                         setForm(f => {
                                           const arr = [...f.guardians];
-                                          arr[idx] = { ...arr[idx], relation: opt };
+                                          arr[idx] = { ...arr[idx], guardianRelation: opt };
                                           return { ...f, guardians: arr };
                                         });
                                         setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? false : v));
@@ -407,10 +408,10 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                             </div>
                           </div>
                           <div className="input-wrap">
-                            <input id={`guardian${indexStr}`} value={guardian.name || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], name: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="보호자 이름" />
+                            <input id={`guardian${indexStr}`} value={guardian.guardianName || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], guardianName: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="보호자 이름" />
                           </div>
                           <div className="input-wrap">
-                            <input id={`guardianPhone${indexStr}`} value={guardian.phone || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], phone: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="연락처 ( - 없이 숫자만 입력 )" />
+                            <input id={`guardianPhone${indexStr}`} value={guardian.guardianContact || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], guardianContact: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="연락처 ( - 없이 숫자만 입력 )" />
                           </div>
                           {/* 최소 1명은 남도록, 1명일 때는 삭제버튼 비활성화 */}
                           <button
@@ -423,7 +424,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                               if (form.guardians.length <= 1) return;
                               setForm(f => {
                                 const arr = f.guardians.filter((_,i) => i!==idx);
-                                return { ...f, guardians: arr.length > 0 ? arr : [{relation:'', name:'', phone:''}] };
+                                return { ...f, guardians: arr.length > 0 ? arr : [{guardianRelation:'', guardianName:'', guardianContact:''}] };
                               });
                               setOpenGuardianSelect(prev => prev.filter((_,i) => i!==idx));
                             }}
@@ -434,8 +435,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                     <button className="add-btn" type="button" onClick={() => {
                       setForm(f => {
                         // 배열 및 객체 배열 보장
-                        const arr = Array.isArray(f.guardians) && f.guardians.every(g => typeof g === 'object') ? f.guardians : [{relation: '', name: '', phone: ''}];
-                        return { ...f, guardians: [...arr, {relation: '', name: '', phone: ''}] };
+                        const arr = Array.isArray(f.guardians) && f.guardians.every(g => typeof g === 'object') ? f.guardians : [{guardianRelation: '', guardianName: '', guardianContact: ''}];
+                        return { ...f, guardians: [...arr, {guardianRelation: '', guardianName: '', guardianContact: ''}] };
                       });
                       setOpenGuardianSelect(prev => ([...prev, false]));
                     }}><span>보호자 추가</span></button>

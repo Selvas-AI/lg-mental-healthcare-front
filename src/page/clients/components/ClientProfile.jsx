@@ -1,9 +1,6 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { maskingState, clientsState } from "@/recoil";
-import { clientUpdate } from "@/api/apiCaller";
-import ClientRegisterModal from "./ClientRegisterModal";
-import ToastPop from "@/components/ToastPop";
+import { useRecoilValue } from "recoil";
+import { maskingState } from "@/recoil";
 
 function ClientProfile({ profileData, onEdit, onEditMemo }) {
   const masked = useRecoilValue(maskingState);
@@ -11,9 +8,6 @@ function ClientProfile({ profileData, onEdit, onEditMemo }) {
   const infoWrapRef = useRef(null);
   const [maxHeight, setMaxHeight] = useState('0px');
   const [paddingTop, setPaddingTop] = useState('0');
-  const [registerOpen, setRegisterOpen] = useState(false);
-  const [editClient, setEditClient] = useState(null);
-
 
   useLayoutEffect(() => {
     if (showInfo && infoWrapRef.current) {
@@ -24,92 +18,6 @@ function ClientProfile({ profileData, onEdit, onEditMemo }) {
       setPaddingTop('0');
     }
   }, [showInfo]);
-
-  
-  const setClients = useSetRecoilState(clientsState);
-
-  const onSave = async (clientData) => {
-    try {
-      if (editClient) {
-        // 내담자 정보 수정 - 변경된 필드만 전송
-        const updateData = { clientSeq: editClient.clientSeq };
-        
-        // 변경된 필드만 포함
-        if (clientData.name !== editClient.clientName) {
-          updateData.clientName = clientData.name;
-        }
-        if ((clientData.nickname || '') !== (editClient.nickname || '')) {
-          updateData.nickname = clientData.nickname || '';
-        }
-        
-        const newBirthDate = `${clientData.birthYear}${clientData.birthMonth.padStart(2, '0')}${clientData.birthDay.padStart(2, '0')}`;
-        if (newBirthDate !== editClient.birthDate) {
-          updateData.birthDate = newBirthDate;
-        }
-        
-        const newGender = clientData.gender === 'female' ? 'F' : clientData.gender === 'male' ? 'M' : clientData.gender;
-        if (newGender !== editClient.gender) {
-          updateData.gender = newGender;
-        }
-        
-        if (clientData.phoneNumber !== editClient.contactNumber) {
-          updateData.contactNumber = clientData.phoneNumber;
-        }
-        if ((clientData.address || '') !== (editClient.address || '')) {
-          updateData.address = clientData.address || '';
-        }
-        
-        const newEmail = clientData.emailId && clientData.emailDomain ? `${clientData.emailId}@${clientData.emailDomain}` : '';
-        if (newEmail !== (editClient.email || '')) {
-          updateData.email = newEmail;
-        }
-        
-        if ((clientData.job || '') !== (editClient.job || '')) {
-          updateData.job = clientData.job || '';
-        }
-        if ((clientData.memo || '') !== (editClient.memo || '')) {
-          updateData.memo = clientData.memo || '';
-        }
-        
-        // 보호자 정보 변경 확인 (의미있는 데이터만 비교)
-        const hasValidGuardianData = (guardians) => {
-          if (!Array.isArray(guardians) || guardians.length === 0) return false;
-          return guardians.some(g => g.relation || g.name || g.phone);
-        };
-        
-        const currentHasGuardians = hasValidGuardianData(editClient.guardian);
-        const newHasGuardians = hasValidGuardianData(clientData.guardians);
-        
-        // 의미있는 보호자 데이터가 변경된 경우만 전송
-        if (currentHasGuardians !== newHasGuardians || 
-            (newHasGuardians && JSON.stringify(editClient.guardian || []) !== JSON.stringify(clientData.guardians || []))) {
-          updateData.guardian = newHasGuardians ? clientData.guardians : null;
-        }
-        
-        console.log('전송할 수정 데이터 (변경된 필드만):', updateData);
-        
-        const response = await clientUpdate(updateData);
-        if (response.success) {
-          // Recoil 상태 업데이트
-          setClients(prevClients => 
-            prevClients.map(client => 
-              client.clientSeq === editClient.clientSeq 
-                ? { ...client, ...updateData }
-                : client
-            )
-          );
-          ToastPop({ type: 'success', message: '내담자 정보가 수정되었습니다.' });
-        } else {
-          ToastPop({ type: 'error', message: response.message || '내담자 정보 수정에 실패했습니다.' });
-        }
-      }
-      setRegisterOpen(false);
-      setEditClient(null);
-    } catch (error) {
-      console.error('내담자 정보 수정 중 오류:', error);
-      ToastPop({ type: 'error', message: '처리 중 오류가 발생했습니다.' });
-    }
-  };
 
 function maskName(name) {
   if (name.length <= 1) return '*';
@@ -210,19 +118,19 @@ const gender = masked ? '**' : getKoreanGender(profileData.gender);
   return phone;
 }
 
-const guardians = Array.isArray(profileData.guardians) ? profileData.guardians.map(g => {
+const guardian = Array.isArray(profileData.guardian) ? profileData.guardian.map(g => {
   if (masked) {
     // 이름, 전화번호 마스킹 + 하이픈 포맷
-    const maskedName = g.name ? '*'.repeat(g.name.length) : '';
-    let maskedPhone = g.phone ? g.phone.replace(/\D/g, '') : '';
+    const maskedName = g.guardianName ? '*'.repeat(g.guardianName.length) : '';
+    let maskedPhone = g.guardianContact ? g.guardianContact.replace(/\D/g, '') : '';
     if (maskedPhone.length === 11) {
       maskedPhone = `${maskedPhone.slice(0,3)}-****-${maskedPhone.slice(7,11)}`;
     } else if (g.phone) {
       maskedPhone = g.phone.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3');
     }
-    return `${maskedName} (${g.relation}) ${maskedPhone}`;
+    return `${maskedName} (${g.guardianRelation}) ${maskedPhone}`;
   } else {
-    return `${g.name} (${g.relation}) ${formatPhoneNumber(g.phone)}`;
+    return `${g.guardianName} (${g.guardianRelation}) ${formatPhoneNumber(g.guardianContact)}`;
   }
 }) : [];
 
@@ -243,10 +151,6 @@ function formatPhoneNumber(phone) {
     // 부모 컴포넌트에서 onEdit prop이 제공된 경우 부모가 처리하도록 함
     if (onEdit) {
       onEdit(profileData);
-    } else {
-      // 부모 컴포넌트에서 onEdit이 없는 경우 자체적으로 처리
-      setEditClient(profileData);
-      setRegisterOpen(true);
     }
   }
 
@@ -312,8 +216,8 @@ function formatPhoneNumber(phone) {
                   <td>{gender}</td>
                   <th rowSpan={2}>보호자</th>
                   <td rowSpan={2}>
-                    {guardians.length === 0 ? '없음' : guardians.map((g, idx) => (
-                      <span key={idx}>{g}{idx < guardians.length - 1 ? ', ' : ''}</span>
+                    {guardian.length === 0 ? '없음' : guardian.map((g, idx) => (
+                      <span key={idx}>{g}{idx < guardian.length - 1 ? ', ' : ''}</span>
                     ))}
                   </td>
                 </tr>
@@ -334,14 +238,6 @@ function formatPhoneNumber(phone) {
             </table>
           </div>
       </div>
-      <ClientRegisterModal
-        open={registerOpen}
-        onClose={() => setRegisterOpen(false)}
-        onSave={onSave}
-        mode={editClient ? "edit" : "register"}
-        initialData={editClient}
-      />
-
     </>
   );
 }
