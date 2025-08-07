@@ -5,7 +5,7 @@ import { clientUpdate } from "@/api/apiCaller";
 import ClientRegisterModal from "./ClientRegisterModal";
 import ToastPop from "@/components/ToastPop";
 
-function ClientProfile({ profileData, onEdit }) {
+function ClientProfile({ profileData, onEdit, onEditMemo }) {
   const masked = useRecoilValue(maskingState);
   const [showInfo, setShowInfo] = useState(false);
   const infoWrapRef = useRef(null);
@@ -13,6 +13,7 @@ function ClientProfile({ profileData, onEdit }) {
   const [paddingTop, setPaddingTop] = useState('0');
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
+
 
   useLayoutEffect(() => {
     if (showInfo && infoWrapRef.current) {
@@ -250,7 +251,9 @@ function formatPhoneNumber(phone) {
   }
 
   const handleEditMemo = () => {
-    console.log('메모수정');
+    if (onEditMemo) {
+      onEditMemo();
+    }
   };
 
   return (
@@ -338,6 +341,7 @@ function formatPhoneNumber(phone) {
         mode={editClient ? "edit" : "register"}
         initialData={editClient}
       />
+
     </>
   );
 }

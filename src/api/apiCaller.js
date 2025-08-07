@@ -41,5 +41,38 @@ export const clientFind = async (params) => {
     return await axiosIns.get('/api/client/find', { params })
 }
 
+// 내담자 메모 수정
+export const clientUpdateMemo = async (memoData) => {
+    return await axiosIns.post('/api/client/updateMemo', memoData)
+}
+
 
 //! ===== 상담 세션 관리 =====
+// 전체 회기 목록 조회
+export const sessionList = async (clientSeq) => {
+    return await axiosIns.get('/api/session/list', { 
+        params: { clientSeq: clientSeq } 
+    })
+}
+
+// 현재 진행중인 회기 목록 조회
+export const sessionCurrentList = async (clientSeq) => {
+    return await axiosIns.get('/api/session/current_list', { 
+        params: { clientSeq: clientSeq } 
+    })
+}
+
+// 특정 회기 상세 조회
+export const sessionFind = async (clientSeq, sessionSeq) => {
+    return await axiosIns.get('/api/session/find', { 
+        params: { 
+            clientSeq: clientSeq,
+            sessionSeq: sessionSeq 
+        } 
+    })
+}
+
+// 신규 회기 등록
+export const sessionCreate = async (sessionData) => {
+    return await axiosIns.post('/api/session/create', sessionData)
+}

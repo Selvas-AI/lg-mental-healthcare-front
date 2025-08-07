@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function SessionTable({ clientId, sessionDummyData }) {
+function SessionTable({ clientId, sessionData}) {
   const navigate = useNavigate();
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
@@ -53,31 +53,72 @@ function SessionTable({ clientId, sessionDummyData }) {
           </tr>
         </thead>
         <tbody>
-          {/* //! 상태에 따른 class : 작성전,정보없음 : no-schedule / 노쇼 : no-show */}
-          {sessionDummyData && sessionDummyData.map((row, idx) => (
-            <tr key={idx}>
-              <td>
-                <a className="cursor-pointer" onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>{row.session}회기</a>
-              </td>
-              <td className={row.status.className}>{row.status.text.split(" ").map((t, i) => (
-                <span key={i}>
-                  {t}
-                  {i === 0 && <br />}
-                </span>
-              ))}</td>
-              <td>{row.date}</td>
-              <td>
-                <div className="summary-wrap">{row.summary}</div>
-              </td>
-              <td>
-                <div className="flex-wrap">
-                  {row.todos.map((todo, i) => (
-                    <a className="cursor-pointer" key={i}>{todo}</a>
-                  ))}
-                </div>
-              </td>
-            </tr>
-          ))}
+          {sessionData && sessionData.length > 0 ? (
+            sessionData.map((session, idx) => {
+              const statusText = session.session_status || '예정';
+              const statusClass = statusText === '노쇼' ? 'no-show' : statusText === '취소' ? 'cancelled' : '';
+              
+              // 날짜 포맷 변환 (2025-05-10 14:00:00 -> 2025.05.10 (토) 오후 2시)
+              const formatDate = (dateStr) => {
+                if (!dateStr) return '-';
+                try {
+                  const date = new Date(dateStr);
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                  const weekday = weekdays[date.getDay()];
+                  const hour = date.getHours();
+                  const minute = String(date.getMinutes()).padStart(2, '0');
+                  const period = hour >= 12 ? '오후' : '오전';
+                  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+                  
+                  return `${year}.${month}.${day} (${weekday}) ${period} ${displayHour}시${minute !== '00' ? ` ${minute}분` : ''}`;
+                } catch (e) {
+                  return dateStr;
+                }
+              };
+              
+              // TODO 목록 생성
+              const todos = [];
+              if (!session.todo_transcript_creation) todos.push('녹취록 생성');
+              if (!session.todo_ai_analysis_done) todos.push('녹취록 AI 분석');
+              if (!session.todo_ai_analysis_check) todos.push('AI 분석 확인');
+              if (!session.todo_counsel_note) todos.push('상담일지 작성');
+              if (!session.todo_case_concept_initial) todos.push('사례개념화 최초 작성');
+              if (!session.todo_case_concept_ai) todos.push('사례개념화 AI추천');
+              if (!session.todo_psych_test_request) todos.push('심리검사 요청');
+              
+              return (
+                <tr key={session.session_seq || idx}>
+                  <td>
+                    <a className="cursor-pointer" onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>
+                      {session.session_order || session.session_no}회기
+                    </a>
+                  </td>
+                  <td className={statusClass}>
+                    {statusText.split(' ').map((t, i) => (
+                      <span key={i}>
+                        {t}
+                        {i === 0 && <br />}
+                      </span>
+                    ))}
+                  </td>
+                  <td>{formatDate(session.session_date)}</td>
+                  <td>
+                    <div className="summary-wrap">{session.memo || '-'}</div>
+                  </td>
+                  <td>
+                    <div className="flex-wrap">
+                      {todos.length > 0 ? todos.map((todo, i) => (
+                        <a className="cursor-pointer" key={i}>{todo}</a>
+                      )) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          ) : null}
         </tbody>
       </table>
     </div>

@@ -4,17 +4,16 @@ import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { maskingState, clientsState, foldState, supportPanelState } from "@/recoil";
-import { clientSearch, clientUpdate, clientCreate, clientFind } from '../../../api/apiCaller';
+import { clientSearch, clientUpdate, clientCreate, clientFind, sessionList, clientUpdateMemo } from '../../../api/apiCaller';
 import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
 
 import ClientRegisterModal from "../components/ClientRegisterModal";
+import EditorModal from "../components/EditorModal";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 import TimelinePanel from "./TimelinePanel";
 import SessionTable from "./SessionTable";
 import RecordSelectModal from "./RecordSelectModal";
-//! 회기 더미 데이터
-import sessionDummyData from "./sessionDummyData";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -39,6 +38,9 @@ function Sessions() {
   const [showToast, setShowToast] = useState(false);
   const [sessionStatus, setSessionStatus] = useState(1); // 1: 진행중, 0: 종결
   const [clientListData, setClientListData] = useState([]); // ClientList 전용 데이터
+  const [sessionData, setSessionData] = useState([]); // 회기 데이터
+  const [sessionLoading, setSessionLoading] = useState(false); // 회기 데이터 로딩 상태
+  const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
 
   // 페이지 로드 시 내담자 목록 fetch
   useEffect(() => {
@@ -92,6 +94,37 @@ function Sessions() {
     fetchData();
     
   }, [clientId, sessionStatus]);
+
+  // 회기 데이터 불러오기 (clientId가 있을 때만)
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (!clientId) {
+        setSessionData([]);
+        setIsEmpty(true);
+        return;
+      }
+
+      setSessionLoading(true);
+      try {
+        const response = await sessionList(parseInt(clientId));
+        if (response.code === 200 && Array.isArray(response.data)) {
+          setSessionData(response.data);
+          setIsEmpty(response.data.length === 0);
+        } else {
+          setSessionData([]);
+          setIsEmpty(true);
+        }
+      } catch (error) {
+        console.error('회기 목록 조회 실패:', error);
+        setSessionData([]);
+        setIsEmpty(true);
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+
+    fetchSessionData();
+  }, [clientId]);
 
   // sessionStatus 변경 핸들러 (진행중/종결 라디오 버튼 클릭 시)
   // ClientList만 업데이트하고 현재 선택된 내담자 정보는 유지
@@ -268,6 +301,55 @@ function Sessions() {
     setRecordSelectOpen(false);
   };
 
+  // 메모 수정 모달 열기
+  const handleEditMemo = () => {
+    setMemoModalOpen(true);
+  };
+
+  // 메모 저장 처리
+  const handleMemoSave = async (memoValue) => {
+    try {
+      const response = await clientUpdateMemo({
+        clientSeq: parseInt(clientId),
+        memo: memoValue
+      });
+      
+      if (response.code === 200) {
+        // 성공 시 로컬 상태 업데이트
+        setClients(prevClients => 
+          prevClients.map(client => 
+            client.clientSeq === parseInt(clientId) 
+              ? { ...client, memo: memoValue }
+              : client
+          )
+        );
+        
+        // ClientList 데이터도 동시에 업데이트
+        setClientListData(prevListData => 
+          prevListData.map(client => 
+            client.clientSeq === parseInt(clientId) 
+              ? { ...client, memo: memoValue }
+              : client
+          )
+        );
+        
+        setMemoModalOpen(false);
+        setToastMessage('내담자 메모가 저장되었습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      } else {
+        setToastMessage(response.message || '메모 저장에 실패했습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      }
+    } catch (error) {
+      console.error('메모 저장 오류:', error);
+      setToastMessage('메모 저장 중 오류가 발생했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    }
+  };
+
   return (
     <>
       <ClientList
@@ -299,6 +381,7 @@ function Sessions() {
             setEditClient(clientData);
             setRegisterOpen(true);
           }}
+          onEditMemo={handleEditMemo}
         />
         {isEmpty ? null : (
           <div className="btn-wrap">
@@ -322,13 +405,14 @@ function Sessions() {
           {isEmpty ? (
             <>
               <img src={emptyFace} alt="empty"/>
-              <p className="empty-info">예정, 완료한 상담이 없습니다.<br/>내담자와의 예약 일정을 확인해 보세요.</p>
-              <button className="type05 h44" type="button">스케줄 관리</button>
+              <p className="empty-info">작성 완료한 상담일지가 없습니다.<br/>해당 회기를 생성하고 상담일지 작성(녹취록 분석)을 진행 할 수 있어요.</p>
+              <button className="type11 h44" type="button" onClick={() => setRecordSelectOpen(true)}>회기 등록</button>
             </>
           ) : (
             <SessionTable 
               clientId={clientId}
-              sessionDummyData={sessionDummyData}
+              sessionData={sessionData}
+              loading={sessionLoading}
             />
           )}
         </div>
@@ -348,12 +432,22 @@ function Sessions() {
           setSupportPanel(false);
         }}
         isEmpty={isEmpty}
-        sessionDummyData={sessionDummyData}
+        sessionData={sessionData}
       />
       <RecordSelectModal
         open={recordSelectOpen}
         onClose={() => setRecordSelectOpen(false)}
         onSave={handleRecordSelect}
+      />
+      <EditorModal
+        open={memoModalOpen}
+        onClose={() => setMemoModalOpen(false)}
+        onSave={handleMemoSave}
+        title="내담자 메모"
+        className="client-memo"
+        placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
+        maxLength={500}
+        initialValue={client?.memo || ""}
       />
     </>
   );

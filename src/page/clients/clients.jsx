@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import ClientRegisterModal from "./components/ClientRegisterModal";
 import EditorModal from "./components/EditorModal";
 import ToastPop from "@/components/ToastPop";
-import { clientSearch, clientCreate } from "@/api/apiCaller";
+import { clientSearch, clientCreate, clientUpdateMemo } from "@/api/apiCaller";
 
 function Clients() {
   const [memoClient, setMemoClient] = useState(null);
@@ -175,11 +175,38 @@ function Clients() {
         <EditorModal
         open={true}
         onClose={handleCloseMemo}
-        onSave={() => {
-          handleCloseMemo(); 
-          setToastMessage('내담자 메모가 저장 되었습니다.');
-          setShowToast(true); 
-          setTimeout(() => setShowToast(false), 2000);
+        onSave={async (memoValue) => {
+          try {
+            const response = await clientUpdateMemo({
+              clientSeq: memoClient.clientSeq,
+              memo: memoValue
+            });
+            
+            if (response.code === 200) {
+              // 성공 시 로컬 상태 업데이트
+              setClients(prevClients => 
+                prevClients.map(client => 
+                  client.clientSeq === memoClient.clientSeq 
+                    ? { ...client, memo: memoValue }
+                    : client
+                )
+              );
+              
+              handleCloseMemo();
+              setToastMessage('내담자 메모가 저장되었습니다.');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 2000);
+            } else {
+              setToastMessage(response.message || '메모 저장에 실패했습니다.');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 2000);
+            }
+          } catch (error) {
+            console.error('메모 저장 오류:', error);
+            setToastMessage('메모 저장 중 오류가 발생했습니다.');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
+          }
         }}
         title="내담자 메모"
         className="client-memo"
