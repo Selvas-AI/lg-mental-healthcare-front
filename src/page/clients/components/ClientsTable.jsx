@@ -2,14 +2,42 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import { clientsState } from "@/recoil";
+import { clientSearch } from "@/api/apiCaller";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
 function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoClient, onCloseMemo }) {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [clients] = useRecoilState(clientsState);
+  const [clients, setClients] = useRecoilState(clientsState);
   const [searchValue, setSearchValue] = useState("");
   const [filteredClients, setFilteredClients] = useState(clients);
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc': 오름차순, 'desc': 내림차순
+  const [sessionStatus, setSessionStatus] = useState(1); // 1: 진행중, 0: 종결
+
+  // sessionStatus에 따라 내담자 목록 조회
+  const loadClientsByStatus = async (status) => {
+    try {
+      const response = await clientSearch({
+        clientName: '',
+        sessionStatus: status
+      });
+      
+      if (response.code === 200 && Array.isArray(response.data)) {
+        setClients(response.data);
+      } else {
+        console.error('내담자 목록 조회 실패:', response);
+        setClients([]);
+      }
+    } catch (error) {
+      console.error('내담자 목록 조회 오류:', error);
+      setClients([]);
+    }
+  };
+
+  // 진행중/종결 라디오 버튼 변경 핸들러
+  const handleStatusChange = (status) => {
+    setSessionStatus(status);
+    loadClientsByStatus(status);
+  };
 
   const handleSearch = () => {
     const keyword = searchValue.trim();
@@ -68,6 +96,11 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     setFilteredClients(sortedClients);
   };
 
+  // 컴포넌트 마운트 시 초기 내담자 목록 로드 (진행중)
+  useEffect(() => {
+    loadClientsByStatus(1); // 초기값: 진행중
+  }, []);
+
   useEffect(() => {
     const sortedClients = sortClientsByName(clients, sortOrder);
     setFilteredClients(sortedClients);
@@ -80,11 +113,23 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
             <div className="left">
               <div className="raido-toggle">
                 <div className="toggle-btn">
-                  <input id="radio03" type="radio" name="raidoToggle" defaultChecked />
+                  <input 
+                    id="radio03" 
+                    type="radio" 
+                    name="raidoToggle" 
+                    checked={sessionStatus === 1}
+                    onChange={() => handleStatusChange(1)}
+                  />
                   <label htmlFor="radio03">진행중</label>
                 </div>
                 <div className="toggle-btn">
-                  <input id="radio04" type="radio" name="raidoToggle" />
+                  <input 
+                    id="radio04" 
+                    type="radio" 
+                    name="raidoToggle" 
+                    checked={sessionStatus === 0}
+                    onChange={() => handleStatusChange(0)}
+                  />
                   <label htmlFor="radio04">종결</label>
                 </div>
               </div>

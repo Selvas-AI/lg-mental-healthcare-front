@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 function ClientRegisterModal({ open, onClose, onSave, mode = "register", initialData = null }) {
   const [openGuardianSelect, setOpenGuardianSelect] = useState([]);
   const [openEmailSelect, setOpenEmailSelect] = useState(false);
+  const [selectedEmailDomain, setSelectedEmailDomain] = useState(''); // select-box에서 선택된 도메인
   const emailOptionListRef = useRef(null);
   const [emailListHeight, setEmailListHeight] = useState(0);
   const guardianOptionListRefs = useRef([]);
@@ -56,9 +57,16 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
 
   const handleFormChange = (e) => {
     const { id, value } = e.target;
-    // address는 clientsAddress로 id가 들어오므로 예외 처리
+    // 필드명 매핑 처리
     if (id === 'clientsAddress') {
       setForm(f => ({ ...f, address: value }));
+    } else if (id === 'email') {
+      // 이메일 아이디 입력 필드
+      setForm(f => ({ ...f, emailId: value }));
+    } else if (id === 'emailDomain') {
+      // 이메일 도메인 직접 입력 시 select-box 초기화
+      setForm(f => ({ ...f, emailDomain: value }));
+      setSelectedEmailDomain(''); // select-box 선택 상태 초기화
     } else {
       setForm(f => ({ ...f, [id]: value }));
     }
@@ -71,14 +79,10 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
         guardians = [{ relation: '', name: '', phone: '' }];
       }
       let birthYear = '', birthMonth = '', birthDay = '';
-      if (initialData.birth) {
-        const birthStr = initialData.birth.split(' ')[0];
-        const birthParts = birthStr.split('.');
-        if (birthParts.length === 3) {
-          birthYear = birthParts[0];
-          birthMonth = birthParts[1];
-          birthDay = birthParts[2];
-        } else if (/^\d{8}$/.test(birthStr.replace(/\D/g, ''))) {
+      // API 응답에서 birthDate는 'YYYYMMDD' 형식
+      if (initialData.birthDate) {
+        const birthStr = initialData.birthDate.toString();
+        if (/^\d{8}$/.test(birthStr)) {
           birthYear = birthStr.slice(0,4);
           birthMonth = birthStr.slice(4,6);
           birthDay = birthStr.slice(6,8);
@@ -87,23 +91,36 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       let emailId = '', emailDomain = '';
       if (initialData.email && initialData.email.includes('@')) {
         [emailId, emailDomain] = initialData.email.split('@');
+        // 미리 정의된 도메인인 경우 selectedEmailDomain 설정
+        if (['naver.com', 'gmail.com', 'daum.net'].includes(emailDomain)) {
+          setSelectedEmailDomain(emailDomain);
+        } else {
+          setSelectedEmailDomain(''); // 직접 입력된 도메인인 경우
+        }
+      } else {
+        setSelectedEmailDomain(''); // 이메일이 없는 경우
       }
-      let phoneNumber = initialData.phone || '';
+      let phoneNumber = initialData.contactNumber || initialData.phone || '';
       let memo = initialData.memo || '';
       setForm({
         ...INITIAL_FORM,
-        ...initialData,
+        name: initialData.clientName || initialData.name || '',
+        nickname: initialData.nickname || '',
         birthYear,
         birthMonth,
         birthDay,
+        gender: initialData.gender === 'F' ? 'female' : initialData.gender === 'M' ? 'male' : '',
+        phoneNumber,
+        address: initialData.address || '',
         emailId,
         emailDomain,
-        phoneNumber,
+        job: initialData.job || '',
         memo,
         guardians
       });
     } else if (open && !initialData) {
       setForm(INITIAL_FORM);
+      setSelectedEmailDomain(''); // 새 등록 시 selectedEmailDomain 초기화
     }
   }, [open, initialData]);
 
@@ -140,26 +157,26 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     });
   }, [form.guardians]);
 
-    // 이메일 드롭다운 높이 동기화
-    useEffect(() => {
-      if (openEmailSelect && emailOptionListRef.current) {
-        setEmailListHeight(emailOptionListRef.current.scrollHeight);
-      } else {
-        setEmailListHeight(0);
-      }
-    }, [openEmailSelect, form.emailDomain]);
-  
-    // 보호자 드롭다운 높이 동기화
-    useEffect(() => {
-      setGuardianListHeights(
-        (Array.isArray(form.guardians) ? form.guardians : [{relation:'',name:'',phone:''}])
-          .map((_, idx) =>
-            openGuardianSelect[idx] && guardianOptionListRefs.current[idx]
-              ? guardianOptionListRefs.current[idx].scrollHeight
-              : 0
-          )
-      );
-    }, [openGuardianSelect, form.guardians]);
+  // 이메일 드롭다운 높이 동기화
+  useEffect(() => {
+    if (openEmailSelect && emailOptionListRef.current) {
+      setEmailListHeight(emailOptionListRef.current.scrollHeight);
+    } else {
+      setEmailListHeight(0);
+    }
+  }, [openEmailSelect, form.emailDomain]);
+
+  // 보호자 드롭다운 높이 동기화
+  useEffect(() => {
+    setGuardianListHeights(
+      (Array.isArray(form.guardians) ? form.guardians : [{relation:'',name:'',phone:''}])
+        .map((_, idx) =>
+          openGuardianSelect[idx] && guardianOptionListRefs.current[idx]
+            ? guardianOptionListRefs.current[idx].scrollHeight
+            : 0
+        )
+    );
+  }, [openGuardianSelect, form.guardians]);
 
   if (!open) return null;
 
@@ -296,8 +313,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                 <li>
                   <label htmlFor="clientsAddress">주소</label>
                   <div className="input-wrap search">
-                    <input id="clientsAddress" value={form.address || ""} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} type="text" placeholder="주소 검색" />
-                    <button className="search-btn" type="button" aria-label="검색"></button>
+                    <input id="clientsAddress" value={form.address || ""} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} type="text" placeholder="주소 입력" />
+                    {/* <button className="search-btn" type="button" aria-label="검색"></button> */}
                   </div>
                 </li>
                 <li>
@@ -312,17 +329,26 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                     </div>
                     <div className="select-wrap">
                       <div className="select-box">
-                        <button className={`select-item ${openEmailSelect ? ' on' : ''}`} type="button" onClick={() => setOpenEmailSelect(open => !open)}>
-                          {form.emailDomain || '선택'}
+                        <button 
+                          className={`select-item ${openEmailSelect ? ' on' : ''}`} 
+                          type="button" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOpenEmailSelect(open => !open);
+                          }}
+                        >
+                          {selectedEmailDomain || '선택'}
                         </button>
                         <ul ref={emailOptionListRef}
                           className={`option-list${openEmailSelect ? ' open' : ''}`}
                           style={dropdownStyle(openEmailSelect)}>
                           {["naver.com","gmail.com","daum.net"].map(opt => (
-                            <li key={opt} className={form.emailDomain === opt ? 'on' : ''}>
+                            <li key={opt} className={selectedEmailDomain === opt ? 'on' : ''}>
                               <a href="#" onClick={e => {
                                 e.preventDefault();
-                                setForm(f => ({...f, emailDomain: opt}));
+                                setForm(f => ({...f, emailDomain: opt})); // 직접 입력 값도 선택값으로 변경
+                                setSelectedEmailDomain(opt); // select-box 선택 상태 설정
                                 setOpenEmailSelect(false);
                               }}>{opt}</a>
                             </li>
@@ -340,7 +366,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                 </li>
                 <li>
                   <label>보호자 정보</label>
-                  {/* 혹시라도 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
+                  {/* 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
                   {(Array.isArray(form.guardians) ? form.guardians : []).map((g, idx) => {
                     const guardian = (g && typeof g === 'object') ? g : { relation: '', name: '', phone: '' };
 
@@ -349,9 +375,17 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                       <div className="input-cont input-add" key={idx}>
                         <div className="select-wrap">
                           <div className="select-box" style={{zIndex: openGuardianSelect[idx] ? 1000 : 0}}>
-                            <button className={`select-item ${openGuardianSelect[idx] ? ' on' : ''}`} type="button" onClick={() => setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? !v : false))}>
-                                {guardian.relation || '선택'}
-                              </button>
+                            <button 
+                              className={`select-item ${openGuardianSelect[idx] ? ' on' : ''}`} 
+                              type="button" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? !v : false));
+                              }}
+                            >
+                              {guardian.relation || '선택'}
+                            </button>
                               <ul 
                                 ref={el => guardianOptionListRefs.current[idx] = el}
                                 className={`option-list${openGuardianSelect[idx] ? ' open' : ''}`}

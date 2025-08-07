@@ -31,5 +31,10 @@ export const clientCreate = async (clientData) => {
     return await axiosIns.post('/api/client/create', clientData)
 }
 
+// 내담자 정보 수정
+export const clientUpdate = async (clientData) => {
+    return await axiosIns.post('/api/client/update', clientData)
+}
+
 
 //! ===== 상담 세션 관리 =====

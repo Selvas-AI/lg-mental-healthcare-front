@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { maskingState, clientsState, foldState, supportPanelState } from "@/recoil";
+import { clientUpdate, clientCreate, clientSearch } from "@/api/apiCaller";
+import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
 
 import ClientRegisterModal from "../components/ClientRegisterModal";
@@ -24,6 +26,7 @@ function Sessions() {
   const clientId = query.get("clientId");
   const navigate = useNavigate();
   const clients = useRecoilValue(clientsState);
+  const setClients = useSetRecoilState(clientsState);
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
@@ -32,14 +35,190 @@ function Sessions() {
   const [recordSelectOpen, setRecordSelectOpen] = useState(false);
   const fold = useRecoilValue(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [sessionStatus, setSessionStatus] = useState(1); // 1: 진행중, 0: 종결
+  const [clientListData, setClientListData] = useState([]); // ClientList 전용 데이터
 
-  const onSave = (clientData) => {
-    if (editClient) {
-      // TODO: 수정 로직 구현
-    } else {
-      // TODO: 등록 로직 구현
+  // 페이지 로드 시 내담자 목록 fetch (새로고침 대응)
+  useEffect(() => {
+    const fetchClientsIfEmpty = async () => {
+      // clients가 비어있거나 현재 clientId에 해당하는 내담자가 없는 경우
+      if (clients.length === 0 || (clientId && !client)) {
+        try {
+          const response = await clientSearch({
+            clientName: '',
+            sessionStatus: sessionStatus  // 현재 선택된 상태로 조회
+          });
+          if (response.code === 200 && Array.isArray(response.data)) {
+            setClients(response.data);
+            // ClientList 데이터도 동시에 초기화
+            setClientListData(response.data);
+          } else {
+            console.error('내담자 목록 조회 실패:', response);
+            setClients([]);
+            setClientListData([]);
+          }
+        } catch (error) {
+          console.error('내담자 목록 조회 오류:', error);
+          setClients([]);
+          setClientListData([]);
+        }
+      }
+    };
+
+    fetchClientsIfEmpty();
+    
+  }, [clients.length, clientId, client, setClients]);
+
+  // sessionStatus 변경 핸들러 (진행중/종결 라디오 버튼 클릭 시)
+  // ClientList만 업데이트하고 현재 선택된 내담자 정보는 유지
+  const handleStatusChange = async (status) => {
+    setSessionStatus(status);
+    try {
+      const response = await clientSearch({
+        clientName: '',
+        sessionStatus: status
+      });
+      
+      if (response.code === 200 && Array.isArray(response.data)) {
+        setClientListData(response.data); // ClientList 전용 데이터만 업데이트
+      } else {
+        console.error('내담자 목록 조회 실패:', response);
+        setClientListData([]);
+      }
+    } catch (error) {
+      console.error('내담자 목록 조회 오류:', error);
+      setClientListData([]);
     }
-    setRegisterOpen(false);
+  };
+
+  const onSave = async (clientData) => {
+    try {
+      if (editClient) {
+        // 내담자 정보 수정 - 변경된 필드만 전송
+        const updateData = { clientSeq: editClient.clientSeq };
+        
+        // 변경된 필드만 포함
+        if (clientData.name !== editClient.clientName) {
+          updateData.clientName = clientData.name;
+        }
+        if ((clientData.nickname || '') !== (editClient.nickname || '')) {
+          updateData.nickname = clientData.nickname || '';
+        }
+        
+        const newBirthDate = `${clientData.birthYear}${clientData.birthMonth.padStart(2, '0')}${clientData.birthDay.padStart(2, '0')}`;
+        if (newBirthDate !== editClient.birthDate) {
+          updateData.birthDate = newBirthDate;
+        }
+        
+        const newGender = clientData.gender === 'female' ? 'F' : clientData.gender === 'male' ? 'M' : clientData.gender;
+        if (newGender !== editClient.gender) {
+          updateData.gender = newGender;
+        }
+        
+        if (clientData.phoneNumber !== editClient.contactNumber) {
+          updateData.contactNumber = clientData.phoneNumber;
+        }
+        if ((clientData.address || '') !== (editClient.address || '')) {
+          updateData.address = clientData.address || '';
+        }
+        
+        const newEmail = clientData.emailId && clientData.emailDomain ? `${clientData.emailId}@${clientData.emailDomain}` : '';
+        if (newEmail !== (editClient.email || '')) {
+          updateData.email = newEmail;
+        }
+        
+        if ((clientData.job || '') !== (editClient.job || '')) {
+          updateData.job = clientData.job || '';
+        }
+        if ((clientData.memo || '') !== (editClient.memo || '')) {
+          updateData.memo = clientData.memo || '';
+        }
+        
+        // 보호자 정보 변경 확인 (의미있는 데이터만 비교)
+        const hasValidGuardianData = (guardians) => {
+          if (!Array.isArray(guardians) || guardians.length === 0) return false;
+          return guardians.some(g => g.relation || g.name || g.phone);
+        };
+        
+        const currentHasGuardians = hasValidGuardianData(editClient.guardian);
+        const newHasGuardians = hasValidGuardianData(clientData.guardians);
+        
+        // 의미있는 보호자 데이터가 변경된 경우만 전송
+        if (currentHasGuardians !== newHasGuardians || 
+            (newHasGuardians && JSON.stringify(editClient.guardian || []) !== JSON.stringify(clientData.guardians || []))) {
+          updateData.guardian = newHasGuardians ? clientData.guardians : null;
+        }
+        
+        console.log('전송할 수정 데이터 (변경된 필드만):', updateData);
+        
+        const response = await clientUpdate(updateData);
+        if (response.code === 200) {
+          // 내담자 정보 수정 후 최신 데이터 다시 불러오기
+          try {
+            const refreshResponse = await clientSearch({
+              clientName: '',
+              sessionStatus: 1  // 진행중 내담자 목록 새로고침
+            });
+            if (refreshResponse.code === 200 && Array.isArray(refreshResponse.data)) {
+              setClients(refreshResponse.data);
+            }
+          } catch (refreshError) {
+            console.error('내담자 목록 새로고침 실패:', refreshError);
+            // 새로고침 실패 시 기존 방식으로 폴백
+            setClients(prevClients => 
+              prevClients.map(client => 
+                client.clientSeq === editClient.clientSeq 
+                  ? { ...client, ...updateData }
+                  : client
+              )
+            );
+          }
+          setToastMessage('내담자 정보가 수정되었습니다.');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+        } else {
+          setToastMessage(response.message || '내담자 정보 수정에 실패했습니다.');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+        }
+      } else {
+        const registerData = {
+          clientName: clientData.name,
+          nickname: clientData.nickname || '',
+          birthDate: `${clientData.birthYear}${clientData.birthMonth.padStart(2, '0')}${clientData.birthDay.padStart(2, '0')}`,
+          gender: clientData.gender === 'female' ? 'F' : clientData.gender === 'male' ? 'M' : clientData.gender,
+          contactNumber: clientData.phoneNumber,
+          address: clientData.address || '',
+          email: clientData.emailId && clientData.emailDomain ? `${clientData.emailId}@${clientData.emailDomain}` : '',
+          job: clientData.job || '',
+          guardian: clientData.guardians || null,
+          memo: clientData.memo || ''
+        };
+        
+        console.log('전송할 등록 데이터:', registerData);
+        
+        const response = await clientCreate(registerData);
+        if (response.code === 200) {
+          setClients(prevClients => [...prevClients, response.data]);
+          setToastMessage('내담자가 등록되었습니다.');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+        } else {
+          setToastMessage(response.message || '내담자 등록에 실패했습니다.');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+        }
+      }
+      setRegisterOpen(false);
+      setEditClient(null);
+    } catch (error) {
+      console.error('내담자 정보 처리 중 오류:', error);
+      setToastMessage('처리 중 오류가 발생했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    }
   };
 
   const handleSelectClient = (client) => {
@@ -56,9 +235,11 @@ function Sessions() {
   return (
     <>
       <ClientList
-        clients={clients}
+        clients={clientListData}
         onSelect={handleSelectClient}
         fold={fold}
+        sessionStatus={sessionStatus}
+        onStatusChange={handleStatusChange}
       />
       <div className="inner">
         <div className="move-up">
@@ -116,6 +297,7 @@ function Sessions() {
           )}
         </div>
       </div>
+      <ToastPop message={toastMessage} showToast={showToast} />
       <ClientRegisterModal
         open={registerOpen}
         onClose={() => setRegisterOpen(false)}

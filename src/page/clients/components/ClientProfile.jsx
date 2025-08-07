@@ -1,7 +1,9 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { useRecoilValue } from "recoil";
-import { maskingState } from "@/recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { maskingState, clientsState } from "@/recoil";
+import { clientUpdate } from "@/api/apiCaller";
 import ClientRegisterModal from "./ClientRegisterModal";
+import ToastPop from "@/components/ToastPop";
 
 function ClientProfile({ profileData, onEdit }) {
   const masked = useRecoilValue(maskingState);
@@ -23,13 +25,89 @@ function ClientProfile({ profileData, onEdit }) {
   }, [showInfo]);
 
   
-  const onSave = (clientData) => {
-    if (editClient) {
-      // TODO: 수정 로직 구현
-    } else {
-      // TODO: 등록 로직 구현
+  const setClients = useSetRecoilState(clientsState);
+
+  const onSave = async (clientData) => {
+    try {
+      if (editClient) {
+        // 내담자 정보 수정 - 변경된 필드만 전송
+        const updateData = { clientSeq: editClient.clientSeq };
+        
+        // 변경된 필드만 포함
+        if (clientData.name !== editClient.clientName) {
+          updateData.clientName = clientData.name;
+        }
+        if ((clientData.nickname || '') !== (editClient.nickname || '')) {
+          updateData.nickname = clientData.nickname || '';
+        }
+        
+        const newBirthDate = `${clientData.birthYear}${clientData.birthMonth.padStart(2, '0')}${clientData.birthDay.padStart(2, '0')}`;
+        if (newBirthDate !== editClient.birthDate) {
+          updateData.birthDate = newBirthDate;
+        }
+        
+        const newGender = clientData.gender === 'female' ? 'F' : clientData.gender === 'male' ? 'M' : clientData.gender;
+        if (newGender !== editClient.gender) {
+          updateData.gender = newGender;
+        }
+        
+        if (clientData.phoneNumber !== editClient.contactNumber) {
+          updateData.contactNumber = clientData.phoneNumber;
+        }
+        if ((clientData.address || '') !== (editClient.address || '')) {
+          updateData.address = clientData.address || '';
+        }
+        
+        const newEmail = clientData.emailId && clientData.emailDomain ? `${clientData.emailId}@${clientData.emailDomain}` : '';
+        if (newEmail !== (editClient.email || '')) {
+          updateData.email = newEmail;
+        }
+        
+        if ((clientData.job || '') !== (editClient.job || '')) {
+          updateData.job = clientData.job || '';
+        }
+        if ((clientData.memo || '') !== (editClient.memo || '')) {
+          updateData.memo = clientData.memo || '';
+        }
+        
+        // 보호자 정보 변경 확인 (의미있는 데이터만 비교)
+        const hasValidGuardianData = (guardians) => {
+          if (!Array.isArray(guardians) || guardians.length === 0) return false;
+          return guardians.some(g => g.relation || g.name || g.phone);
+        };
+        
+        const currentHasGuardians = hasValidGuardianData(editClient.guardian);
+        const newHasGuardians = hasValidGuardianData(clientData.guardians);
+        
+        // 의미있는 보호자 데이터가 변경된 경우만 전송
+        if (currentHasGuardians !== newHasGuardians || 
+            (newHasGuardians && JSON.stringify(editClient.guardian || []) !== JSON.stringify(clientData.guardians || []))) {
+          updateData.guardian = newHasGuardians ? clientData.guardians : null;
+        }
+        
+        console.log('전송할 수정 데이터 (변경된 필드만):', updateData);
+        
+        const response = await clientUpdate(updateData);
+        if (response.success) {
+          // Recoil 상태 업데이트
+          setClients(prevClients => 
+            prevClients.map(client => 
+              client.clientSeq === editClient.clientSeq 
+                ? { ...client, ...updateData }
+                : client
+            )
+          );
+          ToastPop({ type: 'success', message: '내담자 정보가 수정되었습니다.' });
+        } else {
+          ToastPop({ type: 'error', message: response.message || '내담자 정보 수정에 실패했습니다.' });
+        }
+      }
+      setRegisterOpen(false);
+      setEditClient(null);
+    } catch (error) {
+      console.error('내담자 정보 수정 중 오류:', error);
+      ToastPop({ type: 'error', message: '처리 중 오류가 발생했습니다.' });
     }
-    setRegisterOpen(false);
   };
 
 function maskName(name) {
@@ -85,10 +163,11 @@ function maskValue(label, value) {
   const phone = masked ? maskValue('연락처', profileData.contactNumber) : profileData.contactNumber;
   const address = masked ? maskValue('주소', profileData.address) : profileData.address;
   function getKoreanAge(birthStr) {
-  // 'YYYY.MM.DD' 형식에서 만 나이 계산
-  const match = birthStr.match(/(\d{4})\.(\d{2})\.(\d{2})/);
-  if (!match) return '';
-  const [ , y, m, d ] = match;
+  // 'YYYYMMDD' 형식에서 만 나이 계산
+  if (!birthStr || birthStr.length !== 8) return '';
+  const y = birthStr.slice(0, 4);
+  const m = birthStr.slice(4, 6);
+  const d = birthStr.slice(6, 8);
   const birthDate = new Date(`${y}-${m}-${d}`);
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -98,16 +177,25 @@ function maskValue(label, value) {
   }
   return age;
 }
+// birthDate를 YYYY.MM.DD 형식으로 변환하여 표시
+function formatBirthDate(birthDate) {
+  if (!birthDate || birthDate.length !== 8) return '';
+  const y = birthDate.slice(0, 4);
+  const m = birthDate.slice(4, 6);
+  const d = birthDate.slice(6, 8);
+  return `${y}.${m}.${d}`;
+}
+
 const birth = masked
-  ? maskValue('생년월일', profileData.birth) + ' (만 **세)'
-  : profileData.birth + (profileData.birth && /\d{4}\.\d{2}\.\d{2}/.test(profileData.birth) ? ` (만 ${getKoreanAge(profileData.birth)}세)` : '');
+  ? maskValue('생년월일', formatBirthDate(profileData.birthDate)) + ' (만 **세)'
+  : formatBirthDate(profileData.birthDate) + (profileData.birthDate ? ` (만 ${getKoreanAge(profileData.birthDate)}세)` : '');
 const age = masked ? maskValue('나이', profileData.age) : profileData.age;
   const email = masked ? maskValue('이메일', profileData.email) : profileData.email;
   function getKoreanGender(gender) {
   if (!gender) return '';
-  const g = gender.toLowerCase();
-  if (g === 'male' || g === 'm' || g === '남' || g === '남자') return '남자';
-  if (g === 'female' || g === 'f' || g === '여' || g === '여자') return '여자';
+  // API 응답에서 F/M 형식으로 오는 경우 처리
+  if (gender === 'F' || gender === 'female' || gender === '여' || gender === '여자') return '여자';
+  if (gender === 'M' || gender === 'male' || gender === '남' || gender === '남자') return '남자';
   return gender;
 }
 const gender = masked ? '**' : getKoreanGender(profileData.gender);
@@ -151,7 +239,14 @@ function formatPhoneNumber(phone) {
   const memo = masked ? (profileData.memo ? profileData.memo.replace(/[^\s]/g, '*') : '') : (profileData.memo || '');
 
   const handleEdit = () => {
-    onEdit && onEdit(profileData);
+    // 부모 컴포넌트에서 onEdit prop이 제공된 경우 부모가 처리하도록 함
+    if (onEdit) {
+      onEdit(profileData);
+    } else {
+      // 부모 컴포넌트에서 onEdit이 없는 경우 자체적으로 처리
+      setEditClient(profileData);
+      setRegisterOpen(true);
+    }
   }
 
   const handleEditMemo = () => {

@@ -20,6 +20,7 @@ function Clients() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [totalClientsExist, setTotalClientsExist] = useState(false); // 전체 내담자 존재 여부
   
   const handleSaveRegister = async (formData) => {
     try {
@@ -68,21 +69,46 @@ function Clients() {
         // 중복된 사용자 에러
         setToastMessage('이미 등록된 내담자입니다.');
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        setTimeout(() => setShowToast(false), 2000);
       } else {
         setToastMessage(response.message || '내담자 등록에 실패했습니다.');
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        setTimeout(() => setShowToast(false), 2000);
       }
     } catch (error) {
       console.error('내담자 등록 오류:', error);
       setToastMessage('내담자 등록 중 오류가 발생했습니다.');
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      setTimeout(() => setShowToast(false), 2000);
     }
   }
 
-  // 내담자 목록 로드
+  // 전체 내담자 존재 여부 확인 (진행중 + 종결)
+  const checkTotalClientsExist = async () => {
+    try {
+      // 진행중 내담자 확인
+      const activeResponse = await clientSearch({
+        clientName: '',
+        sessionStatus: 1
+      });
+      
+      // 종결 내담자 확인
+      const completedResponse = await clientSearch({
+        clientName: '',
+        sessionStatus: 0
+      });
+      
+      const activeCount = (activeResponse.code === 200 && activeResponse.data) ? activeResponse.data.length : 0;
+      const completedCount = (completedResponse.code === 200 && completedResponse.data) ? completedResponse.data.length : 0;
+      
+      setTotalClientsExist(activeCount > 0 || completedCount > 0);
+    } catch (error) {
+      console.error('전체 내담자 확인 오류:', error);
+      setTotalClientsExist(false);
+    }
+  };
+
+  // 내담자 목록 로드 (ClientsTable에서 직접 처리하므로 여기서는 전체 존재 여부만 확인)
   const loadClients = async () => {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
@@ -92,26 +118,12 @@ function Clients() {
 
     setLoading(true);
     try {
-      // 전체 내담자 목록 조회 (진행중)
-      const response = await clientSearch({
-        clientName: '',
-        sessionStatus: 1  // 진행중
-      });
-      
-      if (response.code === 200) {
-        setClients(response.data || []);
-        // 첫 번째 내담자를 기본 선택
-        if (response.data && response.data.length > 0) {
-          setSelectedClientId(response.data[0].id);
-        }
-      } else {
-        console.error('내담자 목록 조회 실패:', response.message);
-      }
+      await checkTotalClientsExist();
     } catch (error) {
       console.error('내담자 목록 로드 오류:', error);
       setToastMessage('내담자 목록을 불러오는데 실패했습니다.');
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      setTimeout(() => setShowToast(false), 2000);
     } finally {
       setLoading(false);
     }
@@ -140,7 +152,7 @@ function Clients() {
             내담자 등록
           </button>
         </div>
-        {clients.length === 0 ? (
+        {!totalClientsExist ? (
           <EmptyClients onRegister={handleRegister} />
         ) : (
           <ClientsTable
