@@ -8,13 +8,16 @@ import { clientsState } from "@/recoil";
 import { useLocation } from "react-router-dom";
 import ChartBarStacked from "./ChartBarStacked";
 
-function CounselLog({ setIsNoshow, sessionMngData }) {
+function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   const clients = useRecoilValue(clientsState);
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
+  
+  // sessionData에서 상담일지 작성 여부 확인
+  const isCounselNoteCompleted = sessionData?.todoCounselNote === true;
   const logData = sessionMngData ? [{
     mainIssue: sessionMngData.chiefComplaintText || sessionMngData.chiefComplaintAi || '',
     content: sessionMngData.sessionSummaryText || sessionMngData.sessionSummaryAi || '',
@@ -35,14 +38,14 @@ function CounselLog({ setIsNoshow, sessionMngData }) {
           {logData.length === 0 ? (
             <>
               <button className="type05 white h40" type="button" onClick={() => setIsNoshow(true)}>노쇼 처리</button>
-              <button className="type05 h40" type="button">상담일지 작성</button>
+              <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 작성</button>
             </>
           ) : (
             <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 상세</button>
           )}
         </div>
       </div>
-      {logData.length === 0 ? (
+      {!isCounselNoteCompleted ? (
         <div className="empty-board">
           <img src={emptyFace} alt="empty" />
           <p className="empty-tit">해당 회기 상담일지 작성 내역이 없습니다. 상담일지를 작성해주세요.</p>
@@ -55,7 +58,7 @@ function CounselLog({ setIsNoshow, sessionMngData }) {
             <div className={`urgency ${client?.crisisLevel || ''}`}>
               <div className="box-tit">
                 <strong>1. 자살, 위기 수준의 긴급도</strong>
-                <a className="edit-btn" onClick={() => {}}>수정</a>
+                <a className="edit-btn" onClick={() => { navigate("/clients/consults/detail") }}>수정</a>
               </div>
               <div className="con-wrap">
                 <div className="risk-scale">
@@ -96,7 +99,7 @@ function CounselLog({ setIsNoshow, sessionMngData }) {
             <div className="severity">
               <div className="box-tit">
                 <strong>2. 현재 증상의 심각도</strong>
-                <a className="edit-btn" onClick={() => {}}>수정</a>
+                <a className="edit-btn" onClick={() => { navigate("/clients/consults/detail") }}>수정</a>
               </div>
               <div className="con-wrap">
                 <ChartBarStacked />

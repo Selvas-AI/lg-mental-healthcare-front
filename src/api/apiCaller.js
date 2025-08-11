@@ -87,6 +87,14 @@ export const timelineList = async (clientSeq) => {
 
 //! ===== 상담관리 API =====
 // 상담관리 조회
+export const sessionMngFind = async (sessionSeq) => {
+    return await axiosIns.get('/api/sessionMng/find', {
+        params: { sessionSeq }
+    })
+}
+
+//! ===== 상담일지 API =====
+// 상담일지 관련 조회
 export const sessionNoteFind = async (sessionSeq) => {
     return await axiosIns.get('/api/sessionNote/find', {
         params: { sessionSeq }

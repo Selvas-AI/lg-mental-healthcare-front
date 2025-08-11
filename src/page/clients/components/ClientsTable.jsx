@@ -88,6 +88,23 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     return phone; // 11자리가 아니면 원본 반환
   };
 
+  // TODO 목록 생성 함수 (currentSession의 false인 값만 표시)
+  const generateTodos = (client) => {
+    if (!client.currentSession) return [];
+    
+    const session = client.currentSession;
+    const todos = [];
+    
+    if (session.todoTranscriptCreation === false) todos.push('녹음파일 등록');
+    if (session.todoAiAnalysisDone === false) todos.push('녹취록 분석');
+    if (session.todoAiAnalysisCheck === false) todos.push('AI 분석 확인');
+    if (session.todoCounselNote === false) todos.push('상담일지 작성');
+    if (session.todoPsychTestRequest === false) todos.push('심리검사 요청');
+    if (session.todoCaseCenceptInital === false) todos.push('사례개념화 최초 작성');
+    
+    return todos;
+  };
+
   // To-Do 클릭 시 정렬 토글
   const handleSortToggle = () => {
     const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
@@ -271,23 +288,26 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                     </td>
                     <td>{formatPhoneNumber(client.contactNumber)}</td>
                     <td>
-                      {client.session === "신규" ? (
-                        "신규"
+                      {client.currentSession === null ? (
+                        <span className="text-[#32D074]">신규</span>
                       ) : (
                         <Link to={`/clients/consults?clientId=${client.clientSeq}`}>
-                          {client.session}
+                          {client.currentSession.sessionNo}회기 
                         </Link>
                       )}
                     </td>
                     <td>
                       <div className="flex-wrap">
-                        {client.todos && client.todos.length > 0 ? (
-                          client.todos.map((todo, i) => (
-                            <a key={i}>{todo}</a>
-                          ))
-                        ) : (
-                          "-"
-                        )}
+                        {(() => {
+                          const todos = generateTodos(client);
+                          return todos.length > 0 ? (
+                            todos.map((todo, i) => (
+                              <a key={i}>{todo}</a>
+                            ))
+                          ) : (
+                            "-"
+                          );
+                        })()}
                       </div>
                     </td>
                     <td>

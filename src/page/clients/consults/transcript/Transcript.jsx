@@ -7,41 +7,59 @@ import StressBox from "./StressBox";
 import { useNavigate } from "react-router-dom";
 import TranscriptBox from "./TranscriptBox";
 
-function Transcript({ setShowUploadModal }) {
+function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
   const navigate = useNavigate();
-  const isAIGenerated = true;
-  const TranscriptData = [
-    {
-      summary: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.",
-      issues: [
-        "원인을 알 수 없는 불안감 호소",
-        "간헐적 불면증",
-        // "낮은 자존감으로 인한 대인관계 어려움",
-        // "예시 텍스트",
-        // "예시 텍스트",
-        // "예시 텍스트"
-      ],
-      keyword: [
-        { text: '힘들어', freq: 18, x: 240, y: 70 },
-        { text: '트라우마', freq: 16, x: 370, y: 70 },
-        { text: '죽고싶은', freq: 12, x: 155, y: 100 },
-        { text: '괴롭힘', freq: 12, x: 100, y: 50 },
-        { text: '우울감', freq: 11, x: 50, y: 100 },
-        { text: '잘했다', freq: 10, x: 35, y: 35 },
-        { text: '엄마', freq: 9, x: 165, y: 35 },
-        { text: '후회', freq: 8, x: 308, y: 110 },
-        { text: '사랑', freq: 8, x: 310, y: 25 }
-      ],
-      frequency: {
-        counselor: { minutes: 12},
-        client: { minutes: 45}
-      },
-      stress: {
-        data: [2.5, 6.2, 4.8, 3.5, 9, 4.2, 5.5],
-        labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
-      }
+  
+  // sessionMngData에서 실제 데이터 추출
+  const hasData = sessionMngData && Object.keys(sessionMngData).length > 0;
+  const isAIGenerated = hasData && (
+    sessionMngData.counselingSummaryAi || 
+    sessionMngData.concernTopicAi || 
+    sessionMngData.keywordAnalysisJson || 
+    sessionMngData.utteranceFrequencyJson || 
+    sessionMngData.stressIndicatorsJson
+  );
+  
+  // sessionData에서 TODO 상태 확인
+  const isTranscriptCreated = sessionData?.todoTranscriptCreation === true;
+  const isAiAnalysisDone = sessionData?.todoAiAnalysisDone === true;
+  const isAiAnalysisChecked = sessionData?.todoAiAnalysisCheck === true;
+  
+  // JSON 파싱 함수
+  const parseJsonSafely = (jsonString) => {
+    try {
+      return jsonString ? JSON.parse(jsonString) : null;
+    } catch (error) {
+      console.error('JSON 파싱 오류:', error);
+      return null;
     }
-  ];
+  };
+
+  const getTranscriptData = () => {
+    if (!hasData) return null;
+    
+    const keywordData = parseJsonSafely(sessionMngData.keywordAnalysisJson);
+    const frequencyData = parseJsonSafely(sessionMngData.utteranceFrequencyJson);
+    const stressData = parseJsonSafely(sessionMngData.stressIndicatorsJson);
+    
+    return {
+      // AI 생성 상담요약 또는 수동 입력 상담요약
+      summary: sessionMngData.counselingSummaryAi || sessionMngData.counselingSummaryText || '',
+      // AI 생성 고민주제 또는 수동 입력 고민주제를 배열로 변환
+      issues: sessionMngData.concernTopicAi ? 
+        sessionMngData.concernTopicAi.split('\n').filter(item => item.trim()) : 
+        (sessionMngData.concernTopicText ? 
+          sessionMngData.concernTopicText.split('\n').filter(item => item.trim()) : []),
+      // 키워드 분석 데이터
+      keyword: keywordData || [],
+      // 발화빈도 데이터
+      frequency: frequencyData || { counselor: { minutes: 0 }, client: { minutes: 0 } },
+      // 스트레스 징후 데이터
+      stress: stressData || { data: [], labels: [] }
+    };
+  };
+  
+  const transcriptData = getTranscriptData();
 
   const handleAIGenerate = () => {
     navigate('/clients/recordings');
@@ -60,7 +78,7 @@ function Transcript({ setShowUploadModal }) {
       <div className="tit-wrap">
         <strong>녹취록</strong>
         <div className="btn-wrap">
-          {TranscriptData.length === 0 ? (
+          {!isTranscriptCreated ? (
             <button className="upload-btn type03 h40" type="button" onClick={handleUpload}>
               녹취록 업로드
             </button>
@@ -72,7 +90,7 @@ function Transcript({ setShowUploadModal }) {
           </button>
         </div>
       </div>
-      {TranscriptData.length === 0 && !isAIGenerated && (
+      {!isTranscriptCreated && (
         <div className="empty-board">
           <img src={emptyFace} alt="empty" />
           <p className="empty-tit">업로드된 녹취록이 없습니다.</p>
@@ -81,7 +99,24 @@ function Transcript({ setShowUploadModal }) {
           </p>
         </div>
       )}
-      {TranscriptData.length > 0 && !isAIGenerated && (
+      {isTranscriptCreated && !isAiAnalysisDone && (
+        <div className="transcript-board">
+          <div className="create-board">
+            <strong>AI가 녹취록을 생성/분석하고 있습니다.</strong>
+            <ul>
+              <li>1. 주호소 문제</li>
+              <li>2. 상담 내용</li>
+              <li>3. 키워드 분석</li>
+              <li>4. 발화빈도</li>
+              <li>5. 스트레스 징후</li>
+            </ul>
+            <button className="type01 h40" type="button">
+              <span>AI 생성하기</span>
+            </button>
+          </div>
+        </div>
+      )}
+      {isAiAnalysisDone && !isAiAnalysisChecked && (
         <div className="transcript-board">
           <div className="create-board">
             <strong>AI가 녹취록 생성을 완료 하였습니다.</strong>
@@ -98,34 +133,34 @@ function Transcript({ setShowUploadModal }) {
           </div>
         </div>
       )}
-      {isAIGenerated && (
+      {isAiAnalysisChecked && (
         <div className="transcript-board">
           <div className="dashboard">
             {/* 주호소 문제 */}
             <TranscriptBox
-              className={`summary${TranscriptData.length === 0 ? ' before-create' : ''}`}
+              className={`summary${!hasData ? ' before-create' : ''}`}
               title="1. 주호소 문제"
               editable={true}
               onEdit={() => {}}
               toggleable={true}
               onAIGenerate={handleAIGenerate}
             >
-              {TranscriptData.length > 0 && (
-                <div className="save-txt">{TranscriptData[0]?.summary}</div>
+              {transcriptData && (
+                <div className="save-txt">{transcriptData.summary}</div>
               )}
             </TranscriptBox>
             {/* 상담 내용 */}
             <TranscriptBox
-              className={`issue${TranscriptData.length === 0 ? ' before-create' : ''}`}
+              className={`issue${!hasData ? ' before-create' : ''}`}
               title="2. 상담 내용"
               editable={true}
               onEdit={() => {}}
               toggleable={true}
               onAIGenerate={handleAIGenerate}
             >
-              {TranscriptData.length > 0 && (
+              {transcriptData && (
                 <div className="save-txt">
-                  {TranscriptData[0]?.issues?.map((issue, idx) => (
+                  {transcriptData.issues?.map((issue, idx) => (
                     <div className="bullet-line" key={idx}>{issue}</div>
                   ))}
                 </div>
@@ -133,17 +168,17 @@ function Transcript({ setShowUploadModal }) {
             </TranscriptBox>
             {/* 키워드 분석 */}
             <KeywordBox
-              data={TranscriptData[0]?.keyword}
+              data={transcriptData?.keyword}
               onAIGenerate={handleAIGenerate}
             />
             {/* 발화빈도 */}
             <FrequencyBox
-              data={TranscriptData[0]?.frequency}
+              data={transcriptData?.frequency}
             />
             {/* 스트레스 징후 */}
             <StressBox
-              data={TranscriptData[0]?.stress?.data}
-              labels={TranscriptData[0]?.stress?.labels}
+              data={transcriptData?.stress?.data}
+              labels={transcriptData?.stress?.labels}
               onAIGenerate={handleAIGenerate}
             />
           </div>
