@@ -67,7 +67,6 @@ const RootLayout = () => {
   useEffect(() => {
     // 특정 경로에서는 스크롤 이동하지 않음
     const excludePaths = [
-      '/clients/consults/detail', // 상담일지 상세
       '/clients/consults/psychologicalTestDetail', // 심리검사 상세
     ];
     

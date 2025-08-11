@@ -6,15 +6,22 @@ import SymptomTable from './components/SymptomTable';
 import CustomTextareaBlock from './components/CustomTextareaBlock';
 import CounselLogStep from './components/CounselLogStep';
 import Header from '@/layouts/Header';
-import { useRecoilState } from 'recoil';
-import { foldState } from '@/recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { foldState, currentSessionState } from '@/recoil';
 import { useSetRecoilState } from 'recoil';
 import { supportPanelState } from '@/recoil';
+import { sessionNoteFind, sessionFind } from '@/api/apiCaller';
+import { useLocation } from 'react-router-dom';
 import GuidePanel from './components/GuidePanel';
 import HistoryPanel from './components/HistoryPanel';
 import AiPanelCommon from '@/components/AiPanelCommon';
 
 function CounselLogDetail() {
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const clientId = query.get('clientId');
+  const sessionSeq = query.get('sessionSeq');
+  
   const handleStepNavClick = (e, targetId) => {
     e.preventDefault();
     const el = document.getElementById(targetId);
@@ -22,29 +29,8 @@ function CounselLogDetail() {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-  const dummyData = {
-    currentRisk: '2', // 자살 사고
-    pastRisk: '1', // 해당 사항 없음
-    riskFactors: ['2', '4'], // 진단 경험, 최근 극심한 스트레스
-    // riskFactorEtc: '경제적 문제',
-    riskScale: '2', // 주의
-    symptoms: {
-      depression: 3,
-      anxiety: 2,
-      panic: 0,
-      ocd: 1,
-      adhd: 0,
-      ptsd: 0,
-    },
-    mainProblem: '최근 업무 스트레스로 불면과 불안이 심해짐',
-    sessionContent: '내담자는 최근 업무에서의 압박감과 대인관계 어려움을 호소함. 상담 과정에서 감정 표현과 스트레스 관리 방법을 논의함.',
-    counselorOpinion: '내담자는 스트레스에 취약한 성향이 있으나, 상담을 통해 점진적 개선이 기대됨.',
-    observation: '피로해 보이며, 표정이 어둡고 말수가 적음. 면담 중간에 한숨을 자주 쉼.',
-    goal: '불면 해소 및 스트레스 대처능력 향상',
-    nextPlan: '다음 회기에는 이완훈련 및 대인관계 기술 훈련을 진행할 예정',
-    concern: '상담 효과가 일시적일 수 있다는 우려가 있음',
-    caseConcept: '내담자의 불안과 불면은 업무 스트레스와 대인관계에서 비롯된 것으로, 성장 과정에서의 완벽주의 경향과 연관됨.',
-  }
+  // 상담일지 데이터 상태
+  const [sessionNoteData, setSessionNoteData] = useState(null);
   // AI Panel 더미 데이터 
   const aiPanelConfigs = {
     mainProblem: {
@@ -79,25 +65,71 @@ function CounselLogDetail() {
     }
   };
   const [aiPanelKey, setAiPanelKey] = useState(null);
-  const [currentRisk, setCurrentRisk] = useState(dummyData?.currentRisk || '');
-  const [pastRisk, setPastRisk] = useState(dummyData?.pastRisk || '');
-  const [riskFactors, setRiskFactors] = useState(dummyData?.riskFactors || []);
-  const [riskFactorEtc, setRiskFactorEtc] = useState(dummyData?.riskFactorEtc || '');
-  const [riskScale, setRiskScale] = useState(dummyData?.riskScale || '');
-  const [symptoms, setSymptoms] = useState(dummyData?.symptoms || []);
-  const [mainProblem, setMainProblem] = useState(dummyData?.mainProblem || '');
-  const [sessionContent, setSessionContent] = useState(dummyData?.sessionContent || '');
-  const [counselorOpinion, setCounselorOpinion] = useState(dummyData?.counselorOpinion || '');
-  const [observation, setObservation] = useState(dummyData?.observation || '');
-  const [goal, setGoal] = useState(dummyData?.goal || '');
-  const [nextPlan, setNextPlan] = useState(dummyData?.nextPlan || '');
-  const [concern, setConcern] = useState(dummyData?.concern || '');
-  const [caseConcept, setCaseConcept] = useState(dummyData?.caseConcept || '');
+  // 상담일지 폼 상태들
+  const [currentRisk, setCurrentRisk] = useState('');
+  const [pastRisk, setPastRisk] = useState('');
+  const [riskFactors, setRiskFactors] = useState([]);
+  const [riskFactorEtc, setRiskFactorEtc] = useState('');
+  const [riskScale, setRiskScale] = useState('');
+  const [symptoms, setSymptoms] = useState({
+    depression: null,
+    anxiety: null,
+    panic: null,
+    ocd: null,
+    adhd: null,
+    ptsd: null,
+  });
+  const [mainProblem, setMainProblem] = useState('');
+  const [sessionContent, setSessionContent] = useState('');
+  const [counselorOpinion, setCounselorOpinion] = useState('');
+  const [observation, setObservation] = useState('');
+  const [goal, setGoal] = useState('');
+  const [nextPlan, setNextPlan] = useState('');
+  const [concern, setConcern] = useState('');
+  const [caseConcept, setCaseConcept] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
   const [openedPanel, setOpenedPanel] = useState(null); // 'guide' | 'history' | 'ai' | null
   const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
   const [fold, setFold] = useRecoilState(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  const [currentSession, setCurrentSession] = useRecoilState(currentSessionState);
+
+  // 날짜 포맷팅 함수
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[date.getDay()];
+      const hour = date.getHours();
+      const minute = String(date.getMinutes()).padStart(2, '0');
+      const period = hour >= 12 ? '오후' : '오전';
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      
+      return `${year}.${month}.${day}(${weekday}) ${period} ${displayHour}시${minute !== '00' ? ` ${minute}분` : ''}`;
+    } catch (e) {
+      return '-';
+    }
+  };
+
+  // 동적 제목 생성
+  const getSessionTitle = () => {
+    if (currentSession?.sessionNo) {
+      return `${currentSession.sessionNo}회기 상담일지`;
+    }
+    return '상담일지';
+  };
+
+  // 동적 상담일시 생성
+  const getSessionDateTime = () => {
+    if (currentSession?.sessionDate) {
+      return formatDate(currentSession.sessionDate);
+    }
+    return '-';
+  };
 
   const handleOpenGuidePanel = () => {
     setOpenedPanel('guide');
@@ -168,6 +200,117 @@ function CounselLogDetail() {
   const handleSymptomChange = (field, score) => setSymptoms(prev => ({ ...prev, [field]: score }));
   const handleMainProblemChange = e => setMainProblem(e.target.value);
 
+  // URL 파라미터로부터 세션 데이터 로딩 (새로고침 대응)
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (sessionSeq && clientId) {
+        // 새로고침 시에는 항상 세션 데이터를 다시 가져옴
+        try {
+          const response = await sessionFind(clientId, sessionSeq);
+          if (response.code === 200 && response.data) {
+            setCurrentSession(response.data);
+            console.log('세션 데이터 로드 성공:', response.data);
+          } else {
+            console.error('세션 조회 실패:', response.message);
+          }
+        } catch (error) {
+          console.error('세션 조회 오류:', error);
+        }
+      }
+    };
+
+    fetchSessionData();
+  }, [sessionSeq, clientId, setCurrentSession]);
+
+  // 상담일지 데이터 로딩
+  useEffect(() => {
+    const fetchSessionNoteData = async () => {
+      if (currentSession?.sessionSeq) {
+        try {
+          const response = await sessionNoteFind(currentSession.sessionSeq);
+          if (response.code === 200 && response.data) {
+            const data = response.data;
+            setSessionNoteData(data);
+            
+            // API 데이터를 각 상태값에 매핑
+            setCurrentRisk(data.currentRiskLevel ? String(data.currentRiskLevel) : '');
+            setPastRisk(data.pastRiskLevel ? String(data.pastRiskLevel) : '');
+            setRiskScale(data.crisisStageLevelCollapse ? String(data.crisisStageLevelCollapse) : '');
+            
+            // 위험요인 매핑 (boolean 값들을 배열로 변환)
+            const factors = [];
+            if (data.riskNone) factors.push('1');
+            if (data.riskDiagnosis) factors.push('2');
+            if (data.riskSelfHarm) factors.push('3');
+            if (data.riskExtremeStress) factors.push('4');
+            if (data.riskFamilyHistory) factors.push('5');
+            if (data.riskGrief) factors.push('6');
+            if (data.riskSleepChange) factors.push('7');
+            if (data.riskHighImpulsivity) factors.push('8');
+            if (data.riskOtherText && data.riskOtherText.trim()) factors.push('9');
+            setRiskFactors(factors);
+            setRiskFactorEtc(data.riskOtherText || '');
+            
+            // 증상 심각도 매핑 (값이 없으면 null로 설정하여 아무것도 선택되지 않게 함)
+            setSymptoms({
+              depression: data.depression !== null && data.depression !== undefined ? data.depression : null,
+              anxiety: data.anxiety !== null && data.anxiety !== undefined ? data.anxiety : null,
+              panic: data.panic !== null && data.panic !== undefined ? data.panic : null,
+              ocd: data.compulsion !== null && data.compulsion !== undefined ? data.compulsion : null,
+              adhd: data.adhd !== null && data.adhd !== undefined ? data.adhd : null,
+              ptsd: data.ptsd !== null && data.ptsd !== undefined ? data.ptsd : null,
+            });
+            
+            // 텍스트 필드들 매핑
+            setMainProblem(data.chiefComplaintText || '');
+            setSessionContent(data.sessionSummaryText || '');
+            setCounselorOpinion(data.counselorOpinionText || '');
+            setObservation(data.objectiveObservationText || '');
+            setGoal(data.counselingGoalText || '');
+            setNextPlan(data.nextSessionPlanText || '');
+            setConcern(data.clientConcernsText || '');
+            setCaseConcept(data.caseConceptualizationText || '');
+            
+            console.log('상담일지 데이터 로드 성공:', data);
+          } else {
+            console.error('상담일지 조회 실패:', response.message);
+            // 실패 시 기본값으로 초기화
+            setSessionNoteData(null);
+          }
+        } catch (error) {
+          console.error('상담일지 조회 오류:', error);
+          setSessionNoteData(null);
+        }
+      } else {
+        // currentSession이 없으면 초기화
+        setSessionNoteData(null);
+        setCurrentRisk('');
+        setPastRisk('');
+        setRiskFactors([]);
+        setRiskFactorEtc('');
+        setRiskScale('');
+        setSymptoms({
+          depression: null,
+          anxiety: null,
+          panic: null,
+          ocd: null,
+          adhd: null,
+          ptsd: null,
+        });
+        setMainProblem('');
+        setSessionContent('');
+        setCounselorOpinion('');
+        setObservation('');
+        setGoal('');
+        setNextPlan('');
+        setConcern('');
+        setCaseConcept('');
+      }
+    };
+
+    fetchSessionNoteData();
+  }, [currentSession]);
+
   // 스크롤 이벤트
   useEffect(() => {
     const handleScroll = () => setScroll(window.scrollY >= 100);
@@ -175,10 +318,12 @@ function CounselLogDetail() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+
+
   return (
     <>
       <Header
-        title="3회기 상담일지"
+        title={getSessionTitle()}
         scroll={scroll}
         fold={fold}
         rightActions={
@@ -189,14 +334,14 @@ function CounselLogDetail() {
       />
       <div className="inner">
         <div className="move-up">
-          <strong className="page-title">3회기 상담일지</strong>
+          <strong className="page-title">{getSessionTitle()}</strong>
           <button className="save-btn type07 black" type="button" onClick={handleSave}>저장</button>
         </div>
         <div className="session-info-bar">
           <div className="info">
             <strong>상담내용</strong>
             <p>
-              <span>상담일시</span> : <span>2024.09.28(토) 오후 2시</span>
+              <span>상담일시</span> : <span>{getSessionDateTime()}</span>
             </p>
           </div>
           <a className="panel-btn cursor-pointer" onClick={handleOpenHistoryPanel}>이전 회기 기록</a>
@@ -255,7 +400,7 @@ function CounselLogDetail() {
                   <RadioList
                     name="currentRisk"
                     options={riskOptions}
-                    value={dummyData.currentRisk}
+                    value={currentRisk}
                     onChange={handleRiskChange}
                   />
                 </div>
@@ -269,7 +414,7 @@ function CounselLogDetail() {
                   <RadioList
                     name="pastRisk"
                     options={riskOptions}
-                    value={dummyData.pastRisk}
+                    value={pastRisk}
                     onChange={handlePastRiskChange}
                   />
                 </div>

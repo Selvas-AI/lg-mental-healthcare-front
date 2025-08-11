@@ -1,6 +1,6 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, supportPanelState } from "@/recoil";
+import { maskingState, clientsState, supportPanelState, currentSessionState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sessionMngFind, sessionFind, clientFind } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
@@ -36,6 +36,7 @@ function Consults() {
   const setClients = useSetRecoilState(clientsState);
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
   const [masked, setMasked] = useRecoilState(maskingState);
+  const setCurrentSession = useSetRecoilState(currentSessionState);
   
   // URL 쿼리 파라미터에서 탭 인덱스 가져오기 (기본값: 0)
   const getTabIndexFromParam = (tabParam) => {
@@ -146,9 +147,12 @@ function Consults() {
           // 회기 데이터 설정
           if (sessionResponse.code === 200) {
             setSessionData(sessionResponse.data);
+            // currentSessionState에도 설정하여 CounselLogDetail에서 사용할 수 있도록 함
+            setCurrentSession(sessionResponse.data);
           } else {
             console.error('회기 조회 실패:', sessionResponse.message);
             setSessionData(null);
+            setCurrentSession(null);
           }
         } catch (error) {
           console.error('데이터 조회 오류:', error);
@@ -158,6 +162,7 @@ function Consults() {
       } else {
         setSessionMngData(null);
         setSessionData(null);
+        setCurrentSession(null);
       }
     };
 

@@ -13,8 +13,17 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
+  const sessionSeq = query.get('sessionSeq');
   const clients = useRecoilValue(clientsState);
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
+  
+  // 상담일지 상세 페이지로 이동하는 함수
+  const navigateToCounselDetail = () => {
+    const params = new URLSearchParams();
+    if (clientId) params.set('clientId', clientId);
+    if (sessionSeq) params.set('sessionSeq', sessionSeq);
+    navigate(`/clients/consults/detail?${params.toString()}`);
+  };
   
   // sessionData에서 상담일지 작성 여부 확인
   const isCounselNoteCompleted = sessionData?.todoCounselNote === true;
@@ -38,10 +47,10 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
           {logData.length === 0 ? (
             <>
               <button className="type05 white h40" type="button" onClick={() => setIsNoshow(true)}>노쇼 처리</button>
-              <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 작성</button>
+              <button className="type05 h40" type="button" onClick={navigateToCounselDetail}>상담일지 작성</button>
             </>
           ) : (
-            <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 상세</button>
+            <button className="type05 h40" type="button" onClick={navigateToCounselDetail}>상담일지 상세</button>
           )}
         </div>
       </div>
@@ -58,7 +67,7 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
             <div className={`urgency ${client?.crisisLevel || ''}`}>
               <div className="box-tit">
                 <strong>1. 자살, 위기 수준의 긴급도</strong>
-                <a className="edit-btn" onClick={() => { navigate("/clients/consults/detail") }}>수정</a>
+                <a className="edit-btn" onClick={navigateToCounselDetail}>수정</a>
               </div>
               <div className="con-wrap">
                 <div className="risk-scale">
@@ -99,7 +108,7 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
             <div className="severity">
               <div className="box-tit">
                 <strong>2. 현재 증상의 심각도</strong>
-                <a className="edit-btn" onClick={() => { navigate("/clients/consults/detail") }}>수정</a>
+                <a className="edit-btn" onClick={navigateToCounselDetail}>수정</a>
               </div>
               <div className="con-wrap">
                 <ChartBarStacked />

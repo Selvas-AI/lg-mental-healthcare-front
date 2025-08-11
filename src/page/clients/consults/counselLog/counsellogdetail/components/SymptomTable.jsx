@@ -106,7 +106,7 @@ function SymptomTable({ symptoms = [], values, onChange }) {
                         type="radio"
                         name={symptom.field}
                         value={item.score}
-                        checked={values[symptom.field] == item.score}
+                        checked={values[symptom.field] !== null && values[symptom.field] !== undefined && values[symptom.field] === item.score}
                         onChange={() => onChange(symptom.field, item.score)} />
                       <label htmlFor={`${symptom.field}${item.score}`}></label>
                     </div>
