@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSetRecoilState } from "recoil";
+import { currentSessionState } from "@/recoil";
 
 function SessionTable({ clientId, sessionData}) {
   const navigate = useNavigate();
+  const setCurrentSession = useSetRecoilState(currentSessionState);
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
 
@@ -55,8 +58,8 @@ function SessionTable({ clientId, sessionData}) {
         <tbody>
           {sessionData && sessionData.length > 0 ? (
             sessionData.map((session, idx) => {
-              const statusText = session.session_status || '예정';
-              const statusClass = statusText === '노쇼' ? 'no-show' : statusText === '취소' ? 'cancelled' : '';
+              const statusText = session.sessionStatus === 'NOSCHED' ? '노쇼' : session.sessionStatus === 'PLANNED' ? '상담예정' : session.sessionStatus === 'COMPLETE' ? '상담완료' : session.sessionStatus === 'NOSHOW' ? '노쇼' : '';
+              const statusClass = statusText === '노쇼' ? 'no-show' : statusText === '상담예정' ? 'scheduled' : statusText === '상담완료' ? 'completed' : '';
               
               // 날짜 포맷 변환 (2025-05-10 14:00:00 -> 2025.05.10 (토) 오후 2시)
               const formatDate = (dateStr) => {
@@ -79,30 +82,40 @@ function SessionTable({ clientId, sessionData}) {
                 }
               };
               
-              // TODO 목록 생성
+              // TODO 목록 생성 (false인 값만 표시)
               const todos = [];
-              if (!session.todoTranscriptCreation) todos.push('녹취록 생성');
-              if (!session.todoAiAnalysisDone) todos.push('녹취록 분석');
-              if (!session.todoAiAnalysisCheck) todos.push('AI 분석 확인');
-              if (!session.todoCounselNote) todos.push('상담일지 작성');
-              if (!session.todoCaseConceptInitial) todos.push('사례개념화 최초 작성');
-              if (!session.todoCaseConceptAi) todos.push('사례개념화 AI추천');
-              if (!session.todoPsychTestRequest) todos.push('심리검사 요청');
+              if (session.todoTranscriptCreation === false) todos.push('녹음파일 등록');
+              if (session.todoAiAnalysisDone === false) todos.push('녹취록 분석');
+              if (session.todoAiAnalysisCheck === false) todos.push('AI 분석 확인');
+              if (session.todoCounselNote === false) todos.push('상담일지 작성');
+              if (session.todoPsychTestRequest === false) todos.push('심리검사 요청');
+              if (session.todoCaseCenceptInital === false) todos.push('사례개념화 최초 작성');
               
               return (
                 <tr key={session.sessionSeq || idx}>
                   <td>
-                    <a className="cursor-pointer" onClick={() => navigate(`/clients/consults?clientId=${clientId}`)}>
-                      {session.sessionOrder || session.sessionNo}회기
+                    <a className="cursor-pointer" onClick={() => {
+                      // 현재 선택된 세션 데이터를 Recoil에 저장
+                      setCurrentSession(session);
+                      // 페이지 이동
+                      navigate(`/clients/consults?clientId=${clientId}&sessionSeq=${session.sessionSeq}`);
+                    }}>
+                      {session.sessionNo}회기
                     </a>
                   </td>
                   <td className={statusClass}>
-                    {statusText.split(' ').map((t, i) => (
-                      <span key={i}>
-                        {t}
-                        {i === 0 && <br />}
+                    {statusText.length === 4 ? (
+                      <span>
+                        {statusText.slice(0, 2)}<br />{statusText.slice(2)}
                       </span>
-                    ))}
+                    ) : (
+                      statusText.split(' ').map((t, i) => (
+                        <span key={i}>
+                          {t}
+                          {i === 0 && <br />}
+                        </span>
+                      ))
+                    )}
                   </td>
                   <td>{formatDate(session.sessionDate)}</td>
                   <td>

@@ -166,10 +166,10 @@ function formatPhoneNumber(phone) {
         <div className="name-wrap">
           <div className="left">
             <strong>{name}</strong>
-            {profileData.danger === "critical" && <span className="tag critical">고위험</span>}
-            {profileData.danger === "danger" && <span className="tag danger">위험</span>}
-            {profileData.danger === "caution" && <span className="tag caution">주의</span>}
-            {profileData.danger === "safe" && <span className="tag safe">양호</span>}
+            {profileData.crisisLevel === "critical" && <span className="tag critical">고위험</span>}
+            {profileData.crisisLevel === "danger" && <span className="tag danger">위험</span>}
+            {profileData.crisisLevel === "caution" && <span className="tag caution">주의</span>}
+            {profileData.crisisLevel === "safe" && <span className="tag safe">양호</span>}
             <a className="edit-btn cursor-pointer" onClick={handleEdit}>정보수정</a>
           </div>
           <button

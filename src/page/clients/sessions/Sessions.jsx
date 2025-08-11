@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
-import { maskingState, clientsState, foldState, supportPanelState } from "@/recoil";
+import { maskingState, clientsState, foldState, supportPanelState, sessionDataState, currentSessionState } from "@/recoil";
 import { clientSearch, clientUpdate, clientCreate, clientFind, sessionList, clientUpdateMemo, sessionCreate } from '../../../api/apiCaller';
 import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
@@ -38,7 +38,8 @@ function Sessions() {
   const [showToast, setShowToast] = useState(false);
   const [sessionStatus, setSessionStatus] = useState(1); // 1: 진행중, 0: 종결
   const [clientListData, setClientListData] = useState([]); // ClientList 전용 데이터
-  const [sessionData, setSessionData] = useState([]); // 회기 데이터
+  const [sessionData, setSessionData] = useRecoilState(sessionDataState); // 회기 데이터 (Recoil)
+  const setCurrentSession = useSetRecoilState(currentSessionState); // 현재 선택된 세션
   const [sessionLoading, setSessionLoading] = useState(false); // 회기 데이터 로딩 상태
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
 
@@ -440,8 +441,7 @@ function Sessions() {
           setTimelineOpen(false);
           setSupportPanel(false);
         }}
-        isEmpty={isEmpty}
-        sessionData={sessionData}
+        clientSeq={clientId}
       />
       <RecordSelectModal
         open={recordSelectOpen}

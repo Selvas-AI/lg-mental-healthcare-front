@@ -1,21 +1,55 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { sessionDataState, currentSessionState } from "@/recoil";
+import { useLocation } from "react-router-dom";
+import { sessionList } from "@/api/apiCaller";
 import Transcript from "../transcript/Transcript";
 import CounselLog from "../counselLog/CounselLog";
 import SessionSelect from "./SessionSelect";
 import warningFace from "@/assets/images/common/warning_face.svg";
 //상담관리
-function CounselManagement({ setShowUploadModal }) {
+function CounselManagement({ setShowUploadModal, sessionMngData }) {
   const [isNoshow, setIsNoshow] = useState(false);
-  const sessionOptions = [
-    { session: "1회기"},
-    { session: "2회기"},
-    { session: "3회기", selected: true },
-    { session: "4회기"},
-    { session: "5회기"},
-    { session: "6회기"},
-    { session: "7회기"},
-  ];
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const clientId = query.get('clientId');
+  
+  const sessionData = useRecoilValue(sessionDataState); // 실제 회기 데이터
+  const setSessionData = useSetRecoilState(sessionDataState); // 회기 데이터 설정
+  const currentSession = useRecoilValue(currentSessionState); // 현재 선택된 세션
+  
+  // 새로고침 시 sessionData가 비어있으면 다시 불러오기
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (clientId && (!sessionData || sessionData.length === 0)) {
+        try {
+          const response = await sessionList(parseInt(clientId));
+          if (response.code === 200 && Array.isArray(response.data)) {
+            setSessionData(response.data);
+          }
+        } catch (error) {
+          console.error('회기 목록 조회 실패:', error);
+        }
+      }
+    };
 
+    fetchSessionData();
+  }, [clientId, sessionData, setSessionData]);
+  // sessionNo 역순으로 정렬하여 sessionOptions 생성
+  const sessionOptions = useMemo(() => {
+    if (!sessionData || sessionData.length === 0) return [];
+    
+    return [...sessionData] // 배열 복사
+      .sort((a, b) => b.sessionNo - a.sessionNo) // sessionNo 역순 정렬 (큰 번호부터)
+      .map(session => ({
+        session: `${session.sessionNo}회기`,
+        sessionSeq: session.sessionSeq,
+        sessionNo: session.sessionNo,
+        sessionDate: session.sessionDate, // 세션 날짜 추가
+        selected: currentSession?.sessionSeq === session.sessionSeq // 현재 선택된 세션과 비교
+      }));
+  }, [sessionData, currentSession]);
+  
   function handleSessionSelect(option, idx) {
     // TODO: 선택 시 동작 구현
   }
@@ -27,7 +61,7 @@ function CounselManagement({ setShowUploadModal }) {
         {!isNoshow ? 
         <>
           <Transcript setShowUploadModal={setShowUploadModal} />
-          <CounselLog setIsNoshow={setIsNoshow} />
+          <CounselLog setIsNoshow={setIsNoshow} sessionMngData={sessionMngData} />
         </> : 
         <>
           <div className="noshow">

@@ -47,7 +47,7 @@ export const clientUpdateMemo = async (memoData) => {
 }
 
 
-//! ===== 상담 세션 관리 =====
+//! ===== 상담 세션 관리 API =====
 // 전체 회기 목록 조회
 export const sessionList = async (clientSeq) => {
     return await axiosIns.get('/api/session/list', { 
@@ -75,4 +75,20 @@ export const sessionFind = async (clientSeq, sessionSeq) => {
 // 신규 회기 등록
 export const sessionCreate = async (sessionData) => {
     return await axiosIns.post('/api/session/create', sessionData)
+}
+
+//! ===== 타임라인 정보 조회 API =====
+// 타임라인 정보 목록 조회
+export const timelineList = async (clientSeq) => {
+    return await axiosIns.get('/api/timeline/list', { 
+        params: { clientSeq } 
+    })
+}
+
+//! ===== 상담관리 API =====
+// 상담관리 조회
+export const sessionNoteFind = async (sessionSeq) => {
+    return await axiosIns.get('/api/sessionNote/find', {
+        params: { sessionSeq }
+    })
 }
