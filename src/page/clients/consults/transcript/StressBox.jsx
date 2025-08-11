@@ -15,9 +15,9 @@ function StressBox({ data, labels, onAIGenerate }) {
     const ctx = canvas.getContext('2d');
     const maxIndex = data.indexOf(Math.max(...data));
     const pointRadiusArray = data.map((_, i) => i === maxIndex ? 5 : 0);
-    const gradientFill = ctx.createLinearGradient(0, 0, 0, 100);
-    gradientFill.addColorStop(0.0517, 'rgba(49, 137, 255, 0.21)');
-    gradientFill.addColorStop(1, 'rgba(49, 137, 255, 0.00)');
+    const gradientFill = ctx.createLinearGradient(0, 0, 0, 111);
+    gradientFill.addColorStop(0, 'rgba(49, 137, 255, 0.3)');
+    gradientFill.addColorStop(1, 'rgba(49, 137, 255, 0.0)');
 
     const pluginShowMaxTooltip = {
       id: 'showMaxTooltip',
@@ -227,13 +227,13 @@ function StressBox({ data, labels, onAIGenerate }) {
           },
           y: {
             beginAtZero: true,
-            max: 5,
-            min: 1,
+            max: 10,
+            min: 0,
             ticks: {
               autoSkip: false,
-              stepSize: 1,
+              stepSize: 2,
               padding: 10,
-              font: { size: 16, family: 'Pretendard', weight: '500' },
+              font: { size: 14, family: 'Pretendard', weight: '500' },
               color: '#7A8A93'
             },
             grid: { color: '#DCE4E7' },

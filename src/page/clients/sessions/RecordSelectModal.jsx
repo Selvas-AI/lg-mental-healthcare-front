@@ -6,7 +6,7 @@ import CustomSelect from '@/components/CustomSelect';
 
 const RecordSelectModal = ({ open, onClose, onSave }) => {
   const [selectedRecord, setSelectedRecord] = useState("");
-  const [currentStep, setCurrentStep] = useState(1); // 1: 녹음파일 선택, 2: 날짜/시간 선택
+  const [currentStep, setCurrentStep] = useState(2); // 1: 녹음파일 선택(주석처리), 2: 날짜/시간 선택
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [showTimeOptions, setShowTimeOptions] = useState(false);
@@ -22,66 +22,70 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
   };
 
   // 더미 녹음파일 데이터
-  const recordFiles = [
-    {
-      id: "record01",
-      name: "김마음 녹음파일 1",
-      date: "2025.04.23(수)",
-      duration: "50:11"
-    },
-    {
-      id: "record02", 
-      name: "박케어 녹음파일 2",
-      date: "2025.04.23(수)",
-      duration: "50:11"
-    },
-    {
-      id: "record03",
-      name: "4월 16일 두번째 상담 녹취",
-      date: "2025.04.23(수)", 
-      duration: "50:11"
-    },
-    {
-      id: "record04",
-      name: "녹음파일명 노출영역입니다.",
-      date: "2025.04.23(수)",
-      duration: "50:11"
-    },
-    {
-      id: "record05",
-      name: "녹음파일명 노출영역입니다.",
-      date: "2025.04.23(수)",
-      duration: "50:11"
-    },
-    {
-      id: "record06",
-      name: "녹음파일명 노출영역입니다.",
-      date: "2025.04.23(수)",
-      duration: "50:11"
-    },
-    {
-      id: "record07",
-      name: "녹음파일명 노출영역입니다.",
-      date: "2025.04.23(수)",
-      duration: "50:11"
+  // const recordFiles = [
+  //   {
+  //     id: "record01",
+  //     name: "김마음 녹음파일 1",
+  //     date: "2025.04.23(수)",
+  //     duration: "50:11"
+  //   },
+  //   {
+  //     id: "record02", 
+  //     name: "박케어 녹음파일 2",
+  //     date: "2025.04.23(수)",
+  //     duration: "50:11"
+  //   },
+  //   {
+  //     id: "record03",
+  //     name: "4월 16일 두번째 상담 녹취",
+  //     date: "2025.04.23(수)", 
+  //     duration: "50:11"
+  //   },
+  //   {
+  //     id: "record04",
+  //     name: "녹음파일명 노출영역입니다.",
+  //     date: "2025.04.23(수)",
+  //     duration: "50:11"
+  //   },
+  //   {
+  //     id: "record05",
+  //     name: "녹음파일명 노출영역입니다.",
+  //     date: "2025.04.23(수)",
+  //     duration: "50:11"
+  //   },
+  //   {
+  //     id: "record06",
+  //     name: "녹음파일명 노출영역입니다.",
+  //     date: "2025.04.23(수)",
+  //     duration: "50:11"
+  //   },
+  //   {
+  //     id: "record07",
+  //     name: "녹음파일명 노출영역입니다.",
+  //     date: "2025.04.23(수)",
+  //     duration: "50:11"
+  //   }
+  // ];
+
+  // 30분 단위로 24시간 전체 시간 옵션 생성
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const period = hour < 12 ? '오전' : '오후';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const timeStr = `${period} ${displayHour}:${minute.toString().padStart(2, '0')}`;
+        options.push(timeStr);
+      }
     }
-  ];
-
-  // 시간 선택 옵션
-  const timeOptions = [
-    "오후 4:00",
-    "오후 4:30",
-    "오후 5:00",
-    "오후 5:30",
-    "오후 6:00",
-    "오후 6:30",
-    "오후 7:00",
-    "오후 7:30"
-  ];
-
-  const handleRecordSelect = (recordId) => {
-    setSelectedRecord(recordId);
+    return options;
   };
+  
+  const timeOptions = generateTimeOptions();
+
+  // const handleRecordSelect = (recordId) => {
+  //   setSelectedRecord(recordId);
+  // };
 
   const handleTimeSelect = (time) => {
     setSelectedTime(time);
@@ -96,14 +100,58 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
     }
   };
 
+  // 시간 문자열 24시간 형식으로 변환
+  const convertTo24Hour = (timeStr) => {
+    if (!timeStr) return null;
+    
+    const parts = timeStr.split(' ');
+    if (parts.length !== 2) return null;
+    
+    const [period, time] = parts;
+    const timeParts = time.split(':');
+    if (timeParts.length !== 2) return null;
+    
+    const hour = parseInt(timeParts[0]);
+    const minute = parseInt(timeParts[1]);
+    
+    if (isNaN(hour) || isNaN(minute)) return null;
+    
+    let hour24 = hour;
+    
+    if (period === '오후' && hour !== 12) {
+      hour24 = hour + 12;
+    } else if (period === '오전' && hour === 12) {
+      hour24 = 0;
+    }
+    
+    return `${hour24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  };
+
   const handleSave = () => {
-    if (currentStep === 2 && selectedRecord && selectedDate && selectedTime) {
-      const selectedRecordData = recordFiles.find(record => record.id === selectedRecord);
+    if (selectedDate && selectedTime) {
+      // 날짜를 YYYY-MM-DD 형식으로 변환
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      // 시간을 24시간 형식으로 변환
+      const timeStr = convertTo24Hour(selectedTime);
+      
+      if (!timeStr) {
+        console.error('시간 변환 실패:', selectedTime);
+        return;
+      }
+      
+      // sessionDate 형식: "2025-08-05 10:30"
+      const sessionDate = `${dateStr} ${timeStr}`;
+      
+      console.log('전송될 sessionDate:', sessionDate); // 디버깅용
+      
       const sessionData = {
-        ...selectedRecordData,
-        date: formatDate(selectedDate),
-        time: selectedTime
+        sessionDate: sessionDate
       };
+      
       onSave(sessionData);
       resetModal();
     }
@@ -129,7 +177,8 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
 
   if (!open) return null;
 
-  // 1단계: 녹음파일 선택 UI
+  // 1단계: 녹음파일 선택 UI (주석처리)
+  /*
   const renderRecordSelectStep = () => (
     <div className={`modal select-record ${open ? "on" : ""}`}>
       <div className="modal-dim fixed top-0 left-0 w-full h-full z-[999]" onClick={handleClose}></div>
@@ -187,6 +236,7 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
       </div>
     </div>
   );
+  */
 
   // 2단계: 날짜/시간 선택 UI
   const renderDateTimeSelectStep = () => (
@@ -194,7 +244,7 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
       <div className="modal-dim fixed top-0 left-0 w-full h-full z-[999]" onClick={handleCancel}></div>
       <div className="inner z-[1000]">
         <div className="modal-hd">
-          <strong>녹음파일 선택</strong>
+          <strong>상담일시 선택</strong>
           <button 
             className="close-btn" 
             type="button" 
@@ -277,7 +327,9 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
     </div>
   );
 
-  return currentStep === 1 ? renderRecordSelectStep() : renderDateTimeSelectStep();
+  // 1단계 주석처리로 2단계만 사용
+  return renderDateTimeSelectStep();
+  // return currentStep === 1 ? renderRecordSelectStep() : renderDateTimeSelectStep();
 };
 
 export default RecordSelectModal;

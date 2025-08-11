@@ -1,7 +1,8 @@
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { maskingState, clientsState, supportPanelState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
+import { sessionNoteFind } from '@/api/apiCaller';
 import './consults.scss';
 
 import ClientProfile from './../components/ClientProfile';
@@ -26,9 +27,10 @@ function Consults() {
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
+  const sessionSeq = query.get('sessionSeq');
   const tabParam = query.get('tab');
   const clients = useRecoilValue(clientsState);
-  const client = clients.find(c => String(c.id) === String(clientId));
+  const client = clients.find(c => String(c.clientSeq) === String(clientId));
   const [masked, setMasked] = useRecoilState(maskingState);
   
   // URL 쿼리 파라미터에서 탭 인덱스 가져오기 (기본값: 0)
@@ -51,6 +53,7 @@ function Consults() {
   const [showAiSummary, setShowAiSummary] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   const [showSurveySendModal, setShowSurveySendModal] = useState(false);
+  const [sessionMngData, setSessionMngData] = useState(null);
   
   // 스크롤 위치 복원 처리
   useLayoutEffect(() => {
@@ -82,6 +85,30 @@ function Consults() {
       indicator.style.left = tabLeft + 'px';
     }
   }, [activeTab]);
+
+  // sessionSeq가 있을 때 상담관리 데이터 조회
+  useEffect(() => {
+    const fetchSessionMngData = async () => {
+      if (sessionSeq) {
+        try {
+          const response = await sessionNoteFind(sessionSeq);
+          if (response.code === 200) {
+            setSessionMngData(response.data);
+          } else {
+            console.error('상담관리 조회 실패:', response.message);
+            setSessionMngData(null);
+          }
+        } catch (error) {
+          console.error('상담관리 조회 오류:', error);
+          setSessionMngData(null);
+        }
+      } else {
+        setSessionMngData(null);
+      }
+    };
+
+    fetchSessionMngData();
+  }, [sessionSeq]);
 
   const ActiveComponent = TAB_LIST[activeTab].component;
 
@@ -151,6 +178,7 @@ function Consults() {
                 onOpenSurveySendModal={() => setShowSurveySendModal(true)}
                 setShowAiSummary={setShowAiSummary}
                 setSupportPanel={setSupportPanel}
+                sessionMngData={activeTab === 0 ? sessionMngData : undefined}
               />
             </div>
           </div>

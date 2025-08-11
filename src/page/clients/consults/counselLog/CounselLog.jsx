@@ -8,36 +8,38 @@ import { clientsState } from "@/recoil";
 import { useLocation } from "react-router-dom";
 import ChartBarStacked from "./ChartBarStacked";
 
-function CounselLog({ setIsNoshow }) {
+function CounselLog({ setIsNoshow, sessionMngData }) {
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   const clients = useRecoilValue(clientsState);
-  const client = clients.find(c => String(c.id) === String(clientId));
-  // const logData = [{
-  //   mainIssue: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  //   content: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  //   opinion: "내담자의 완벽주의적 사고와 인정 욕구가 핵심 스트레스 요인이라 판단하였음.",
-  //   observation: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  //   goals: [
-  //     "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
-  //     "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
-  //     "상사의 피드백에 대한 감정적 반응을 탐색하고 조절하는 능력 향상",
-  //   ],
-  //   nextPlan: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  //   mind: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  //   caseConcept: "20세 남성으로 원인 모를 불안감으로 불면증을 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다. 최대 3줄 노출 후 말줄임 처리 됩니다. 최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.최대 3줄 노출 후 말줄임 처리 됩니다.",
-  // }];
-  const logData = [];
+  const client = clients.find(c => String(c.clientSeq) === String(clientId));
+  const logData = sessionMngData ? [{
+    mainIssue: sessionMngData.chiefComplaintText || sessionMngData.chiefComplaintAi || '',
+    content: sessionMngData.sessionSummaryText || sessionMngData.sessionSummaryAi || '',
+    opinion: sessionMngData.counselorOpinionText || '',
+    observation: sessionMngData.objectiveObservationText || '',
+    goals: sessionMngData.counselingGoalText ? [sessionMngData.counselingGoalText] : [],
+    nextPlan: sessionMngData.nextSessionPlanText || sessionMngData.nextSessionPlanAi || '',
+    mind: sessionMngData.clientConcernsText || '',
+    caseConcept: sessionMngData.caseConceptualizationText || ''
+  }] : [];
+  // const logData = [];
 
   return (
     <div className="counsel-log">
       <div className="tit-wrap">
         <strong>상담일지</strong>
         <div className="btn-wrap">
-          <button className="type05 white h40" type="button" onClick={() => setIsNoshow(true)}>노쇼 처리</button>
-          <button className="type05 h40" type="button">상담일지 작성</button>
+          {logData.length === 0 ? (
+            <>
+              <button className="type05 white h40" type="button" onClick={() => setIsNoshow(true)}>노쇼 처리</button>
+              <button className="type05 h40" type="button">상담일지 작성</button>
+            </>
+          ) : (
+            <button className="type05 h40" type="button" onClick={() => { navigate("/clients/consults/detail") }}>상담일지 상세</button>
+          )}
         </div>
       </div>
       {logData.length === 0 ? (
@@ -50,7 +52,7 @@ function CounselLog({ setIsNoshow }) {
         <>
           <div className="dashboard">
             {/* 1. 자살, 위기 수준의 긴급도 */}
-            <div className={`urgency ${client.danger}`}>
+            <div className={`urgency ${client?.crisisLevel || ''}`}>
               <div className="box-tit">
                 <strong>1. 자살, 위기 수준의 긴급도</strong>
                 <a className="edit-btn" onClick={() => {}}>수정</a>

@@ -1,19 +1,42 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 import EmergencyChart from "./EmergencyChart";
+import { timelineList } from "@/api/apiCaller";
 
-function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
+function TimelinePanel({ open, onClose, clientSeq }) {
   // 각 토글 영역(상담요약/고민주제/긴급도/심각도/스트레스 징후) 열림 상태
   const [openSection, setOpenSection] = useState([true, true, true, true, true]);
   const sectionRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
   const [maxHeights, setMaxHeights] = useState(["0px", "0px", "0px", "0px", "0px"]);
+  const [timelineData, setTimelineData] = useState([]);
+  const [isEmpty, setIsEmpty] = useState(false);
 
   const handleToggle = idx => {
     setOpenSection(arr => arr.map((v, i) => (i === idx ? !v : v)));
   };
 
+  // 타임라인 데이터 조회
+  const fetchTimelineData = async () => {
+    try {
+      const response = await timelineList(clientSeq);
+      
+      if (response.data && response.data.code === 0) {
+        const data = response.data.data || [];
+        setTimelineData(data);
+        setIsEmpty(data.length === 0);
+      } else {
+        setTimelineData([]);
+        setIsEmpty(true);
+      }
+    } catch (error) {
+      console.error('타임라인 데이터 조회 실패:', error);
+      setTimelineData([]);
+      setIsEmpty(true);
+    }
+  };
+
   // 긴급도 차트 데이터 역순으로 정렬
-  const reversedData = [...sessionDummyData].reverse();
+  const reversedData = [...timelineData].reverse();
 
   useLayoutEffect(() => {
     setMaxHeights(prev => prev.map((_, i) => {
@@ -25,8 +48,11 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
   }, [openSection]);
 
   useEffect(() => {
-    if (open) setOpenSection([true, true, true, true, true]);
-  }, [open]);
+    if (open) {
+      setOpenSection([true, true, true, true, true]);
+      fetchTimelineData();
+    }
+  }, [open, clientSeq]);
 
   return (
     <div className={"support-panel timeline" + (open ? " on" : "")}>
@@ -67,10 +93,10 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                   </div>
                 ) : (
                   <ul className="session-list">
-                    {sessionDummyData.map((row, idx) => (
+                    {timelineData.map((row, idx) => (
                       <li key={idx}>
-                        <span>{row.session}회기</span>
-                        <div>{row.summary}</div>
+                        <span>{row.sessionOrder || row.sessionNo}회기</span>
+                        <div>{row.counselingSummaryText || '-'}</div>
                       </li>
                     ))}
                   </ul>
@@ -105,12 +131,10 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                   </div>
                 ) : (
                   <ul className="session-list">
-                    {sessionDummyData.map((row, idx) => (
+                    {timelineData.map((row, idx) => (
                       <li key={idx}>
-                        <span>{row.session}</span>
-                        <div>{row.summaryList && row.summaryList.map((summary, i) => (
-                          <React.Fragment key={i}>{summary}{i < row.summaryList.length - 1 && <br />}</React.Fragment>
-                        ))}</div>
+                        <span>{row.sessionOrder || row.sessionNo}</span>
+                        <div>{row.concernTopicText || '-'}</div>
                       </li>
                     ))}
                   </ul>
@@ -147,8 +171,8 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                   <>
                     <div className="chart-wrap">
                       <EmergencyChart
-                        values={reversedData.map(row => (row.crisis) ?? null)}
-                        labels={reversedData.map(row => row.session)}
+                        values={reversedData.map(row => row.crisisStageLevel ?? null)}
+                        labels={reversedData.map(row => `${row.sessionOrder || row.sessionNo}회기`)}
                         min={0}
                         max={4}
                         width={304}
@@ -195,7 +219,7 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                         <div className="severity-hd">
                           <ul>
                             {reversedData.map((row, idx) => (
-                              <li key={idx}>{row.session}</li>
+                              <li key={idx}>{row.sessionOrder || row.sessionNo}</li>
                             ))}
                           </ul>
                         </div>
@@ -207,13 +231,11 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                               {(() => {
                                 let lastIdx = -1;
                                 reversedData.forEach((row, idx) => {
-                                  const val = row.severity && row.severity["우울"];
-                                  const value = Array.isArray(val) ? val[0] : val;
+                                  const value = row.depression;
                                   if (value != null) lastIdx = idx;
                                 });
                                 return reversedData.map((row, idx) => {
-                                  const val = row.severity && row.severity["우울"];
-                                  const value = Array.isArray(val) ? val[0] : val;
+                                  const value = row.depression;
                                   return (
                                     <li key={idx}>
                                       <span
@@ -233,13 +255,11 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                               {(() => {
                                 let lastIdx = -1;
                                 reversedData.forEach((row, idx) => {
-                                  const val = row.severity && row.severity["강박"];
-                                  const value = Array.isArray(val) ? val[0] : val;
+                                  const value = row.compulsion;
                                   if (value != null) lastIdx = idx;
                                 });
                                 return reversedData.map((row, idx) => {
-                                  const val = row.severity && row.severity["강박"];
-                                  const value = Array.isArray(val) ? val[0] : val;
+                                  const value = row.compulsion;
                                   return (
                                     <li key={idx}>
                                       <span
@@ -259,13 +279,11 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                               {(() => {
                                 let lastIdx = -1;
                                 reversedData.forEach((row, idx) => {
-                                  const val = row.severity && row.severity["PTSD"];
-                                  const value = Array.isArray(val) ? val[0] : val;
+                                  const value = row.ptsd;
                                   if (value != null) lastIdx = idx;
                                 });
                                 return reversedData.map((row, idx) => {
-                                  const val = row.severity && row.severity["PTSD"];
-                                  const value = Array.isArray(val) ? val[0] : val;
+                                  const value = row.ptsd;
                                   return (
                                     <li key={idx}>
                                       <span
@@ -329,12 +347,24 @@ function TimelinePanel({ open, onClose, isEmpty, sessionDummyData = [] }) {
                   <>
                     <div className="chart-wrap">
                       <EmergencyChart
-                        values={reversedData.map(row => (row.stress) ?? null)}
-                        labels={reversedData.map(row => row.session)}
+                        values={reversedData.map(row => {
+                          // stressIndicatorsJson이 JSON 문자열인 경우 파싱하여 스트레스 레벨 추출
+                          if (row.stressIndicatorsJson) {
+                            try {
+                              const stressData = JSON.parse(row.stressIndicatorsJson);
+                              // 스트레스 데이터에서 평균값이나 대표값 추출 (구조에 따라 조정 필요)
+                              return stressData.level || stressData.average || null;
+                            } catch (e) {
+                              return null;
+                            }
+                          }
+                          return null;
+                        })}
+                        labels={reversedData.map(row => `${row.sessionOrder || row.sessionNo}회기`)}
                         min={1}
                         max={4}
-                        width={304}
-                        height={159}
+                        width={288}
+                        height={180}
                       />
                     </div>
                     <div className="chart-summary steady">

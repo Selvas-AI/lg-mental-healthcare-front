@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register } from '../../api/auth';
+import { authRegister } from '@/api/apiCaller';
 import imgLogo from '@/assets/images/logo.svg';
 import txtLogo from '@/assets/images/onshim.svg';
 import './signup.scss';
@@ -105,7 +105,7 @@ function SignUp() {
         // phoneNumber: ''
       };
 
-      const response = await register(userData);
+      const response = await authRegister(userData);
       
       if (response.code === 200) {
         // 회원가입 성공

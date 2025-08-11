@@ -3,10 +3,11 @@ import ClientsTable from "./components/ClientsTable";
 import "./clients.scss";
 import EmptyClients from "./components/EmptyClients";
 import { clientsState } from "@/recoil";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ClientRegisterModal from "./components/ClientRegisterModal";
 import EditorModal from "./components/EditorModal";
 import ToastPop from "@/components/ToastPop";
+import { clientSearch, clientCreate, clientUpdateMemo } from "@/api/apiCaller";
 
 function Clients() {
   const [memoClient, setMemoClient] = useState(null);
@@ -15,17 +16,123 @@ function Clients() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const handleRegister = () => setRegisterOpen(true);
   const handleCloseRegister = () => setRegisterOpen(false);
-  const handleSaveRegister = () => {
-    // TODO: 저장 처리
-    setRegisterOpen(false);
-    setToastMessage('신규 내담자가 등록 되었습니다.');
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
-  }
-
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [totalClientsExist, setTotalClientsExist] = useState(false); // 전체 내담자 존재 여부
+  
+  const handleSaveRegister = async (formData) => {
+    try {
+      const clientData = {
+        // 필수 필드
+        clientName: formData.name,
+        gender: formData.gender === 'male' ? 'M' : 'F',
+        birthDate: `${formData.birthYear}${formData.birthMonth.padStart(2, '0')}${formData.birthDay.padStart(2, '0')}`,
+        
+        // 선택 필드 (빈 값이 아닌 경우만 전송)
+        ...(formData.nickname && { nickname: formData.nickname }),
+        ...(formData.phoneNumber && { contactNumber: formData.phoneNumber }),
+        ...(formData.address && { address: formData.address }),
+        ...(formData.emailId && formData.emailDomain && { 
+          email: `${formData.emailId}@${formData.emailDomain}` 
+        }),
+        ...(formData.job && { job: formData.job }),
+        ...(formData.memo && { memo: formData.memo }),
+        
+        // 보호자 정보 (빈 값이 아닌 경우만 전송)
+        ...(formData.guardians && formData.guardians.length > 0 && 
+            formData.guardians.some(g => g.name || g.relation || g.phone) && {
+          guardian: formData.guardians
+            .filter(g => g.name || g.relation || g.phone) // 빈 보호자 제거
+            .map(g => ({
+              guardianRelation: g.relation || '',
+              guardianName: g.name || '',
+              guardianContact: g.phone || ''
+            }))
+        })
+      };
+      
+      console.log('전송할 내담자 데이터:', clientData);
+      
+      const response = await clientCreate(clientData);
+      
+      if (response.code === 200) {
+        setRegisterOpen(false);
+        setToastMessage('신규 내담자가 등록되었습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+        
+        // 내담자 목록 새로고침
+        await loadClients();
+      } else if (response.code === 320) {
+        // 중복된 사용자 에러
+        setToastMessage('이미 등록된 내담자입니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      } else {
+        setToastMessage(response.message || '내담자 등록에 실패했습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      }
+    } catch (error) {
+      console.error('내담자 등록 오류:', error);
+      setToastMessage('내담자 등록 중 오류가 발생했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    }
+  }
+
+  // 전체 내담자 존재 여부 확인 (진행중 + 종결)
+  const checkTotalClientsExist = async () => {
+    try {
+      // 진행중 내담자 확인
+      const activeResponse = await clientSearch({
+        clientName: '',
+        sessionStatus: 1
+      });
+      
+      // 종결 내담자 확인
+      const completedResponse = await clientSearch({
+        clientName: '',
+        sessionStatus: 0
+      });
+      
+      const activeCount = (activeResponse.code === 200 && activeResponse.data) ? activeResponse.data.length : 0;
+      const completedCount = (completedResponse.code === 200 && completedResponse.data) ? completedResponse.data.length : 0;
+      
+      setTotalClientsExist(activeCount > 0 || completedCount > 0);
+    } catch (error) {
+      console.error('전체 내담자 확인 오류:', error);
+      setTotalClientsExist(false);
+    }
+  };
+
+  // 내담자 목록 로드 (ClientsTable에서 직접 처리하므로 여기서는 전체 존재 여부만 확인)
+  const loadClients = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      console.warn('로그인이 필요합니다.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await checkTotalClientsExist();
+    } catch (error) {
+      console.error('내담자 목록 로드 오류:', error);
+      setToastMessage('내담자 목록을 불러오는데 실패했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 내담자 목록 로드
+  useEffect(() => {
+    loadClients();
+  }, []);
 
   return (
     <>
@@ -45,7 +152,7 @@ function Clients() {
             내담자 등록
           </button>
         </div>
-        {clients.length === 0 ? (
+        {!totalClientsExist ? (
           <EmptyClients onRegister={handleRegister} />
         ) : (
           <ClientsTable
@@ -63,28 +170,55 @@ function Clients() {
             </div>
           </div>
         </div>
-        <ToastPop message={toastMessage} showToast={showToast} />
       </div>
       {memoClient && (
         <EditorModal
-          open={true}
-          onClose={handleCloseMemo}
-          onSave={() => {
-            handleCloseMemo(); 
-            setToastMessage('내담자 메모가 저장 되었습니다.');
-            setShowToast(true); 
+        open={true}
+        onClose={handleCloseMemo}
+        onSave={async (memoValue) => {
+          try {
+            const response = await clientUpdateMemo({
+              clientSeq: memoClient.clientSeq,
+              memo: memoValue
+            });
+            
+            if (response.code === 200) {
+              // 성공 시 로컬 상태 업데이트
+              setClients(prevClients => 
+                prevClients.map(client => 
+                  client.clientSeq === memoClient.clientSeq 
+                    ? { ...client, memo: memoValue }
+                    : client
+                )
+              );
+              
+              handleCloseMemo();
+              setToastMessage('내담자 메모가 저장되었습니다.');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 2000);
+            } else {
+              setToastMessage(response.message || '메모 저장에 실패했습니다.');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 2000);
+            }
+          } catch (error) {
+            console.error('메모 저장 오류:', error);
+            setToastMessage('메모 저장 중 오류가 발생했습니다.');
+            setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
-          }}
-          title="내담자 메모"
-          className="client-memo"
-          placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
-          maxLength={500}
-          initialValue={memoClient.memo || ""}
+          }
+        }}
+        title="내담자 메모"
+        className="client-memo"
+        placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
+        maxLength={500}
+        initialValue={memoClient.memo || ""}
         />
       )}
       {registerOpen && (
         <ClientRegisterModal open={registerOpen} onClose={handleCloseRegister} onSave={handleSaveRegister} />
       )}
+      <ToastPop message={toastMessage} showToast={showToast} />
     </>
   );
 }

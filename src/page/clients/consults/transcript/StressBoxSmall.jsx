@@ -50,9 +50,12 @@ function StressBoxSmall({ data, labels }) {
           y: {
             display: true,
             beginAtZero: true,
-            max: 5,
-            min: 1,
-            ticks: { display: false },
+            max: 10,
+            min: 0,
+            ticks: { 
+                stepSize: 2,
+                display: false ,
+            },
             grid: {
               display: true,
               color: "#E6EDF2",
@@ -79,7 +82,7 @@ function StressBoxSmall({ data, labels }) {
       ref={canvasRef}
       className="line-chart-small"
       width={284}
-      height={100}
+      height={110}
       style={{ display: "block" }}
     />
   );

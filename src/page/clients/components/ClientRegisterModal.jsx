@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 function ClientRegisterModal({ open, onClose, onSave, mode = "register", initialData = null }) {
   const [openGuardianSelect, setOpenGuardianSelect] = useState([]);
   const [openEmailSelect, setOpenEmailSelect] = useState(false);
+  const [selectedEmailDomain, setSelectedEmailDomain] = useState(''); // select-box에서 선택된 도메인
   const emailOptionListRef = useRef(null);
   const [emailListHeight, setEmailListHeight] = useState(0);
   const guardianOptionListRefs = useRef([]);
@@ -23,7 +24,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     emailId: "",
     emailDomain: "",
     job: "",
-    guardians: [{ relation: "", name: "", phone: "" }],
+    guardians: [{ guardianRelation: "", guardianName: "", guardianContact: "" }],
     memo: ""
   };
   const [form, setForm] = useState(INITIAL_FORM);
@@ -56,9 +57,16 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
 
   const handleFormChange = (e) => {
     const { id, value } = e.target;
-    // address는 clientsAddress로 id가 들어오므로 예외 처리
+    // 필드명 매핑 처리
     if (id === 'clientsAddress') {
       setForm(f => ({ ...f, address: value }));
+    } else if (id === 'email') {
+      // 이메일 아이디 입력 필드
+      setForm(f => ({ ...f, emailId: value }));
+    } else if (id === 'emailDomain') {
+      // 이메일 도메인 직접 입력 시 select-box 초기화
+      setForm(f => ({ ...f, emailDomain: value }));
+      setSelectedEmailDomain(''); // select-box 선택 상태 초기화
     } else {
       setForm(f => ({ ...f, [id]: value }));
     }
@@ -66,19 +74,16 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
 
   useEffect(() => {
     if (open && initialData) {
-      let guardians = initialData.guardians;
-      if (!Array.isArray(guardians) || !guardians.every(g => typeof g === 'object' && g !== null && 'relation' in g && 'name' in g && 'phone' in g)) {
-        guardians = [{ relation: '', name: '', phone: '' }];
+      // API 응답에서 guardian 필드를 guardians로 매핑
+      let guardians = initialData.guardian || initialData.guardians;
+      if (!Array.isArray(guardians) || !guardians.every(g => typeof g === 'object' && g !== null && 'guardianRelation' in g && 'guardianName' in g && 'guardianContact' in g)) {
+        guardians = [{ guardianRelation: '', guardianName: '', guardianContact: '' }];
       }
       let birthYear = '', birthMonth = '', birthDay = '';
-      if (initialData.birth) {
-        const birthStr = initialData.birth.split(' ')[0];
-        const birthParts = birthStr.split('.');
-        if (birthParts.length === 3) {
-          birthYear = birthParts[0];
-          birthMonth = birthParts[1];
-          birthDay = birthParts[2];
-        } else if (/^\d{8}$/.test(birthStr.replace(/\D/g, ''))) {
+      // API 응답에서 birthDate는 'YYYYMMDD' 형식
+      if (initialData.birthDate) {
+        const birthStr = initialData.birthDate.toString();
+        if (/^\d{8}$/.test(birthStr)) {
           birthYear = birthStr.slice(0,4);
           birthMonth = birthStr.slice(4,6);
           birthDay = birthStr.slice(6,8);
@@ -87,23 +92,36 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       let emailId = '', emailDomain = '';
       if (initialData.email && initialData.email.includes('@')) {
         [emailId, emailDomain] = initialData.email.split('@');
+        // 미리 정의된 도메인인 경우 selectedEmailDomain 설정
+        if (['naver.com', 'gmail.com', 'daum.net'].includes(emailDomain)) {
+          setSelectedEmailDomain(emailDomain);
+        } else {
+          setSelectedEmailDomain(''); // 직접 입력된 도메인인 경우
+        }
+      } else {
+        setSelectedEmailDomain(''); // 이메일이 없는 경우
       }
-      let phoneNumber = initialData.phone || '';
+      let phoneNumber = initialData.contactNumber || initialData.phone || '';
       let memo = initialData.memo || '';
       setForm({
         ...INITIAL_FORM,
-        ...initialData,
+        name: initialData.clientName || initialData.name || '',
+        nickname: initialData.nickname || '',
         birthYear,
         birthMonth,
         birthDay,
+        gender: initialData.gender === 'F' ? 'female' : initialData.gender === 'M' ? 'male' : '',
+        phoneNumber,
+        address: initialData.address || '',
         emailId,
         emailDomain,
-        phoneNumber,
+        job: initialData.job || '',
         memo,
         guardians
       });
     } else if (open && !initialData) {
       setForm(INITIAL_FORM);
+      setSelectedEmailDomain(''); // 새 등록 시 selectedEmailDomain 초기화
     }
   }, [open, initialData]);
 
@@ -140,26 +158,26 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     });
   }, [form.guardians]);
 
-    // 이메일 드롭다운 높이 동기화
-    useEffect(() => {
-      if (openEmailSelect && emailOptionListRef.current) {
-        setEmailListHeight(emailOptionListRef.current.scrollHeight);
-      } else {
-        setEmailListHeight(0);
-      }
-    }, [openEmailSelect, form.emailDomain]);
-  
-    // 보호자 드롭다운 높이 동기화
-    useEffect(() => {
-      setGuardianListHeights(
-        (Array.isArray(form.guardians) ? form.guardians : [{relation:'',name:'',phone:''}])
-          .map((_, idx) =>
-            openGuardianSelect[idx] && guardianOptionListRefs.current[idx]
-              ? guardianOptionListRefs.current[idx].scrollHeight
-              : 0
-          )
-      );
-    }, [openGuardianSelect, form.guardians]);
+  // 이메일 드롭다운 높이 동기화
+  useEffect(() => {
+    if (openEmailSelect && emailOptionListRef.current) {
+      setEmailListHeight(emailOptionListRef.current.scrollHeight);
+    } else {
+      setEmailListHeight(0);
+    }
+  }, [openEmailSelect, form.emailDomain]);
+
+  // 보호자 드롭다운 높이 동기화
+  useEffect(() => {
+    setGuardianListHeights(
+      (Array.isArray(form.guardians) ? form.guardians : [{guardianRelation:'',guardianName:'',guardianContact:''}])
+        .map((_, idx) =>
+          openGuardianSelect[idx] && guardianOptionListRefs.current[idx]
+            ? guardianOptionListRefs.current[idx].scrollHeight
+            : 0
+        )
+    );
+  }, [openGuardianSelect, form.guardians]);
 
   if (!open) return null;
 
@@ -191,8 +209,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     if (missingFields.length > 0) {
       const fieldText = missingFields.join(', ');
       //? joy : fieldText 사용하여 alert에 포함시킬 때 아래 코드 사용 
-      // alert(`${fieldText} - 필수입력 값을 확인해 주세요.`);
-      alert(`필수입력 값을 확인해 주세요.`);
+      alert(`${fieldText} - 필수입력 값을 확인해 주세요.`);
+      // alert(`필수입력 값을 확인해 주세요.`);
       return;
     }
     // 저장 시 editorRef에서 memo 읽기
@@ -202,7 +220,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       memo,
       guardians: Array.isArray(form.guardians) && form.guardians.every(g => typeof g === 'object')
         ? form.guardians
-        : [{ relation: '', name: '', phone: '' }]
+        : [{ guardianRelation: '', guardianName: '', guardianContact: '' }]
     };
     onSave(safeForm);
   };
@@ -296,8 +314,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                 <li>
                   <label htmlFor="clientsAddress">주소</label>
                   <div className="input-wrap search">
-                    <input id="clientsAddress" value={form.address || ""} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} type="text" placeholder="주소 검색" />
-                    <button className="search-btn" type="button" aria-label="검색"></button>
+                    <input id="clientsAddress" value={form.address || ""} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} type="text" placeholder="주소 입력" />
+                    {/* <button className="search-btn" type="button" aria-label="검색"></button> */}
                   </div>
                 </li>
                 <li>
@@ -312,17 +330,26 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                     </div>
                     <div className="select-wrap">
                       <div className="select-box">
-                        <button className={`select-item ${openEmailSelect ? ' on' : ''}`} type="button" onClick={() => setOpenEmailSelect(open => !open)}>
-                          {form.emailDomain || '선택'}
+                        <button 
+                          className={`select-item ${openEmailSelect ? ' on' : ''}`} 
+                          type="button" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOpenEmailSelect(open => !open);
+                          }}
+                        >
+                          {selectedEmailDomain || '선택'}
                         </button>
                         <ul ref={emailOptionListRef}
                           className={`option-list${openEmailSelect ? ' open' : ''}`}
                           style={dropdownStyle(openEmailSelect)}>
                           {["naver.com","gmail.com","daum.net"].map(opt => (
-                            <li key={opt} className={form.emailDomain === opt ? 'on' : ''}>
+                            <li key={opt} className={selectedEmailDomain === opt ? 'on' : ''}>
                               <a href="#" onClick={e => {
                                 e.preventDefault();
-                                setForm(f => ({...f, emailDomain: opt}));
+                                setForm(f => ({...f, emailDomain: opt})); // 직접 입력 값도 선택값으로 변경
+                                setSelectedEmailDomain(opt); // select-box 선택 상태 설정
                                 setOpenEmailSelect(false);
                               }}>{opt}</a>
                             </li>
@@ -340,29 +367,37 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                 </li>
                 <li>
                   <label>보호자 정보</label>
-                  {/* 혹시라도 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
+                  {/* 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
                   {(Array.isArray(form.guardians) ? form.guardians : []).map((g, idx) => {
-                    const guardian = (g && typeof g === 'object') ? g : { relation: '', name: '', phone: '' };
+                    const guardian = (g && typeof g === 'object') ? g : { guardianRelation: '', guardianName: '', guardianContact: '' };
 
                     const indexStr = String(idx + 1).padStart(2, '0');
                     return (
                       <div className="input-cont input-add" key={idx}>
                         <div className="select-wrap">
                           <div className="select-box" style={{zIndex: openGuardianSelect[idx] ? 1000 : 0}}>
-                            <button className={`select-item ${openGuardianSelect[idx] ? ' on' : ''}`} type="button" onClick={() => setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? !v : false))}>
-                                {guardian.relation || '선택'}
-                              </button>
+                            <button 
+                              className={`select-item ${openGuardianSelect[idx] ? ' on' : ''}`} 
+                              type="button" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? !v : false));
+                              }}
+                            >
+                              {guardian.guardianRelation || '선택'}
+                            </button>
                               <ul 
                                 ref={el => guardianOptionListRefs.current[idx] = el}
                                 className={`option-list${openGuardianSelect[idx] ? ' open' : ''}`}
                                 style={dropdownStyle(openGuardianSelect[idx])}>
                                   {["부","모","조부","조모","형(오빠)","누나(언니)","동생","선생님","사회복지사","담당자","기타"].map(opt => (
-                                    <li key={opt} className={guardian.relation === opt ? 'on' : ''}>
+                                    <li key={opt} className={guardian.guardianRelation === opt ? 'on' : ''}>
                                       <a href="#" onClick={e => {
                                         e.preventDefault();
                                         setForm(f => {
                                           const arr = [...f.guardians];
-                                          arr[idx] = { ...arr[idx], relation: opt };
+                                          arr[idx] = { ...arr[idx], guardianRelation: opt };
                                           return { ...f, guardians: arr };
                                         });
                                         setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? false : v));
@@ -373,10 +408,10 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                             </div>
                           </div>
                           <div className="input-wrap">
-                            <input id={`guardian${indexStr}`} value={guardian.name || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], name: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="보호자 이름" />
+                            <input id={`guardian${indexStr}`} value={guardian.guardianName || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], guardianName: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="보호자 이름" />
                           </div>
                           <div className="input-wrap">
-                            <input id={`guardianPhone${indexStr}`} value={guardian.phone || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], phone: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="연락처 ( - 없이 숫자만 입력 )" />
+                            <input id={`guardianPhone${indexStr}`} value={guardian.guardianContact || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], guardianContact: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="연락처 ( - 없이 숫자만 입력 )" />
                           </div>
                           {/* 최소 1명은 남도록, 1명일 때는 삭제버튼 비활성화 */}
                           <button
@@ -389,7 +424,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                               if (form.guardians.length <= 1) return;
                               setForm(f => {
                                 const arr = f.guardians.filter((_,i) => i!==idx);
-                                return { ...f, guardians: arr.length > 0 ? arr : [{relation:'', name:'', phone:''}] };
+                                return { ...f, guardians: arr.length > 0 ? arr : [{guardianRelation:'', guardianName:'', guardianContact:''}] };
                               });
                               setOpenGuardianSelect(prev => prev.filter((_,i) => i!==idx));
                             }}
@@ -400,8 +435,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                     <button className="add-btn" type="button" onClick={() => {
                       setForm(f => {
                         // 배열 및 객체 배열 보장
-                        const arr = Array.isArray(f.guardians) && f.guardians.every(g => typeof g === 'object') ? f.guardians : [{relation: '', name: '', phone: ''}];
-                        return { ...f, guardians: [...arr, {relation: '', name: '', phone: ''}] };
+                        const arr = Array.isArray(f.guardians) && f.guardians.every(g => typeof g === 'object') ? f.guardians : [{guardianRelation: '', guardianName: '', guardianContact: ''}];
+                        return { ...f, guardians: [...arr, {guardianRelation: '', guardianName: '', guardianContact: ''}] };
                       });
                       setOpenGuardianSelect(prev => ([...prev, false]));
                     }}><span>보호자 추가</span></button>

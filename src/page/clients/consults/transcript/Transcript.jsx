@@ -37,7 +37,7 @@ function Transcript({ setShowUploadModal }) {
         client: { minutes: 45}
       },
       stress: {
-        data: [1.5, 3.2, 2.8, 1.5, 4.5, 3, 1.5],
+        data: [2.5, 6.2, 4.8, 3.5, 9, 4.2, 5.5],
         labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
       }
     }

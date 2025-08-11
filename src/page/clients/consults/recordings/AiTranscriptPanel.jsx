@@ -34,7 +34,7 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData }
       <div className="complete-cont visual-wrap">
         <StressBoxSmall data={AiSummaryData.stress?.data} labels={AiSummaryData.stress?.labels} />
         <div className="chart-data">
-          <span>최고5점</span>/<span>25.12</span>
+          <span>최고10점</span>/<span>25.12</span>
         </div>
       </div>
     </>

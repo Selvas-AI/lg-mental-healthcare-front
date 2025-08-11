@@ -16,6 +16,27 @@ function SessionSelect({ options = [], onSelect }) {
 
   const selectedOption = options[selectedIdx] || options[0];
 
+  // 날짜 포맷 변환 함수 (2025-05-10 14:00:00 -> 2025.05.10 (토) 오후 2시)
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[date.getDay()];
+      const hour = date.getHours();
+      const minute = String(date.getMinutes()).padStart(2, '0');
+      const period = hour >= 12 ? '오후' : '오전';
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      
+      return `${year}.${month}.${day}(${weekday}) ${period} ${displayHour}시${minute !== '00' ? ` ${minute}분` : ''}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="top-info">
       <CustomSelect
@@ -41,7 +62,7 @@ function SessionSelect({ options = [], onSelect }) {
           </>
         )}
       />
-      <span className="datetime-info">2025.04.19(토) 오전 10시</span>
+      <span className="datetime-info">{formatDate(selectedOption?.sessionDate)}</span>
       <a className="edit-btn cursor-pointer" >수정</a>
     </div>
   );

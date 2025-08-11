@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 
-function ClientList({ clients, onSelect, fold }) {
+function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange }) {
   const [search, setSearch] = useState("");
-  const filtered = clients.filter(client =>
-    client.name.includes(search) || (client.engName && client.engName.includes(search))
-  );
+  const filtered = clients.filter(client => {
+    const clientName = client.clientName || '';
+    const nickname = client.nickname || '';
+    return clientName.includes(search) || nickname.includes(search);
+  });
 
   return (
     <div className={"client-list" + (fold ? " on" : "")}>
@@ -24,11 +26,23 @@ function ClientList({ clients, onSelect, fold }) {
         </div>
         <div className="raido-toggle type01">
           <div className="toggle-btn">
-            <input id="ongoing" type="radio" name="clientToggle" defaultChecked/>
+            <input 
+              id="ongoing" 
+              type="radio" 
+              name="clientToggle" 
+              checked={sessionStatus === 1}
+              onChange={() => onStatusChange && onStatusChange(1)}
+            />
             <label htmlFor="ongoing">진행중</label>
           </div>
           <div className="toggle-btn">
-            <input id="closed" type="radio" name="clientToggle"/>
+            <input 
+              id="closed" 
+              type="radio" 
+              name="clientToggle" 
+              checked={sessionStatus === 0}
+              onChange={() => onStatusChange && onStatusChange(0)}
+            />
             <label htmlFor="closed">종결</label>
           </div>
         </div>
@@ -36,7 +50,7 @@ function ClientList({ clients, onSelect, fold }) {
           <ul>
             {filtered.length > 0 ? (
               filtered.map(client => (
-                <li key={client.id}>
+                <li key={client.clientSeq}>
                   <a
                     href="#"
                     onClick={e => {
@@ -44,8 +58,7 @@ function ClientList({ clients, onSelect, fold }) {
                       onSelect && onSelect(client);
                     }}
                   >
-                    {client.name}{client.nickname ? ` (${client.nickname})` : ""}
-                    {client.engName ? ` (${client.engName})` : ""}
+                    {client.clientName}{client.nickname ? ` (${client.nickname})` : ""}
                   </a>
                 </li>
               ))
