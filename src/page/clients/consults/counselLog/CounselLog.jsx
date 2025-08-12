@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import emptyFace from "@/assets/images/common/empty_face.svg";
 import TranscriptBox from "../transcript/TranscriptBox";
-import { useRecoilValue } from "recoil";
-import { clientsState } from "@/recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { clientsState, sessionNoteState } from "@/recoil";
 import { useLocation } from "react-router-dom";
 import ChartBarStacked from "./ChartBarStacked";
+import { sessionNoteFind } from "@/api/apiCaller";
 
-function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
+function CounselLog({ setIsNoshow, sessionData }) {
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
@@ -16,9 +17,39 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
   const sessionSeq = query.get('sessionSeq');
   const clients = useRecoilValue(clientsState);
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
+  const [sessionNote, setSessionNote] = useRecoilState(sessionNoteState);
+
+  // 현재 세션의 상담일지 데이터를 조회하여 로컬 상태에 저장
+  useEffect(() => {
+    const fetchNote = async () => {
+      if (!sessionSeq) return;
+      try {
+        const res = await sessionNoteFind(sessionSeq);
+        if (res.code === 200 && res.data) {
+          setSessionNote({ sessionSeq, data: res.data, updatedAt: Date.now() });
+        } else {
+          setSessionNote(null);
+          console.error('sessionNoteFind 실패:', res.message);
+        }
+      } catch (err) {
+        setSessionNote(null);
+        console.error('sessionNoteFind 오류:', err);
+      }
+    };
+    fetchNote();
+  }, [sessionSeq]);
   
   // 상담일지 상세 페이지로 이동하는 함수
-  const navigateToCounselDetail = () => {
+  const navigateToCounselDetail = async () => {
+    // 상세로 이동 전 캐시 최신화 (없거나 다른 세션일 경우만)
+    if (sessionSeq && (!sessionNote || sessionNote.sessionSeq !== sessionSeq || !sessionNote.data)) {
+      try {
+        const res = await sessionNoteFind(sessionSeq);
+        if (res.code === 200 && res.data) {
+          setSessionNote({ sessionSeq, data: res.data, updatedAt: Date.now() });
+        }
+      } catch (_) { /* noop */ }
+    }
     const params = new URLSearchParams();
     if (clientId) params.set('clientId', clientId);
     if (sessionSeq) params.set('sessionSeq', sessionSeq);
@@ -27,15 +58,16 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
   
   // sessionData에서 상담일지 작성 여부 확인
   const isCounselNoteCompleted = sessionData?.todoCounselNote === true;
-  const logData = sessionMngData ? [{
-    mainIssue: sessionMngData.chiefComplaintText || sessionMngData.chiefComplaintAi || '',
-    content: sessionMngData.sessionSummaryText || sessionMngData.sessionSummaryAi || '',
-    opinion: sessionMngData.counselorOpinionText || '',
-    observation: sessionMngData.objectiveObservationText || '',
-    goals: sessionMngData.counselingGoalText ? [sessionMngData.counselingGoalText] : [],
-    nextPlan: sessionMngData.nextSessionPlanText || sessionMngData.nextSessionPlanAi || '',
-    mind: sessionMngData.clientConcernsText || '',
-    caseConcept: sessionMngData.caseConceptualizationText || ''
+  const note = (sessionNote && sessionNote.sessionSeq === sessionSeq) ? sessionNote.data : null;
+  const logData = note ? [{
+    mainIssue: note.chiefComplaintText || note.chiefComplaintAi || '',
+    content: note.sessionSummaryText || note.sessionSummaryAi || '',
+    opinion: note.counselorOpinionText || '',
+    observation: note.objectiveObservationText || '',
+    goals: note.counselingGoalText ? [note.counselingGoalText] : [],
+    nextPlan: note.nextSessionPlanText || note.nextSessionPlanAi || '',
+    mind: note.clientConcernsText || '',
+    caseConcept: note.caseConceptualizationText || ''
   }] : [];
   // const logData = [];
 
@@ -197,22 +229,34 @@ function CounselLog({ setIsNoshow, sessionMngData, sessionData }) {
               title="7. 고민되는 점"
               editable={true}
               onEdit={() => {}}
-              toggleable={true}
+              toggleable={logData[0]?.mind ? true : false}
             >
-              <div className="save-txt">
-                {logData[0]?.mind}
-              </div>
+              {logData[0]?.mind ? (
+                <div className="save-txt">
+                  {logData[0]?.mind}
+                </div>
+              ) : (
+                <div className="box-explain empty">
+                  <p>내용이 작성되지 않았습니다.</p>
+                </div>
+              )}
             </TranscriptBox>
             {/* 8. 사례개념화 */}
             <TranscriptBox
               title="8. 사례개념화"
               editable={true}
               onEdit={() => {}}
-              toggleable={true}
+              toggleable={logData[0]?.caseConcept ? true : false}
             >
-              <div className="save-txt">
-                {logData[0]?.caseConcept}
-              </div>
+              {logData[0]?.caseConcept ? (
+                <div className="save-txt">
+                  {logData[0]?.caseConcept}
+                </div>
+              ) : (
+                <div className="box-explain empty">
+                  <p>내용이 작성되지 않았습니다.</p>
+                </div>
+              )}
             </TranscriptBox>
           </div>
         </>

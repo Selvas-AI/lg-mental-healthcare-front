@@ -147,7 +147,6 @@ function Consults() {
           // 회기 데이터 설정
           if (sessionResponse.code === 200) {
             setSessionData(sessionResponse.data);
-            // currentSessionState에도 설정하여 CounselLogDetail에서 사용할 수 있도록 함
             setCurrentSession(sessionResponse.data);
           } else {
             console.error('회기 조회 실패:', sessionResponse.message);

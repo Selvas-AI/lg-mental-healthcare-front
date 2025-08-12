@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react'
-import './notes.scss';
-import RadioList from './components/RadioList';
-import CheckboxList from './components/CheckboxList';
-import SymptomTable from './components/SymptomTable';
-import CustomTextareaBlock from './components/CustomTextareaBlock';
-import CounselLogStep from './components/CounselLogStep';
-import Header from '@/layouts/Header';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { foldState, currentSessionState } from '@/recoil';
-import { useSetRecoilState } from 'recoil';
-import { supportPanelState } from '@/recoil';
-import { sessionNoteFind, sessionFind, sessionNoteUpdate } from '@/api/apiCaller';
-import { useLocation } from 'react-router-dom';
-import GuidePanel from './components/GuidePanel';
-import HistoryPanel from './components/HistoryPanel';
+import { sessionFind, sessionNoteFind, sessionNoteUpdate } from '@/api/apiCaller';
 import AiPanelCommon from '@/components/AiPanelCommon';
 import ToastPop from '@/components/ToastPop';
+import Header from '@/layouts/Header';
+import { currentSessionState, foldState, sessionNoteState, supportPanelState } from '@/recoil';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useRecoilState, useSetRecoilState } from 'recoil';
+import { currentRiskOptions, pastRiskOptions, riskFactorOptions, riskScaleOptions, symptomList } from './components/counselLogOptions';
+import CounselLogStep from './components/CounselLogStep';
+import CustomTextareaBlock from './components/CustomTextareaBlock';
+import GuidePanel from './components/GuidePanel';
+import HistoryPanel from './components/HistoryPanel';
+import RiskSection from './components/RiskSection';
+import SymptomTable from './components/SymptomTable';
+import { mapSessionNoteToState as mapSessionNoteToStateUtil } from './components/sessionNoteMapper';
+import './notes.scss';
 
 function CounselLogDetail() {
   const location = useLocation();
@@ -30,8 +29,7 @@ function CounselLogDetail() {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-  // 상담일지 데이터 상태
-  const [sessionNoteData, setSessionNoteData] = useState(null);
+  // 상담일지 데이터 로컬 상태 제거 (Recoil 캐시 사용)
   // AI Panel 더미 데이터 
   const aiPanelConfigs = {
     mainProblem: {
@@ -94,6 +92,7 @@ function CounselLogDetail() {
   const [fold, setFold] = useRecoilState(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   const [currentSession, setCurrentSession] = useRecoilState(currentSessionState);
+  const [sessionNote, setSessionNote] = useRecoilState(sessionNoteState);
   
   // Toast 상태
   const [toastMessage, setToastMessage] = useState('');
@@ -243,7 +242,7 @@ function CounselLogDetail() {
 
     try {
       // API 파라미터 구조에 맞춰 데이터 변환
-      const sessionNoteData = {
+      const notePayload = {
         sessionSeq: currentSession.sessionSeq,
         currentRiskLevel: currentRisk ? parseInt(currentRisk) : null,
         pastRiskLevel: pastRisk ? parseInt(pastRisk) : null,
@@ -293,14 +292,23 @@ function CounselLogDetail() {
         clientConcernsText: concern,
         caseConceptualizationText: caseConcept
       };
-
-      console.log('저장할 데이터:', sessionNoteData);
       
-      const response = await sessionNoteUpdate(sessionNoteData);
+      const response = await sessionNoteUpdate(notePayload);
       
       if (response.code === 200) {
         showToastMessage('상담일지가 저장되었습니다.');
         console.log('저장 성공:', response);
+        // 저장 성공 시 Recoil 캐시를 최신 값으로 업데이트하여 영속 상태 유지
+        if (currentSession?.sessionSeq) {
+          setSessionNote({
+            sessionSeq: String(currentSession.sessionSeq),
+            data: {
+              ...sessionNote?.data,
+              ...notePayload,
+            },
+            updatedAt: Date.now(),
+          });
+        }
       } else {
         showToastMessage('저장에 실패했습니다: ' + (response.message || '알 수 없는 오류'));
         console.error('저장 실패:', response);
@@ -310,44 +318,6 @@ function CounselLogDetail() {
       console.error('저장 오류:', error);
     }
   };
-
-  const currentRiskOptions = [
-    { id: 'currentRisk01', value: '1', label: '해당 사항 없음' },
-    { id: 'currentRisk02', value: '2', label: '자살 사고' },
-    { id: 'currentRisk03', value: '3', label: '자살계획' },
-    { id: 'currentRisk04', value: '4', label: '자살 시도' },
-  ];
-  const pastRiskOptions = [
-    { id: 'pastRisk01', value: '1', label: '해당 사항 없음' },
-    { id: 'pastRisk02', value: '2', label: '자살 사고' },
-    { id: 'pastRisk03', value: '3', label: '자살계획' },
-    { id: 'pastRisk04', value: '4', label: '자살 시도' },
-  ];
-  const riskFactorOptions = [
-    { id: 'riskFactor01', value: '1', label: '해당 사항 없음' },
-    { id: 'riskFactor02', value: '2', label: '진단 경험' },
-    { id: 'riskFactor03', value: '3', label: '자해 경험' },
-    { id: 'riskFactor04', value: '4', label: '최근 극심한 스트레스' },
-    { id: 'riskFactor05', value: '5', label: '가족력' },
-    { id: 'riskFactor06', value: '6', label: '고립' },
-    { id: 'riskFactor07', value: '7', label: '최근 수면변화' },
-    { id: 'riskFactor08', value: '8', label: '높은 충동성' },
-    { id: 'riskFactor09', value: '9', label: '기타' },
-  ];
-  const riskScaleOptions = [
-    { id: 'riskScale01', value: '1', label: '양호', tag: 'safe', score: 1 },
-    { id: 'riskScale02', value: '2', label: '주의', tag: 'caution', score: 2 },
-    { id: 'riskScale03', value: '3', label: '위험', tag: 'danger', score: 3 },
-    { id: 'riskScale04', value: '4', label: '고위험', tag: 'critical', score: 4 },
-  ];
-  const symptomList = [
-    { name: '우울', field: 'depression' },
-    { name: '불안', field: 'anxiety' },
-    { name: '공황', field: 'panic' },
-    { name: '강박', field: 'ocd' },
-    { name: 'ADHD', field: 'adhd' },
-    { name: 'PTSD', field: 'ptsd' },
-  ];
 
   const handleRiskChange = e => setCurrentRisk(e.target.value);
   const handlePastRiskChange = e => setPastRisk(e.target.value);
@@ -366,6 +336,26 @@ function CounselLogDetail() {
   const handleNextPlanChange = value => setNextPlan(value);
   const handleConcernChange = value => setConcern(value);
   const handleCaseConceptChange = value => setCaseConcept(value);
+
+  // API 데이터를 컴포넌트 상태로 매핑하는 함수 (유틸 위임)
+  const mapSessionNoteToState = (data) => {
+    return mapSessionNoteToStateUtil(data, {
+      setCurrentRisk,
+      setPastRisk,
+      setRiskScale,
+      setRiskFactors,
+      setRiskFactorEtc,
+      setSymptoms,
+      setMainProblem,
+      setSessionContent,
+      setCounselorOpinion,
+      setObservation,
+      setGoal,
+      setNextPlan,
+      setConcern,
+      setCaseConcept,
+    });
+  };
 
   // URL 파라미터로부터 세션 데이터 로딩 (새로고침 대응)
   useEffect(() => {
@@ -387,70 +377,38 @@ function CounselLogDetail() {
     };
 
     fetchSessionData();
-  }, [sessionSeq, clientId, setCurrentSession]);
+  }, [sessionSeq, clientId]);
 
-  // 상담일지 데이터 로딩
+  // 상담일지 데이터 로딩 (전역 상태 우선 확인, 없을 때만 API 호출)
   useEffect(() => {
     const fetchSessionNoteData = async () => {
       if (currentSession?.sessionSeq) {
+        // 1. 전역 상태에서 해당 sessionSeq의 데이터가 있는지 확인
+        if (sessionNote?.data && String(sessionNote.sessionSeq) === String(currentSession.sessionSeq)) {
+          console.log('전역 상태에서 데이터 로드 성공:', sessionNote.data);
+          mapSessionNoteToState(sessionNote.data);
+          return;
+        }
+
+        // 2. 전역 상태에 없으면 API 호출
         try {
           const response = await sessionNoteFind(currentSession.sessionSeq);
           if (response.code === 200 && response.data) {
-            const data = response.data;
-            setSessionNoteData(data);
-            
-            // API 데이터를 각 상태값에 매핑
-            setCurrentRisk(data.currentRiskLevel ? String(data.currentRiskLevel) : '');
-            setPastRisk(data.pastRiskLevel ? String(data.pastRiskLevel) : '');
-            setRiskScale(data.crisisStageLevel ? String(data.crisisStageLevel) : '');
-            
-            // 위험요인 매핑 (boolean 값들을 배열로 변환)
-            const factors = [];
-            if (data.riskNone) factors.push('1');
-            if (data.riskDiagnosis) factors.push('2');
-            if (data.riskSelfHarm) factors.push('3');
-            if (data.riskExtremeStress) factors.push('4');
-            if (data.riskFamilyHistory) factors.push('5');
-            if (data.riskGrief) factors.push('6');
-            if (data.riskSleepChange) factors.push('7');
-            if (data.riskHighImpulsivity) factors.push('8');
-            if (data.riskOtherText && data.riskOtherText.trim()) factors.push('9');
-            setRiskFactors(factors);
-            setRiskFactorEtc(data.riskOtherText || '');
-            
-            // 증상 심각도 매핑 (값이 없으면 null로 설정하여 아무것도 선택되지 않게 함)
-            setSymptoms({
-              depression: data.depression !== null && data.depression !== undefined ? data.depression : null,
-              anxiety: data.anxiety !== null && data.anxiety !== undefined ? data.anxiety : null,
-              panic: data.panic !== null && data.panic !== undefined ? data.panic : null,
-              ocd: data.compulsion !== null && data.compulsion !== undefined ? data.compulsion : null,
-              adhd: data.adhd !== null && data.adhd !== undefined ? data.adhd : null,
-              ptsd: data.ptsd !== null && data.ptsd !== undefined ? data.ptsd : null,
+            console.log('API 호출로 데이터 로드 성공:', response.data);
+            setSessionNote({
+              sessionSeq: String(currentSession.sessionSeq),
+              data: response.data,
+              updatedAt: Date.now(),
             });
-            
-            // 텍스트 필드들 매핑
-            setMainProblem(data.chiefComplaintText || '');
-            setSessionContent(data.sessionSummaryText || '');
-            setCounselorOpinion(data.counselorOpinionText || '');
-            setObservation(data.objectiveObservationText || '');
-            setGoal(data.counselingGoalText || '');
-            setNextPlan(data.nextSessionPlanText || '');
-            setConcern(data.clientConcernsText || '');
-            setCaseConcept(data.caseConceptualizationText || '');
-            
-            // console.log('상담일지 데이터 로드 성공:', data);
+            mapSessionNoteToState(response.data);
           } else {
             console.error('상담일지 조회 실패:', response.message);
-            // 실패 시 기본값으로 초기화
-            setSessionNoteData(null);
           }
         } catch (error) {
           console.error('상담일지 조회 오류:', error);
-          setSessionNoteData(null);
         }
       } else {
         // currentSession이 없으면 초기화
-        setSessionNoteData(null);
         setCurrentRisk('');
         setPastRisk('');
         setRiskFactors([]);
@@ -476,7 +434,7 @@ function CounselLogDetail() {
     };
 
     fetchSessionNoteData();
-  }, [currentSession]);
+  }, [currentSession, sessionNote]);
 
   // 스크롤 이벤트
   useEffect(() => {
@@ -484,8 +442,6 @@ function CounselLogDetail() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-
 
   return (
     <>
@@ -521,7 +477,7 @@ function CounselLogDetail() {
                 <li className={currentRisk ? 'on' : ''}>
                   <a href="#step01" onClick={e => handleStepNavClick(e, 'step01')}>자살, 위기 상황의 긴급도</a>
                 </li>
-                <li className={Array.isArray(symptoms) ? (symptoms.length > 0 ? 'on' : '') : (Object.values(symptoms).some(v => v) ? 'on' : '')}>
+                <li className={Object.values(symptoms).some(v => v != null && v !== 0) ? 'on' : ''}>
                   <a href="#step02" onClick={e => handleStepNavClick(e, 'step02')}>현재 증상의 심각도</a>
                 </li>
                 <li className={mainProblem ? 'on' : ''}>
@@ -558,87 +514,23 @@ function CounselLogDetail() {
           </div>
           <div className="form-content">
             <CounselLogStep id="step01" title="자살, 위기 상황의 긴급도">
-              {/* 1. 현재 위기 상황 */}
-              <div className="write-wrap">
-                <div className="write-title">
-                  <p>1. 현재는 어떤 위기 상황이 있는지 선택해 주세요.</p>
-                </div>
-                <div className="write-area">
-                  <RadioList
-                    name="currentRisk"
-                    options={currentRiskOptions}
-                    value={currentRisk}
-                    onChange={handleRiskChange}
-                  />
-                </div>
-              </div>
-              {/* 2. 과거 위기 상황 */}
-              <div className="write-wrap">
-                <div className="write-title">
-                  <p>2. 과거에는 어떤 위기 상황이 있는지 선택해 주세요.</p>
-                </div>
-                <div className="write-area">
-                  <RadioList
-                    name="pastRisk"
-                    options={pastRiskOptions}
-                    value={pastRisk}
-                    onChange={handlePastRiskChange}
-                  />
-                </div>
-              </div>
-              {/* 3. 위험요인 체크박스 */}
-              <div className="write-wrap check">
-                <div className="write-title">
-                  <p>3. 위험요인을 선택해 주세요. (중복 선택 가능)</p>
-                </div>
-                <div className="write-area">
-                  <CheckboxList
-                    name="riskFactor"
-                    options={riskFactorOptions}
-                    values={riskFactors}
-                    onChange={handleRiskFactorsChange}
-                    etcInput={riskFactorEtc}
-                    etcValue={riskFactorEtc}
-                    onEtcChange={handleRiskFactorEtcChange}
-                  />
-                </div>
-              </div>
-              {/* 4. 위기 단계 선택 */}
-              <div className="write-wrap risk-scale">
-                <div className="write-title">
-                  <p>4. 내담자의 위기 단계를 선택해 주세요.</p>
-                  <a className="panel-btn" onClick={handleOpenGuidePanel} style={{cursor:'pointer'}}>
-                    평정 가이드 보기
-                  </a>
-                </div>
-                <p>선택하신 내담자의 위기 단계는 위험도 뱃지에 반영됩니다.</p>
-                <div className="write-area">
-                  <ul>
-                    {riskScaleOptions.map(opt => (
-                      <li key={opt.id}>
-                        <div className="top">
-                          <div className="input-wrap radio">
-                            <input
-                              id={opt.id}
-                              type="radio"
-                              name="riskScale"
-                              value={opt.value}
-                              checked={riskScale === opt.value}
-                              onChange={handleRiskScaleChange}
-                            />
-                            <label htmlFor={opt.id}></label>
-                          </div>
-                          <span className={`face-icon ${opt.tag}`} aria-label="얼굴 아이콘"></span>
-                          <span className={`tag ${opt.tag}`}>{opt.label}</span>
-                        </div>
-                        <div className="bottom">
-                          <span>{opt.label} ({opt.score}점)</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              <RiskSection
+                currentRisk={currentRisk}
+                pastRisk={pastRisk}
+                riskFactors={riskFactors}
+                riskFactorEtc={riskFactorEtc}
+                riskScale={riskScale}
+                onChangeCurrentRisk={handleRiskChange}
+                onChangePastRisk={handlePastRiskChange}
+                onChangeRiskFactors={handleRiskFactorsChange}
+                onChangeRiskFactorEtc={handleRiskFactorEtcChange}
+                onChangeRiskScale={handleRiskScaleChange}
+                currentRiskOptions={currentRiskOptions}
+                pastRiskOptions={pastRiskOptions}
+                riskFactorOptions={riskFactorOptions}
+                riskScaleOptions={riskScaleOptions}
+                onOpenGuide={handleOpenGuidePanel}
+              />
             </CounselLogStep>
 
             <CounselLogStep id="step02" title="현재 증상의 심각도">
