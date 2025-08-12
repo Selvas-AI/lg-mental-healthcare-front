@@ -10,11 +10,12 @@ import { useRecoilState, useRecoilValue } from 'recoil';
 import { foldState, currentSessionState } from '@/recoil';
 import { useSetRecoilState } from 'recoil';
 import { supportPanelState } from '@/recoil';
-import { sessionNoteFind, sessionFind } from '@/api/apiCaller';
+import { sessionNoteFind, sessionFind, sessionNoteUpdate } from '@/api/apiCaller';
 import { useLocation } from 'react-router-dom';
 import GuidePanel from './components/GuidePanel';
 import HistoryPanel from './components/HistoryPanel';
 import AiPanelCommon from '@/components/AiPanelCommon';
+import ToastPop from '@/components/ToastPop';
 
 function CounselLogDetail() {
   const location = useLocation();
@@ -93,6 +94,10 @@ function CounselLogDetail() {
   const [fold, setFold] = useRecoilState(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   const [currentSession, setCurrentSession] = useRecoilState(currentSessionState);
+  
+  // Toast 상태
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   // 날짜 포맷팅 함수
   const formatDate = (dateStr) => {
@@ -153,15 +158,170 @@ function CounselLogDetail() {
     setAiPanelKey(null);
   };
 
-  const handleSave = () => {
-    console.log('저장');
+  // Toast 표시 함수
+  const showToastMessage = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000); // 3초 후 자동 숨김
   };
 
-  const riskOptions = [
+  const handleSave = async () => {
+    if (!currentSession?.sessionSeq) {
+      showToastMessage('세션 정보가 없습니다.');
+      return;
+    }
+
+    // 필수 입력값 검증
+    // 1. 자살, 위기 상황의 긴급도 - 현재 위기 상황, 과거 위기 상황, 위험요인, 위기 단계 모두 체크
+    if (!currentRisk) {
+      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      return;
+    }
+    if (!pastRisk) {
+      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      return;
+    }
+    if (riskFactors.length === 0) {
+      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      return;
+    }
+    if (!riskScale) {
+      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      return;
+    }
+    
+    // 2. 현재 증상의 심각도 - 모든 증상에 대해 점수가 입력되어야 함
+    const allSymptomsCompleted = Object.values(symptoms).every(v => v !== null && v !== undefined);
+    if (!allSymptomsCompleted) {
+      alert('현재 증상의 심각도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      return;
+    }
+    
+    // 3. 기타 필수 텍스트 필드들
+    // 모든 텍스트 필드 타입 안전성 보장 (string이 아닐 경우 빈 문자열 처리)
+    const safeMainProblem = typeof mainProblem === 'string' ? mainProblem : '';
+    const safeSessionContent = typeof sessionContent === 'string' ? sessionContent : '';
+    const safeObservation = typeof observation === 'string' ? observation : '';
+    const safeGoal = typeof goal === 'string' ? goal : '';
+    const safeNextPlan = typeof nextPlan === 'string' ? nextPlan : '';
+    const textRequiredFields = [
+      { value: safeMainProblem.trim(), name: '주호소 문제' },
+      { value: safeSessionContent.trim(), name: '상담기록' },
+      { value: safeObservation.trim(), name: '객관적 관찰' },
+      { value: safeGoal.trim(), name: '상담 목표' },
+      { value: safeNextPlan.trim(), name: '차회기 상담 계획' }
+    ];
+
+    for (const field of textRequiredFields) {
+      if (!field.value) {
+        alert(`${field.name}을 입력하지 않았습니다. 입력 후 저장해 주세요.`);
+        return;
+      }
+    }
+
+    // 글자수 제한 검증
+    const characterLimitFields = [
+      { value: mainProblem, name: '주호소 문제', limit: 1000 },
+      { value: sessionContent, name: '상담내용', limit: 2000 },
+      { value: counselorOpinion, name: '상담사 소견', limit: 2000 },
+      { value: observation, name: '객관적 관찰', limit: 1000 },
+      { value: goal, name: '상담 목표', limit: 1000 },
+      { value: nextPlan, name: '차회기 상담 계획', limit: 1000 },
+      { value: concern, name: '고민되는 점', limit: 1000 },
+      { value: caseConcept, name: '사례개념화', limit: 2000 },
+      { value: riskFactorEtc, name: '위험요인 기타', limit: 100 }
+    ];
+
+    for (const field of characterLimitFields) {
+      if (field.value && field.value.length > field.limit) {
+        alert(`${field.name}의 내용이 입력 가능 글자수를 초과했습니다. 글자수를 줄인 후 저장해주세요.`);
+        return;
+      }
+    }
+
+    try {
+      // API 파라미터 구조에 맞춰 데이터 변환
+      const sessionNoteData = {
+        sessionSeq: currentSession.sessionSeq,
+        currentRiskLevel: currentRisk ? parseInt(currentRisk) : null,
+        pastRiskLevel: pastRisk ? parseInt(pastRisk) : null,
+        
+        // 위험요인 boolean 값들로 변환
+        riskNone: riskFactors.includes('1'),
+        riskDiagnosis: riskFactors.includes('2'),
+        riskSelfHarm: riskFactors.includes('3'),
+        riskExtremeStress: riskFactors.includes('4'),
+        riskHighImpulsivity: riskFactors.includes('8'),
+        riskFamilyHistory: riskFactors.includes('5'),
+        riskGrief: riskFactors.includes('6'),
+        riskSleepChange: riskFactors.includes('7'),
+        riskOtherText: riskFactors.includes('9') ? riskFactorEtc : '',
+        
+        crisisStageLevel: riskScale ? parseInt(riskScale) : null,
+        
+        // 증상 심각도
+        depression: symptoms.depression,
+        anxiety: symptoms.anxiety,
+        panic: symptoms.panic,
+        compulsion: symptoms.ocd,
+        adhd: symptoms.adhd,
+        ptsd: symptoms.ptsd,
+        
+        // 커스텀 증상 (현재는 사용하지 않으므로 기본값)
+        symptom01Active: false,
+        symptom01Name: '',
+        symptom01Severity: 0,
+        symptom02Active: false,
+        symptom02Name: '',
+        symptom02Severity: 0,
+        symptom03Active: false,
+        symptom03Name: '',
+        symptom03Severity: 0,
+        symptom04Active: false,
+        symptom04Name: '',
+        symptom04Severity: 0,
+        
+        // 텍스트 필드들
+        chiefComplaintText: mainProblem,
+        sessionSummaryText: sessionContent,
+        counselorOpinionText: counselorOpinion,
+        objectiveObservationText: observation,
+        counselingGoalText: goal,
+        nextSessionPlanText: nextPlan,
+        clientConcernsText: concern,
+        caseConceptualizationText: caseConcept
+      };
+
+      console.log('저장할 데이터:', sessionNoteData);
+      
+      const response = await sessionNoteUpdate(sessionNoteData);
+      
+      if (response.code === 200) {
+        showToastMessage('상담일지가 저장되었습니다.');
+        console.log('저장 성공:', response);
+      } else {
+        showToastMessage('저장에 실패했습니다: ' + (response.message || '알 수 없는 오류'));
+        console.error('저장 실패:', response);
+      }
+    } catch (error) {
+      showToastMessage('저장 중 오류가 발생했습니다.');
+      console.error('저장 오류:', error);
+    }
+  };
+
+  const currentRiskOptions = [
     { id: 'currentRisk01', value: '1', label: '해당 사항 없음' },
     { id: 'currentRisk02', value: '2', label: '자살 사고' },
     { id: 'currentRisk03', value: '3', label: '자살계획' },
     { id: 'currentRisk04', value: '4', label: '자살 시도' },
+  ];
+  const pastRiskOptions = [
+    { id: 'pastRisk01', value: '1', label: '해당 사항 없음' },
+    { id: 'pastRisk02', value: '2', label: '자살 사고' },
+    { id: 'pastRisk03', value: '3', label: '자살계획' },
+    { id: 'pastRisk04', value: '4', label: '자살 시도' },
   ];
   const riskFactorOptions = [
     { id: 'riskFactor01', value: '1', label: '해당 사항 없음' },
@@ -198,7 +358,14 @@ function CounselLogDetail() {
   const handleRiskFactorEtcChange = e => setRiskFactorEtc(e.target.value);
   const handleRiskScaleChange = e => setRiskScale(e.target.value);
   const handleSymptomChange = (field, score) => setSymptoms(prev => ({ ...prev, [field]: score }));
-  const handleMainProblemChange = e => setMainProblem(e.target.value);
+  const handleMainProblemChange = value => setMainProblem(value);
+  const handleSessionContentChange = value => setSessionContent(value);
+  const handleCounselorOpinionChange = value => setCounselorOpinion(value);
+  const handleObservationChange = value => setObservation(value);
+  const handleGoalChange = value => setGoal(value);
+  const handleNextPlanChange = value => setNextPlan(value);
+  const handleConcernChange = value => setConcern(value);
+  const handleCaseConceptChange = value => setCaseConcept(value);
 
   // URL 파라미터로부터 세션 데이터 로딩 (새로고침 대응)
   useEffect(() => {
@@ -209,7 +376,7 @@ function CounselLogDetail() {
           const response = await sessionFind(clientId, sessionSeq);
           if (response.code === 200 && response.data) {
             setCurrentSession(response.data);
-            console.log('세션 데이터 로드 성공:', response.data);
+            // console.log('세션 데이터 로드 성공:', response.data);
           } else {
             console.error('세션 조회 실패:', response.message);
           }
@@ -235,7 +402,7 @@ function CounselLogDetail() {
             // API 데이터를 각 상태값에 매핑
             setCurrentRisk(data.currentRiskLevel ? String(data.currentRiskLevel) : '');
             setPastRisk(data.pastRiskLevel ? String(data.pastRiskLevel) : '');
-            setRiskScale(data.crisisStageLevelCollapse ? String(data.crisisStageLevelCollapse) : '');
+            setRiskScale(data.crisisStageLevel ? String(data.crisisStageLevel) : '');
             
             // 위험요인 매핑 (boolean 값들을 배열로 변환)
             const factors = [];
@@ -271,7 +438,7 @@ function CounselLogDetail() {
             setConcern(data.clientConcernsText || '');
             setCaseConcept(data.caseConceptualizationText || '');
             
-            console.log('상담일지 데이터 로드 성공:', data);
+            // console.log('상담일지 데이터 로드 성공:', data);
           } else {
             console.error('상담일지 조회 실패:', response.message);
             // 실패 시 기본값으로 초기화
@@ -399,7 +566,7 @@ function CounselLogDetail() {
                 <div className="write-area">
                   <RadioList
                     name="currentRisk"
-                    options={riskOptions}
+                    options={currentRiskOptions}
                     value={currentRisk}
                     onChange={handleRiskChange}
                   />
@@ -413,7 +580,7 @@ function CounselLogDetail() {
                 <div className="write-area">
                   <RadioList
                     name="pastRisk"
-                    options={riskOptions}
+                    options={pastRiskOptions}
                     value={pastRisk}
                     onChange={handlePastRiskChange}
                   />
@@ -517,6 +684,7 @@ function CounselLogDetail() {
                   placeholder="본 회기에서 다룬 주요 주제와 상호작용 흐름을 기술하세요"
                   className="editor-wrap"
                   value={sessionContent}
+                  onChange={handleSessionContentChange}
                 />
                 <div id="step04-2" className="step-title sub">
                   <strong className="necessary">상담사 소견</strong>
@@ -524,7 +692,8 @@ function CounselLogDetail() {
                 <CustomTextareaBlock
                   placeholder="상담사가 내담자의 보고한 내용에 대한 해석이나 현재 상태에 대한 임상적 판단과 경과를 기술하세요."
                   className="editor-wrap"
-                  value={sessionContent}
+                  value={counselorOpinion}
+                  onChange={handleCounselorOpinionChange}
                 />
               </div>
             </div>
@@ -534,6 +703,7 @@ function CounselLogDetail() {
                   value={observation}
                   placeholder="내담자의 외모, 관찰 가능한 증상, 검사 결과, 가능한 진단, 행동관찰 등 객관적으로 관찰된 특이사항을 기록하세요."
                   className="editor-wrap"
+                  onChange={handleObservationChange}
                 />
               </div>
             </CounselLogStep>
@@ -543,6 +713,7 @@ function CounselLogDetail() {
                   value={goal}
                   placeholder="내담자와 설정한 단기 또는 장기 상담 목표를 구체적으로 기술해주세요."
                   className="editor-wrap"
+                  onChange={handleGoalChange}
                 />
               </div>
             </CounselLogStep>
@@ -555,6 +726,7 @@ function CounselLogDetail() {
                   value={nextPlan}
                   placeholder="다음 회기에서 다룰 주제나 전략에 대해 간단히 기술해주세요."
                   className="editor-wrap"
+                  onChange={handleNextPlanChange}
                 />
               </div>
             </CounselLogStep>
@@ -567,6 +739,7 @@ function CounselLogDetail() {
                   value={concern}
                   placeholder="본 회기 진행에 있어 전문가의 도움을 받고 싶은 부분이나 고민되는 점을 적어보세요."
                   className="editor-wrap"
+                  onChange={handleConcernChange}
                 />
               </div>
             </div>
@@ -589,6 +762,7 @@ function CounselLogDetail() {
                   value={caseConcept}
                   placeholder="내담자의 고민이나 문제를 이론적 틀 안에서 이해하고, 그 문제가 비롯된 내담자의 성장 과정과 유지 요인 등을 정리해 보세요."
                   className="editor-wrap"
+                  onChange={handleCaseConceptChange}
                 />
               </div>
             </div>
@@ -617,6 +791,7 @@ function CounselLogDetail() {
           <div className="complete-cont"></div>
         )}
       />
+      <ToastPop message={toastMessage} showToast={showToast} />
     </>
   )
 }

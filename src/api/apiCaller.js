@@ -100,3 +100,8 @@ export const sessionNoteFind = async (sessionSeq) => {
         params: { sessionSeq }
     })
 }
+
+// 상담일지 관련 정보 수정
+export const sessionNoteUpdate = async (sessionNoteData) => {
+    return await axiosIns.post('/api/sessionNote/update', sessionNoteData)
+}
