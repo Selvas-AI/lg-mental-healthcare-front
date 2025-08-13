@@ -6,6 +6,22 @@ const axiosIns = axios.create({
   responseType: 'json',
 })
 
+// 토큰 제거 후 로그인 화면으로 이동
+let _redirectingToLogin = false
+const clearAuthAndRedirect = () => {
+  try {
+    localStorage.removeItem('accessToken')
+    // localStorage.removeItem('refreshToken')
+  } catch (e) {
+    // noop
+  }
+  if (_redirectingToLogin) return
+  if (window.location.pathname !== '/login') {
+    _redirectingToLogin = true
+    window.location.replace('/login')
+  }
+}
+
 axiosIns.interceptors.request.use(
   config => {
     const accessToken = localStorage.getItem('accessToken')
@@ -35,13 +51,8 @@ axiosIns.interceptors.response.use(
       switch (response.data.code) {
         case 401:
           // RefreshToken 로직 주석처리
-          console.warn('401 Unauthorized - 토큰이 만료되었거나 유효하지 않습니다.')
-          localStorage.removeItem('accessToken')
-          // localStorage.removeItem('refreshToken')
-          
-          // 로그인 페이지로 리다이렉트 (필요시 구현)
-          // window.location.href = '/login'
-          
+          console.warn('401 Unauthorized - 토큰 만료 또는 유효하지 않음')
+          clearAuthAndRedirect()
           return Promise.reject(new Error('Unauthorized'))
           
           // try {
@@ -83,6 +94,14 @@ axiosIns.interceptors.response.use(
     return response.data
   },
   error => {
+    // 서버에서 HTTP 401을 직접 반환한 경우 처리
+    const status = error?.response?.status
+    const code = error?.response?.data?.code
+    if (status === 401 || code === 401 || code === '401') {
+      console.warn('HTTP/Body 401 감지 - 토큰 만료 또는 유효하지 않음, 로그인으로 이동합니다.')
+      clearAuthAndRedirect()
+      return Promise.reject(error)
+    }
     if (error.message === 'Network Error') {
       console.error('네트워크 연결을 확인해주세요.')
       // 토스트 메시지 표시 (필요시 구현)

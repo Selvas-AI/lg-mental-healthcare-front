@@ -2,10 +2,8 @@ import React, { useRef, useEffect } from "react";
 import Chart from "chart.js/auto";
 
 function ChartBarStacked({
-  values = [3, 5, 3, 1, 1, 4, 3, 2, 5, 3],
-  labels = [
-    "우울", "불안", "공황", "강박", "ADHD", "PTSD", "수면장애", "기억장애", "무기력", "최대텍스트"
-  ],
+  values = [],
+  labels = [],
   className = "",
   width = 1043,
   height = 167

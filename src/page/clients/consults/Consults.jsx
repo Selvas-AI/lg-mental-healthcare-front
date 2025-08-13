@@ -1,8 +1,9 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, supportPanelState } from "@/recoil";
+import { maskingState, clientsState, supportPanelState, currentSessionState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sessionNoteFind } from '@/api/apiCaller';
+import { sessionMngFind, sessionFind, clientFind } from '@/api/apiCaller';
+import { useClientManager } from '@/hooks/useClientManager';
 import './consults.scss';
 
 import ClientProfile from './../components/ClientProfile';
@@ -14,6 +15,8 @@ import ClientRegisterModal from './../components/ClientRegisterModal';
 import UploadModal from './components/UploadModal';
 import AiPanelCommon from '@/components/AiPanelCommon';
 import SurveySendModal from './psychologicalTest/components/SurveySendModal';
+import ToastPop from '@/components/ToastPop';
+import EditorModal from '../components/EditorModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel'},
@@ -30,8 +33,10 @@ function Consults() {
   const sessionSeq = query.get('sessionSeq');
   const tabParam = query.get('tab');
   const clients = useRecoilValue(clientsState);
+  const setClients = useSetRecoilState(clientsState);
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
   const [masked, setMasked] = useRecoilState(maskingState);
+  const setCurrentSession = useSetRecoilState(currentSessionState);
   
   // URL 쿼리 파라미터에서 탭 인덱스 가져오기 (기본값: 0)
   const getTabIndexFromParam = (tabParam) => {
@@ -54,6 +59,40 @@ function Consults() {
   const setSupportPanel = useSetRecoilState(supportPanelState);
   const [showSurveySendModal, setShowSurveySendModal] = useState(false);
   const [sessionMngData, setSessionMngData] = useState(null);
+  const [sessionData, setSessionData] = useState(null);
+  const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
+  
+  // 내담자 관리 커스텀 훅 사용
+  const { saveClient, saveMemo, toastMessage, showToast } = useClientManager();
+  
+  // clientId가 있을 때 특정 내담자 데이터 조회 (새로고침 대응)
+  useEffect(() => {
+    const fetchClientData = async () => {
+      if (clientId && !client) {
+        try {
+          const response = await clientFind({ clientSeq: parseInt(clientId) });
+          if (response.code === 200 && response.data) {
+            setClients(prevClients => {
+              const exists = prevClients.find(c => c.clientSeq === response.data.clientSeq);
+              if (!exists) {
+                return [...prevClients, response.data];
+              }
+              // 기존 데이터를 최신 데이터로 업데이트
+              return prevClients.map(client => 
+                client.clientSeq === response.data.clientSeq 
+                  ? response.data 
+                  : client
+              );
+            });
+          }
+        } catch (error) {
+          console.error('내담자 조회 실패:', error);
+        }
+      }
+    };
+
+    fetchClientData();
+  }, [clientId, client, setClients]);
   
   // 스크롤 위치 복원 처리
   useLayoutEffect(() => {
@@ -86,40 +125,72 @@ function Consults() {
     }
   }, [activeTab]);
 
-  // sessionSeq가 있을 때 상담관리 데이터 조회
+  // sessionSeq가 있을 때 상담관리 데이터와 회기 데이터 병렬 조회
   useEffect(() => {
-    const fetchSessionMngData = async () => {
-      if (sessionSeq) {
+    const fetchSessionData = async () => {
+      if (sessionSeq && clientId) {
         try {
-          const response = await sessionNoteFind(sessionSeq);
-          if (response.code === 200) {
-            setSessionMngData(response.data);
+          // 두 API를 병렬로 호출
+          const [sessionMngResponse, sessionResponse] = await Promise.all([
+            sessionMngFind(sessionSeq),           // Transcript용 상담관리 데이터
+            sessionFind(clientId, sessionSeq)     // TODO 관리용 회기 데이터
+          ]);
+          
+          // 상담관리 데이터 설정
+          if (sessionMngResponse.code === 200) {
+            setSessionMngData(sessionMngResponse.data);
           } else {
-            console.error('상담관리 조회 실패:', response.message);
+            console.error('상담관리 조회 실패:', sessionMngResponse.message);
             setSessionMngData(null);
           }
+          
+          // 회기 데이터 설정
+          if (sessionResponse.code === 200) {
+            setSessionData(sessionResponse.data);
+            setCurrentSession(sessionResponse.data);
+          } else {
+            console.error('회기 조회 실패:', sessionResponse.message);
+            setSessionData(null);
+            setCurrentSession(null);
+          }
         } catch (error) {
-          console.error('상담관리 조회 오류:', error);
+          console.error('데이터 조회 오류:', error);
           setSessionMngData(null);
+          setSessionData(null);
         }
       } else {
         setSessionMngData(null);
+        setSessionData(null);
+        setCurrentSession(null);
       }
     };
 
-    fetchSessionMngData();
-  }, [sessionSeq]);
+    fetchSessionData();
+  }, [sessionSeq, clientId]);
 
   const ActiveComponent = TAB_LIST[activeTab].component;
 
-  const onSave = (clientData) => {
-    if (editClient) {
-      // TODO: 수정 로직 구현
-    } else {
-      // TODO: 등록 로직 구현
+  const onSave = async (clientData) => {
+    const result = await saveClient(clientData, editClient);
+    if (result.success) {
+      setRegisterOpen(false);
+      setEditClient(null);
     }
-    setRegisterOpen(false);
   };
+
+  // 메모 수정 모달 열기
+  const handleEditMemo = () => {
+    setMemoModalOpen(true);
+  };
+
+  // 메모 저장 처리
+  const handleMemoSave = async (memoValue) => {
+    const result = await saveMemo(clientId, memoValue);
+    if (result.success) {
+      setMemoModalOpen(false);
+    }
+  };
+
 
   return (
     <>
@@ -145,6 +216,7 @@ function Consults() {
             setEditClient(clientData);
             setRegisterOpen(true);
           }}
+          onEditMemo={handleEditMemo}
         />
         <div className="tab-menu type01">
           <div className="tab-list-wrap">
@@ -179,6 +251,7 @@ function Consults() {
                 setShowAiSummary={setShowAiSummary}
                 setSupportPanel={setSupportPanel}
                 sessionMngData={activeTab === 0 ? sessionMngData : undefined}
+                sessionData={activeTab === 0 ? sessionData : undefined}
               />
             </div>
           </div>
@@ -228,6 +301,17 @@ function Consults() {
       {showSurveySendModal && (
         <SurveySendModal modalOpen={showSurveySendModal} onClose={() => setShowSurveySendModal(false)} />
       )}
+      <EditorModal
+        open={memoModalOpen}
+        onClose={() => setMemoModalOpen(false)}
+        onSave={handleMemoSave}
+        title="내담자 메모"
+        className="client-memo"
+        placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
+        maxLength={500}
+        initialValue={client?.memo || ""}
+      />
+      <ToastPop message={toastMessage} showToast={showToast} />
     </>
   );
 }

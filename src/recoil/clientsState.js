@@ -1,5 +1,6 @@
 import { atom } from "recoil";
 
+// 특정 내담자 데이터 상태 관리
 export const clientsState = atom({
   key: "clientsState",
   default: [],

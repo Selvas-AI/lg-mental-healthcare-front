@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { sessionDataState, currentSessionState } from "@/recoil";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { sessionList } from "@/api/apiCaller";
 import Transcript from "../transcript/Transcript";
 import CounselLog from "../counselLog/CounselLog";
 import SessionSelect from "./SessionSelect";
 import warningFace from "@/assets/images/common/warning_face.svg";
 //상담관리
-function CounselManagement({ setShowUploadModal, sessionMngData }) {
+function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData }) {
   const [isNoshow, setIsNoshow] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   
@@ -51,7 +52,12 @@ function CounselManagement({ setShowUploadModal, sessionMngData }) {
   }, [sessionData, currentSession]);
   
   function handleSessionSelect(option, idx) {
-    // TODO: 선택 시 동작 구현
+    // 선택된 회기로 URL 파라미터 변경하여 페이지 이동
+    const newQuery = new URLSearchParams(location.search);
+    newQuery.set('sessionSeq', option.sessionSeq);
+    
+    // URL 변경으로 Consults.jsx에서 새로운 데이터 로딩 트리거
+    navigate(`${location.pathname}?${newQuery.toString()}`, { replace: true });
   }
 
   return (
@@ -60,8 +66,8 @@ function CounselManagement({ setShowUploadModal, sessionMngData }) {
         <SessionSelect options={sessionOptions} onSelect={handleSessionSelect} />
         {!isNoshow ? 
         <>
-          <Transcript setShowUploadModal={setShowUploadModal} />
-          <CounselLog setIsNoshow={setIsNoshow} sessionMngData={sessionMngData} />
+          <Transcript setShowUploadModal={setShowUploadModal} sessionMngData={sessionMngData} sessionData={propSessionData} />
+          <CounselLog setIsNoshow={setIsNoshow} sessionMngData={sessionMngData} sessionData={propSessionData} />
         </> : 
         <>
           <div className="noshow">
