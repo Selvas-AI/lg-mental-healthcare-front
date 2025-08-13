@@ -7,6 +7,7 @@ const axiosIns = axios.create({
 })
 
 // 토큰 제거 후 로그인 화면으로 이동
+let _redirectingToLogin = false
 const clearAuthAndRedirect = () => {
   try {
     localStorage.removeItem('accessToken')
@@ -14,8 +15,10 @@ const clearAuthAndRedirect = () => {
   } catch (e) {
     // noop
   }
+  if (_redirectingToLogin) return
   if (window.location.pathname !== '/login') {
-    window.location.href = '/login'
+    _redirectingToLogin = true
+    window.location.replace('/login')
   }
 }
 
@@ -93,8 +96,9 @@ axiosIns.interceptors.response.use(
   error => {
     // 서버에서 HTTP 401을 직접 반환한 경우 처리
     const status = error?.response?.status
-    if (status === 401) {
-      console.warn('HTTP 401 - 토큰 만료 또는 유효하지 않음')
+    const code = error?.response?.data?.code
+    if (status === 401 || code === 401 || code === '401') {
+      console.warn('HTTP/Body 401 감지 - 토큰 만료 또는 유효하지 않음, 로그인으로 이동합니다.')
       clearAuthAndRedirect()
       return Promise.reject(error)
     }
