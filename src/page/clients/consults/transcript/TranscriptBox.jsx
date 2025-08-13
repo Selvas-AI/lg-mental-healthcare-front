@@ -51,7 +51,7 @@ function TranscriptBox({
     <div className={`${className} txt-box`}>
       <div className="box-tit">
         <strong>{title}</strong>
-        {editable && <a className="edit-btn" onClick={onEdit}>수정</a>}
+        {editable && <a className="edit-btn cursor-pointer" onClick={onEdit}>수정</a>}
       </div>
       {isBeforeCreate ? (
         <div className="create-wrap">

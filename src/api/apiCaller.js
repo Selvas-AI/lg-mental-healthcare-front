@@ -47,27 +47,25 @@ export const clientUpdateMemo = async (memoData) => {
 }
 
 
-//! ===== 상담 세션 관리 API =====
+//! ===== 회기 관리 API =====
 // 전체 회기 목록 조회
 export const sessionList = async (clientSeq) => {
     return await axiosIns.get('/api/session/list', { 
-        params: { clientSeq: clientSeq } 
+        params: { clientSeq } 
     })
 }
 
 // 현재 진행중인 회기 목록 조회
 export const sessionCurrentList = async (clientSeq) => {
-    return await axiosIns.get('/api/session/current_list', { 
-        params: { clientSeq: clientSeq } 
-    })
+    return await axiosIns.get('/api/session/currentList', { params: { clientSeq } })
 }
 
 // 특정 회기 상세 조회
 export const sessionFind = async (clientSeq, sessionSeq) => {
     return await axiosIns.get('/api/session/find', { 
         params: { 
-            clientSeq: clientSeq,
-            sessionSeq: sessionSeq 
+            clientSeq,
+            sessionSeq 
         } 
     })
 }
@@ -80,9 +78,7 @@ export const sessionCreate = async (sessionData) => {
 //! ===== 타임라인 정보 조회 API =====
 // 타임라인 정보 목록 조회
 export const timelineList = async (clientSeq) => {
-    return await axiosIns.get('/api/timeline/list', { 
-        params: { clientSeq } 
-    })
+    return await axiosIns.get('/api/timeline/list', { params: { clientSeq } })
 }
 
 //! ===== 상담관리 API =====

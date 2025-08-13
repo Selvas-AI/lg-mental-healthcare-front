@@ -1,5 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 
+// 불릿 라인 식별용 특수 마커 (저장/전송 문자열에서만 사용, 화면에는 표시되지 않음)
+const BULLET_MARK = '::BLT:: ';
+
 function CustomTextarea({
   value = '',
   onChange,
@@ -12,37 +15,76 @@ function CustomTextarea({
   const [text, setText] = useState(value);
   const isOver = text.length > maxLength;
   const editorRef = useRef(null);
+  const fromInputRef = useRef(false);
 
   useEffect(() => {
+    if (fromInputRef.current) {
+      fromInputRef.current = false;
+      return;
+    }
     if (Array.isArray(value)) {
-      // 배열 → bullet-line div로 변환
-      const html = value.map(item =>
-        `<div class="bullet-line">${item ? String(item).replace(/</g, "&lt;").replace(/>/g, "&gt;") : ""}</div>`
-      ).join('');
+      const str = value.join('\n');
+      // 마커 기반 렌더링: 마커가 있는 줄만 불릿 처리
+      const html = str.split('\n').map(lineRaw => {
+        const line = lineRaw || '';
+        const isBullet = line.startsWith(BULLET_MARK);
+        const text = isBullet ? line.slice(BULLET_MARK.length) : line;
+        const safe = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return isBullet ? `<div class=\"bullet-line\">${safe}</div>` : `<div>${safe}</div>`;
+      }).join('');
       if (editorRef.current && editorRef.current.innerHTML !== html) {
         editorRef.current.innerHTML = html;
       }
-      setText(value.join('\n'));
+      setText(str);
     } else {
-      setText(value || '');
-      if (editorRef.current && value !== editorRef.current.innerText) {
-        editorRef.current.innerText = value || '';
+      const str = value || '';
+      // 문자열에 줄바꿈이 있으면 불릿 라인으로 렌더, 없으면 일반 텍스트로 렌더
+      if (editorRef.current) {
+        if (str.includes('\n')) {
+          const html = str.split('\n').map(lineRaw => {
+            const line = lineRaw || '';
+            const isBullet = line.startsWith(BULLET_MARK);
+            const text = isBullet ? line.slice(BULLET_MARK.length) : line;
+            const safe = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return isBullet ? `<div class=\"bullet-line\">${safe}</div>` : `<div>${safe}</div>`;
+          }).join('');
+          if (editorRef.current.innerHTML !== html) {
+            editorRef.current.innerHTML = html;
+          }
+        } else {
+          // 단일 라인 처리: 마커가 있으면 불릿, 없으면 평문
+          const isBullet = str.startsWith(BULLET_MARK);
+          const text = isBullet ? str.slice(BULLET_MARK.length) : str;
+          if (isBullet) {
+            const safe = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const html = `<div class=\"bullet-line\">${safe}</div>`;
+            if (editorRef.current.innerHTML !== html) editorRef.current.innerHTML = html;
+          } else if (editorRef.current.innerText !== text) {
+            editorRef.current.innerText = text;
+          }
+        }
       }
+      setText(str);
     }
   }, [value]);
 
   const handleInput = e => {
-    // bullet-line이 있으면 배열로, 아니면 문자열
     const editor = editorRef.current;
     if (!editor) return;
-    const bullets = Array.from(editor.querySelectorAll('.bullet-line'));
-    if (bullets.length) {
-      const arr = bullets.map(div => div.textContent);
-      setText(arr.join('\n'));
-      if (onChange) onChange(arr);
+    // DOM → 문자열 직렬화: bullet-line에는 마커를 접두로 붙이고, 일반 라인은 그대로
+    const lines = Array.from(editor.children || []);
+    if (lines.length) {
+      const str = lines.map(div => {
+        const text = div.textContent || '';
+        return div.classList?.contains('bullet-line') ? `${BULLET_MARK}${text}` : text;
+      }).join('\n');
+      setText(str);
+      fromInputRef.current = true;
+      if (onChange) onChange(str);
     } else {
       const val = editor.innerText;
       setText(val);
+      fromInputRef.current = true;
       if (onChange) onChange(val);
     }
   };
@@ -75,6 +117,13 @@ function CustomTextarea({
         newRange.collapse(false);
         selection.removeAllRanges();
         selection.addRange(newRange);
+
+        // 변경 통지 (문자열로 일원화, 불릿은 마커 접두로 기록)
+        const nodes = Array.from(editorRef.current.children || []);
+        const strNow = nodes.map(div => div.classList?.contains('bullet-line') ? `${BULLET_MARK}${div.textContent || ''}` : (div.textContent || '')).join('\n');
+        fromInputRef.current = true;
+        setText(strNow);
+        onChange && onChange(strNow);
         return;
       }
       // 빈 불릿 자동 해제

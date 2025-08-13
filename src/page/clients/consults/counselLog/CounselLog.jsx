@@ -10,6 +10,102 @@ import ChartBarStacked from "./ChartBarStacked";
 import { sessionNoteFind } from "@/api/apiCaller";
 
 function CounselLog({ setIsNoshow, sessionData }) {
+  const BULLET_MARK = '::BLT:: ';
+  const renderSaveText = (content) => {
+    if (!content && content !== 0) return <div className="save-txt" />;
+    if (typeof content !== 'string') return <div className="save-txt">{content}</div>;
+    if (!content.includes(BULLET_MARK)) {
+      // 마커 없으면 단순 줄바꿈 처리
+      const lines = content.split('\n');
+      return (
+        <div className="save-txt">
+          {lines.map((l, i) => (
+            <React.Fragment key={i}>
+              {l}
+              {i < lines.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </div>
+      );
+    }
+    // 마커가 있으면 마커 기준으로 불릿 처리
+    const blocks = [];
+    const lines = content.split('\n');
+    lines.forEach((line, li) => {
+      if (line.includes(BULLET_MARK)) {
+        const parts = line.split(BULLET_MARK).filter(Boolean);
+        parts.forEach((txt, pi) => {
+          blocks.push(<div key={`${li}-${pi}`} className="bullet-line">{txt}</div>);
+        });
+      } else {
+        blocks.push(<div key={`p-${li}`}>{line}</div>);
+      }
+    });
+    return <div className="save-txt">{blocks}</div>;
+  };
+  const crisisClass = (level) => {
+    switch (Number(level)) {
+      case 1: return 'safe';
+      case 2: return 'caution';
+      case 3: return 'danger';
+      case 4: return 'critical';
+      default: return '';
+    }
+  };
+  const riskLevelText = (level) => {
+    switch (Number(level)) {
+      case 1: return '해당 사항 없음';
+      case 2: return '자살 사고';
+      case 3: return '자살계획';
+      case 4: return '자살 시도';
+      default: return '';
+    }
+  };
+  const riskFactorsText = (n) => {
+    if (!n) return '';
+    const items = [];
+    if (n.riskNone) return '해당 사항 없음';
+    if (n.riskDiagnosis) items.push('진단 경험');
+    if (n.riskSelfHarm) items.push('자해 경험');
+    if (n.riskExtremeStress) items.push('최근 극심한 스트레스');
+    if (n.riskHighImpulsivity) items.push('높은 충동성');
+    if (n.riskFamilyHistory) items.push('가족력');
+    if (n.riskGrief) items.push('고립');
+    if (n.riskSleepChange) items.push('최근 수면변화');
+    if (n.riskOtherText && String(n.riskOtherText).trim()) items.push(String(n.riskOtherText).trim());
+    return items.join(', ');
+  };
+  const buildSeverity = (n) => {
+    const labels = [];
+    const values = [];
+    if (!n) return { labels, values };
+    const entries = [
+      ['우울', Number(n.depression)],
+      ['불안', Number(n.anxiety)],
+      ['공황', Number(n.panic)],
+      ['강박', Number(n.compulsion)],
+      ['ADHD', Number(n.adhd)],
+      ['PTSD', Number(n.ptsd)],
+    ];
+    entries.forEach(([label, val]) => {
+      if (!Number.isNaN(val) && val >= 1) {
+        labels.push(label);
+        values.push(val);
+      }
+    });
+    // 추가 증상 01~04 동적 매핑
+    for (let i = 1; i <= 4; i++) {
+      const active = n[`symptom0${i}Active`];
+      const name = (n[`symptom0${i}Name`] || '').toString().trim();
+      const sevRaw = n[`symptom0${i}Severity`];
+      const sev = Number(sevRaw);
+      if (active && name && !Number.isNaN(sev) && sev >= 1) {
+        labels.push(name);
+        values.push(sev);
+      }
+    }
+    return { labels, values };
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
@@ -96,10 +192,10 @@ function CounselLog({ setIsNoshow, sessionData }) {
         <>
           <div className="dashboard">
             {/* 1. 자살, 위기 수준의 긴급도 */}
-            <div className={`urgency ${client?.crisisLevel || ''}`}>
+            <div className={`urgency ${crisisClass(note?.crisisStageLevel)}`}>
               <div className="box-tit">
                 <strong>1. 자살, 위기 수준의 긴급도</strong>
-                <a className="edit-btn" onClick={navigateToCounselDetail}>수정</a>
+                <a className="edit-btn cursor-pointer" onClick={navigateToCounselDetail}>수정</a>
               </div>
               <div className="con-wrap">
                 <div className="risk-scale">
@@ -124,15 +220,15 @@ function CounselLog({ setIsNoshow, sessionData }) {
                 </div>
                 <div className="current-risk">
                   <span>현재 위기 상황</span>
-                  <p>해당 사항 없음</p>
+                  <p>{riskLevelText(note?.currentRiskLevel)}</p>
                 </div>
                 <div className="past-risk">
                   <span>과거 위기 상황</span>
-                  <p>해당 사항 없음</p>
+                  <p>{riskLevelText(note?.pastRiskLevel)}</p>
                 </div>
                 <div className="risk-factor">
                   <span>위험 요인</span>
-                  <p>자해경험, 높은 충동성, 고립 </p>
+                  <p>{riskFactorsText(note)}</p>
                 </div>
               </div>
             </div>
@@ -140,10 +236,12 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <div className="severity">
               <div className="box-tit">
                 <strong>2. 현재 증상의 심각도</strong>
-                <a className="edit-btn" onClick={navigateToCounselDetail}>수정</a>
+                <a className="edit-btn cursor-pointer" onClick={navigateToCounselDetail}>수정</a>
               </div>
               <div className="con-wrap">
-                <ChartBarStacked />
+                {(() => { const sev = buildSeverity(note); return (
+                  <ChartBarStacked labels={sev.labels} values={sev.values} />
+                ); })()}
               </div>
             </div>
           </div>
@@ -155,69 +253,55 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="1. 주호소 문제"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={true}
             >
-              <div className="save-txt">
-                {logData[0]?.mainIssue}
-              </div>
+              {renderSaveText(logData[0]?.mainIssue)}
             </TranscriptBox>
             {/* 2. 상담 내용 */}
             <TranscriptBox
               title="2. 상담 내용"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={true}
             >
-              <div className="save-txt">
-                {logData[0]?.content}
-              </div>
+              {renderSaveText(logData[0]?.content)}
             </TranscriptBox>
             {/* 3. 상담사 소견 */}
             <TranscriptBox
               title="3. 상담사 소견"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={true}
             >
-              <div className="save-txt">
-                {logData[0]?.opinion}
-              </div>
+              {renderSaveText(logData[0]?.opinion)}
             </TranscriptBox>
             {/* 4. 객관적 관찰 */}
             <TranscriptBox
               title="4. 객관적 관찰"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={true}
             >
-              <div className="save-txt">
-                {logData[0]?.observation}
-              </div>
+              {renderSaveText(logData[0]?.observation)}
             </TranscriptBox>
             {/* 5. 상담 목표 */}
             <TranscriptBox
               title="5. 상담 목표"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={true}
             >
-              <div className="save-txt">
-                <div className="bullet-line">{logData[0]?.goals[0]}</div>
-                <div className="bullet-line">{logData[0]?.goals[1]}</div>
-                <div className="bullet-line">{logData[0]?.goals[2]}</div>
-              </div>
+              {renderSaveText((logData[0]?.goals || []).join('\n'))}
             </TranscriptBox>
             {/* 6. 다음 상담 계획 */}
             <TranscriptBox
               title="6. 다음 상담 계획"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={true}
             >
-              <div className="save-txt">
-                {logData[0]?.nextPlan}
-              </div>
+              {renderSaveText(logData[0]?.nextPlan)}
             </TranscriptBox>
           </div>
           <div className="sub-tit">
@@ -228,13 +312,11 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="7. 고민되는 점"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={logData[0]?.mind ? true : false}
             >
               {logData[0]?.mind ? (
-                <div className="save-txt">
-                  {logData[0]?.mind}
-                </div>
+                renderSaveText(logData[0]?.mind)
               ) : (
                 <div className="box-explain empty">
                   <p>내용이 작성되지 않았습니다.</p>
@@ -245,13 +327,11 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="8. 사례개념화"
               editable={true}
-              onEdit={() => {}}
+              onEdit={navigateToCounselDetail}
               toggleable={logData[0]?.caseConcept ? true : false}
             >
               {logData[0]?.caseConcept ? (
-                <div className="save-txt">
-                  {logData[0]?.caseConcept}
-                </div>
+                renderSaveText(logData[0]?.caseConcept)
               ) : (
                 <div className="box-explain empty">
                   <p>내용이 작성되지 않았습니다.</p>

@@ -241,6 +241,9 @@ function CounselLogDetail() {
     }
 
     try {
+      // 문자열 직렬화 보장: 배열이면 \n 조인, 문자열 아니면 빈 문자열
+      const normalizeText = (v) => Array.isArray(v) ? v.join('\n') : (typeof v === 'string' ? v : '');
+
       // API 파라미터 구조에 맞춰 데이터 변환
       const notePayload = {
         sessionSeq: currentSession.sessionSeq,
@@ -282,15 +285,15 @@ function CounselLogDetail() {
         symptom04Name: '',
         symptom04Severity: 0,
         
-        // 텍스트 필드들
-        chiefComplaintText: mainProblem,
-        sessionSummaryText: sessionContent,
-        counselorOpinionText: counselorOpinion,
-        objectiveObservationText: observation,
-        counselingGoalText: goal,
-        nextSessionPlanText: nextPlan,
-        clientConcernsText: concern,
-        caseConceptualizationText: caseConcept
+        // 텍스트 필드들 (항상 문자열 전송)
+        chiefComplaintText: normalizeText(mainProblem),
+        sessionSummaryText: normalizeText(sessionContent),
+        counselorOpinionText: normalizeText(counselorOpinion),
+        objectiveObservationText: normalizeText(observation),
+        counselingGoalText: normalizeText(goal),
+        nextSessionPlanText: normalizeText(nextPlan),
+        clientConcernsText: normalizeText(concern),
+        caseConceptualizationText: normalizeText(caseConcept)
       };
       
       const response = await sessionNoteUpdate(notePayload);
