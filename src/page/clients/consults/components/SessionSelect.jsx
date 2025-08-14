@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import CustomSelect from '@/components/CustomSelect';
 
-function SessionSelect({ options = [], onSelect }) {
+function SessionSelect({ options = [], onSelect, onEdit }) {
   // 현재 선택된 회기 찾기
   const initialIndex =
     options.findIndex((opt) => opt.selected) >= 0
@@ -13,8 +13,6 @@ function SessionSelect({ options = [], onSelect }) {
     setSelectedIdx(idx);
     if (onSelect) onSelect(options[idx], idx);
   };
-
-  const selectedOption = options[selectedIdx] || options[0];
 
   // 날짜 포맷 변환 함수 (2025-05-10 14:00:00 -> 2025.05.10 (토) 오후 2시)
   const formatDate = (dateStr) => {
@@ -36,6 +34,8 @@ function SessionSelect({ options = [], onSelect }) {
       return dateStr;
     }
   };
+
+  const selectedOption = options[selectedIdx] || options[0];
 
   return (
     <div className="top-info">
@@ -63,7 +63,7 @@ function SessionSelect({ options = [], onSelect }) {
         )}
       />
       <span className="datetime-info">{formatDate(selectedOption?.sessionDate)}</span>
-      <a className="edit-btn cursor-pointer" >수정</a>
+      <a className="edit-btn cursor-pointer" onClick={() => onEdit && onEdit(selectedOption)}>수정</a>
     </div>
   );
 }

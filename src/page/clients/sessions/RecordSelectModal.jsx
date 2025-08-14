@@ -302,9 +302,9 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
               />
             </div>
           </div>
-          <p className={`warning ${showWarning ? "on" : ""}`}>
+          {/* <p className={`warning ${showWarning ? "on" : ""}`}>
             이미 해당 일시에 작성된 상담이 있습니다.
-          </p>
+          </p> */}
         </div>
         <div className="btn-wrap">
           <button 

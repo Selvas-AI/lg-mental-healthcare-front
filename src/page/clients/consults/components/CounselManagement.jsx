@@ -8,7 +8,7 @@ import CounselLog from "../counselLog/CounselLog";
 import SessionSelect from "./SessionSelect";
 import warningFace from "@/assets/images/common/warning_face.svg";
 //상담관리
-function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData }) {
+function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData, onOpenEdit }) {
   const [isNoshow, setIsNoshow] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: pr
   return (
     <>
       <div className="inner">
-        <SessionSelect options={sessionOptions} onSelect={handleSessionSelect} />
+        <SessionSelect options={sessionOptions} onSelect={handleSessionSelect} onEdit={onOpenEdit} />
         {!isNoshow ? 
         <>
           <Transcript setShowUploadModal={setShowUploadModal} sessionMngData={sessionMngData} sessionData={propSessionData} />

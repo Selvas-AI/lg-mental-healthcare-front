@@ -20,9 +20,11 @@ function Clients() {
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || null);
   const [loading, setLoading] = useState(false);
   const [totalClientsExist, setTotalClientsExist] = useState(false); // 전체 내담자 존재 여부
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
   
   // 내담자 관리 커스텀 훅 사용
-  const { saveClient, saveMemo, toastMessage, showToast } = useClientManager();
+  const { saveClient, saveMemo } = useClientManager();
   
   const handleSaveRegister = async (formData) => {
     // 추가 업데이트 함수 (내담자 목록 새로고침)

@@ -11,6 +11,7 @@ let _redirectingToLogin = false
 const clearAuthAndRedirect = () => {
   try {
     localStorage.removeItem('accessToken')
+    localStorage.removeItem('isLoggedIn')
     // localStorage.removeItem('refreshToken')
   } catch (e) {
     // noop
@@ -30,10 +31,6 @@ axiosIns.interceptors.request.use(
     if (accessToken) {
       // 표준 Authorization Bearer
       config.headers['Authorization'] = `Bearer ${accessToken}`
-      
-      // 기존 Sh-Auth-Token 방식
-      // config.headers['Sh-Auth-Token'] = `${accessToken}`
-      // config.headers['Sh-Refresh-Token'] = `${refreshToken}`
     }
     
     return config

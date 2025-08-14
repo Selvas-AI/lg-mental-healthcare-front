@@ -23,7 +23,7 @@ export const sessionCurrentList = async (clientSeq) => {
     return await axiosIns.get('/api/session/currentList', { params: { clientSeq } })
 }
 
-//! 현재 회기 정보 수정
+// 현재 회기 정보 수정 (종결처리)
 export const sessionCurrentUpdate = async (params) => {
     return await axiosIns.post('/api/session/update', params)
 }
