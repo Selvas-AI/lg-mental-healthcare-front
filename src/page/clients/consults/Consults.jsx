@@ -306,7 +306,7 @@ function Consults() {
         initialData={editClient}
       />
       {showUploadModal && (
-        <UploadModal setShowUploadModal={setShowUploadModal} />
+        <UploadModal setShowUploadModal={setShowUploadModal} sessionSeq={sessionSeq}/>
       )}
       {/* AI 종합 의견 생성 패널 UI */}
       <AiPanelCommon
