@@ -144,10 +144,7 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
       }
       
       // sessionDate 형식: "2025-08-05 10:30"
-      const sessionDate = `${dateStr} ${timeStr}`;
-      
-      console.log('전송될 sessionDate:', sessionDate); // 디버깅용
-      
+      const sessionDate = `${dateStr} ${timeStr}`;      
       const sessionData = {
         sessionDate: sessionDate
       };
