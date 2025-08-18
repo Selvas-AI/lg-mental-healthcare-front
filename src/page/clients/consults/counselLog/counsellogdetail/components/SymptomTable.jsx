@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 
-function SymptomTable({ symptoms = [], values, onChange }) {
+function SymptomTable({ symptoms = [], values, onChange, customSymptoms = [], onCustomSymptomsChange }) {
   const SCORE_LABELS = [
     { label: '증상 없음', score: 0 },
     { label: '낮음', score: 1 },
@@ -10,17 +10,17 @@ function SymptomTable({ symptoms = [], values, onChange }) {
     { label: '매우 높음', score: 5 },
   ];
 
-  // 커스텀 증상 상태 관리
-  const [customSymptoms, setCustomSymptoms] = useState([]);
   const inputRefs = useRef({});
+  const MAX_CUSTOM_SYMPTOMS = 4;
 
   // 커스텀 증상 추가
   const handleAddCustomSymptom = () => {
+    if (customSymptoms.length >= MAX_CUSTOM_SYMPTOMS) return;
+    
     const id = Date.now() + Math.random().toString(36).slice(2, 6);
-    setCustomSymptoms(prev => [
-      ...prev,
-      { id, name: '', editing: true, error: false, score: undefined }
-    ]);
+    const newSymptom = { id, name: '', editing: true, error: false, score: undefined };
+    onCustomSymptomsChange([...customSymptoms, newSymptom]);
+    
     setTimeout(() => {
       if (inputRefs.current[id]) inputRefs.current[id].focus();
     }, 0);
@@ -28,14 +28,14 @@ function SymptomTable({ symptoms = [], values, onChange }) {
 
   // 커스텀 증상 입력 변경
   const handleCustomInputChange = (id, value) => {
-    setCustomSymptoms(prev => prev.map(s =>
+    onCustomSymptomsChange(customSymptoms.map(s =>
       s.id === id ? { ...s, name: value, error: value.length > 5 } : s
     ));
   };
 
   // 커스텀 증상 blur/입력 완료
   const handleCustomInputBlur = (id) => {
-    setCustomSymptoms(prev => prev.map(s => {
+    onCustomSymptomsChange(customSymptoms.map(s => {
       if (s.id !== id) return s;
       const val = s.name.trim();
       if (val && val.length <= 5) {
@@ -55,7 +55,7 @@ function SymptomTable({ symptoms = [], values, onChange }) {
 
   // 텍스트 클릭 시 다시 인풋 전환
   const handleEditCustomSymptom = (id) => {
-    setCustomSymptoms(prev => prev.map(s =>
+    onCustomSymptomsChange(customSymptoms.map(s =>
       s.id === id ? { ...s, editing: true } : s
     ));
     setTimeout(() => {
@@ -69,12 +69,12 @@ function SymptomTable({ symptoms = [], values, onChange }) {
 
   // 삭제 버튼 클릭
   const handleRemoveCustomSymptom = (id) => {
-    setCustomSymptoms(prev => prev.filter(s => s.id !== id));
+    onCustomSymptomsChange(customSymptoms.filter(s => s.id !== id));
   };
 
   // 커스텀 증상 점수 선택
   const handleCustomScoreChange = (id, score) => {
-    setCustomSymptoms(prev => prev.map(s =>
+    onCustomSymptomsChange(customSymptoms.map(s =>
       s.id === id ? { ...s, score } : s
     ));
   };
@@ -162,8 +162,17 @@ function SymptomTable({ symptoms = [], values, onChange }) {
           </tbody>
         </table>
       </div>
-      <button className="signs-add-btn" type="button" onClick={handleAddCustomSymptom}>
-        <span>증상 추가</span>
+      <button 
+        className="signs-add-btn" 
+        type="button" 
+        onClick={handleAddCustomSymptom}
+        disabled={customSymptoms.length >= MAX_CUSTOM_SYMPTOMS}
+        style={{ 
+          opacity: customSymptoms.length >= MAX_CUSTOM_SYMPTOMS ? 0.5 : 1,
+          cursor: customSymptoms.length >= MAX_CUSTOM_SYMPTOMS ? 'not-allowed' : 'pointer'
+        }}
+      >
+        <span>증상 추가 ({customSymptoms.length}/{MAX_CUSTOM_SYMPTOMS})</span>
       </button>
     </>
   );
