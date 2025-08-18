@@ -20,9 +20,9 @@ const Sidebar = ({ fold, onToggleFold }) => {
     onToggleFold();
   };
 
-  // /clients 외의 경로는 클릭 막음 
+  // /clients, /mypage 외의 경로는 클릭 막음 
   const handleNavClick = (e, path) => {
-    if (path !== "/clients") {
+    if (path !== "/clients" && path !== "/mypage") {
       e.preventDefault();
       e.stopPropagation();
     }

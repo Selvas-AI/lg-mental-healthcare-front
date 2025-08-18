@@ -50,6 +50,7 @@ function Header({ scroll, title, fold, rightActions }) {
               className="mypage-btn"
               type="button"
               aria-label="마이페이지"
+              onClick={() => navigate("/mypage")}
             ></button>
           </div>
         </div>

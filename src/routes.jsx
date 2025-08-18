@@ -57,7 +57,7 @@ const router = createBrowserRouter([
           // 문서 관리
           // { path: "document", element: <Document /> },
           // 마이페이지
-          // { path: "mypage", element: <MyPage /> },
+          { path: "mypage", element: <MyPage /> },
           // 고객지원
           // { path: "support", element: <Support /> },
         ],
