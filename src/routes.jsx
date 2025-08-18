@@ -39,9 +39,9 @@ const router = createBrowserRouter([
         path: "/",
         element: <ProtectedRedirect />,
         children: [
-          { index: true, element: null }, // 루트 경로는 ProtectedRedirect에서 /home으로 리다이렉트
-          { path: "home", element: <Home /> },
-          { path: "schedule", element: <Schedule /> },
+          { index: true, element: null }, // 루트 경로는 ProtectedRedirect에서 /clients로 리다이렉트
+          // { path: "home", element: <Home /> },
+          // { path: "schedule", element: <Schedule /> },
           // 내담자 관리
           { path: "clients", element: <Clients /> },
           // 상담 관리
@@ -55,11 +55,11 @@ const router = createBrowserRouter([
           // 회기 목록
           { path: "clients/sessions", element: <Sessions/> },
           // 문서 관리
-          { path: "document", element: <Document /> },
+          // { path: "document", element: <Document /> },
           // 마이페이지
-          { path: "mypage", element: <MyPage /> },
+          // { path: "mypage", element: <MyPage /> },
           // 고객지원
-          { path: "support", element: <Support /> },
+          // { path: "support", element: <Support /> },
         ],
       },
     ],

@@ -12,8 +12,8 @@ function ProtectedRedirect() {
       // 로그인되지 않은 경우 로그인 페이지로 이동
       navigate("/login", { replace: true });
     } else if (location.pathname === "/") {
-      // 로그인된 상태에서 루트 경로 접근 시 홈으로 이동
-      navigate("/home", { replace: true });
+      // 로그인된 상태에서 루트 경로 접근 시 내담자 목록으로 이동
+      navigate("/clients", { replace: true });
     }
   }, [navigate, location.pathname]);
 
