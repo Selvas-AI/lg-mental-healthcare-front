@@ -78,6 +78,7 @@ function CounselLogDetail() {
     adhd: null,
     ptsd: null,
   });
+  const [customSymptoms, setCustomSymptoms] = useState([]);
   const [mainProblem, setMainProblem] = useState('');
   const [sessionContent, setSessionContent] = useState('');
   const [counselorOpinion, setCounselorOpinion] = useState('');
@@ -271,19 +272,19 @@ function CounselLogDetail() {
         adhd: symptoms.adhd,
         ptsd: symptoms.ptsd,
         
-        // 커스텀 증상 (현재는 사용하지 않으므로 기본값)
-        symptom01Active: false,
-        symptom01Name: '',
-        symptom01Severity: 0,
-        symptom02Active: false,
-        symptom02Name: '',
-        symptom02Severity: 0,
-        symptom03Active: false,
-        symptom03Name: '',
-        symptom03Severity: 0,
-        symptom04Active: false,
-        symptom04Name: '',
-        symptom04Severity: 0,
+        // 커스텀 증상 매핑 (최대 4개)
+        symptom01Active: customSymptoms.length > 0 && customSymptoms[0]?.name?.trim() ? true : false,
+        symptom01Name: customSymptoms.length > 0 ? (customSymptoms[0]?.name?.trim() || '') : '',
+        symptom01Severity: customSymptoms.length > 0 ? (customSymptoms[0]?.score || 0) : 0,
+        symptom02Active: customSymptoms.length > 1 && customSymptoms[1]?.name?.trim() ? true : false,
+        symptom02Name: customSymptoms.length > 1 ? (customSymptoms[1]?.name?.trim() || '') : '',
+        symptom02Severity: customSymptoms.length > 1 ? (customSymptoms[1]?.score || 0) : 0,
+        symptom03Active: customSymptoms.length > 2 && customSymptoms[2]?.name?.trim() ? true : false,
+        symptom03Name: customSymptoms.length > 2 ? (customSymptoms[2]?.name?.trim() || '') : '',
+        symptom03Severity: customSymptoms.length > 2 ? (customSymptoms[2]?.score || 0) : 0,
+        symptom04Active: customSymptoms.length > 3 && customSymptoms[3]?.name?.trim() ? true : false,
+        symptom04Name: customSymptoms.length > 3 ? (customSymptoms[3]?.name?.trim() || '') : '',
+        symptom04Severity: customSymptoms.length > 3 ? (customSymptoms[3]?.score || 0) : 0,
         
         // 텍스트 필드들 (항상 문자열 전송)
         chiefComplaintText: normalizeText(mainProblem),
@@ -331,6 +332,7 @@ function CounselLogDetail() {
   const handleRiskFactorEtcChange = e => setRiskFactorEtc(e.target.value);
   const handleRiskScaleChange = e => setRiskScale(e.target.value);
   const handleSymptomChange = (field, score) => setSymptoms(prev => ({ ...prev, [field]: score }));
+  const handleCustomSymptomsChange = (newCustomSymptoms) => setCustomSymptoms(newCustomSymptoms);
   const handleMainProblemChange = value => setMainProblem(value);
   const handleSessionContentChange = value => setSessionContent(value);
   const handleCounselorOpinionChange = value => setCounselorOpinion(value);
@@ -349,6 +351,7 @@ function CounselLogDetail() {
       setRiskFactors,
       setRiskFactorEtc,
       setSymptoms,
+      setCustomSymptoms,
       setMainProblem,
       setSessionContent,
       setCounselorOpinion,
@@ -546,6 +549,8 @@ function CounselLogDetail() {
                     symptoms={symptomList}
                     values={symptoms}
                     onChange={handleSymptomChange}
+                    customSymptoms={customSymptoms}
+                    onCustomSymptomsChange={handleCustomSymptomsChange}
                   />
                 </div>
               </div>

@@ -1,14 +1,19 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
 import KeywordBox from "./KeywordBox";
 import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import TranscriptBox from "./TranscriptBox";
+import { audioFind } from "@/api/apiCaller";
 
 function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const sessionSeq = query.get('sessionSeq');
+  const [audioFileExists, setAudioFileExists] = useState(false);
   
   // sessionMngData에서 실제 데이터 추출
   const hasData = sessionMngData && Object.keys(sessionMngData).length > 0;
@@ -24,6 +29,26 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
   const isTranscriptCreated = sessionData?.todoTranscriptCreation === true;
   const isAiAnalysisDone = sessionData?.todoAiAnalysisDone === true;
   const isAiAnalysisChecked = sessionData?.todoAiAnalysisCheck === true;
+  
+  // 녹음파일 조회 API 호출
+  useEffect(() => {
+    const fetchAudioData = async () => {
+      try {
+        const findResponse = await audioFind(sessionSeq);
+        if (findResponse.code === 200 && findResponse.data && isTranscriptCreated) {
+          setAudioFileExists(true);
+        }
+      } catch (error) {
+        if (error.response?.status === 400) {
+          setAudioFileExists(false);
+        }
+      }
+    };
+
+    if (isTranscriptCreated) {
+      fetchAudioData();
+    }
+  }, [sessionSeq, isTranscriptCreated]);
   
   // JSON 파싱 함수
   const parseJsonSafely = (jsonString) => {
@@ -78,7 +103,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
       <div className="tit-wrap">
         <strong>녹취록</strong>
         <div className="btn-wrap">
-          {!isTranscriptCreated ? (
+          {!audioFileExists ? (
             <button className="upload-btn type03 h40" type="button" onClick={handleUpload}>
               녹취록 업로드
             </button>
@@ -90,7 +115,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
           </button>
         </div>
       </div>
-      {!isTranscriptCreated && (
+      {!audioFileExists && (
         <div className="empty-board">
           <img src={emptyFace} alt="empty" />
           <p className="empty-tit">업로드된 녹취록이 없습니다.</p>
@@ -99,7 +124,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
           </p>
         </div>
       )}
-      {isTranscriptCreated && !isAiAnalysisDone && (
+      {audioFileExists && !isAiAnalysisDone && (
         <div className="transcript-board">
           <div className="create-board">
             <strong>AI가 녹취록을 생성/분석하고 있습니다.</strong>

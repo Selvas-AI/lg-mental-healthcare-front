@@ -23,7 +23,7 @@ export const sessionCurrentList = async (clientSeq) => {
     return await axiosIns.get('/api/session/currentList', { params: { clientSeq } })
 }
 
-//! 현재 회기 정보 수정
+// 현재 회기 정보 수정 (종결처리)
 export const sessionCurrentUpdate = async (params) => {
     return await axiosIns.post('/api/session/update', params)
 }
@@ -34,12 +34,10 @@ export const sessionCreate = async (sessionData) => {
 }
 
 //? ===== 상담사(내정보) 관리 API =====
-//! 상담사(내정보) 조회
 export const counselorFind = async () => {
     return await axiosIns.get('/api/counselor/find')
 }
 
-//! 상담사(내정보) 수정
 export const counselorUpdate = async (params) => {
     return await axiosIns.post('/api/counselor/update', { params })
 }
@@ -120,6 +118,12 @@ export const sessionNoteUpdate = async (sessionNoteData) => {
     return await axiosIns.post('/api/sessionNote/update', sessionNoteData)
 }
 
+//? ===== 타임라인 정보 조회 API =====
+// 타임라인 정보 목록 조회
+export const timelineList = async (clientSeq) => {
+    return await axiosIns.get('/api/timeline/list', { params: { clientSeq } })
+}
+
 //? ===== 인증 관련 API =====
 // 상담자 등록(회원가입)
 export const authRegister = async (userData) => {
@@ -131,10 +135,20 @@ export const authLogin = async (credentials) => {
     return await axiosIns.post('/api/auth/login', credentials)
 }
 
-//? ===== 타임라인 정보 조회 API =====
-// 타임라인 정보 목록 조회
-export const timelineList = async (clientSeq) => {
-    return await axiosIns.get('/api/timeline/list', { params: { clientSeq } })
+//? ===== 녹음파일 관리 API =====
+// 녹음파일 조회
+export const audioFind = async (sessionSeq) => {
+    return await axiosIns.get('/api/audio/find', { params: { sessionSeq } })
+}
+
+//! 녹음파일 다운로드
+export const audioDownload = async (sessionSeq) => {
+    return await axiosIns.get('/api/audio/download', { params: { sessionSeq } })
+}
+
+// 녹음파일 등록
+export const audioUpload = async (audioData) => {
+    return await axiosIns.post('/api/audio/upload', audioData)
 }
 
 //? ===== 상담관리 API =====

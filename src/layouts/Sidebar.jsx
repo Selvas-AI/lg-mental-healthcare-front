@@ -20,12 +20,20 @@ const Sidebar = ({ fold, onToggleFold }) => {
     onToggleFold();
   };
 
+  // /clients, /mypage 외의 경로는 클릭 막음 
+  const handleNavClick = (e, path) => {
+    if (path !== "/clients" && path !== "/mypage") {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return (
     <nav className="lnb">
       <div className={`inner${fold ? " fold" : ""}`}>
         <div className="top">
           <h1 className="logo">
-            <NavLink to="/home">
+            <NavLink to="/home" onClick={(e) => handleNavClick(e, "/home")}>
               <img className="img-logo" src={logoImg} alt="Onshim 이미지 로고" />
               <img
                 className="txt-logo"
@@ -52,6 +60,7 @@ const Sidebar = ({ fold, onToggleFold }) => {
                     end={item.path === "/home"}
                     className={`sidebar-item ${item.path === "/home" ? "home" : item.path.replace("/", "")}`}
                     style={{ display: "block", width: "100%", height: "100%", position: "absolute", left: "1.2rem", top: "1.2rem", zIndex: 1}}
+                    onClick={(e) => handleNavClick(e, item.path)}
                   >
                     <span>{item.name}</span>
                   </NavLink>

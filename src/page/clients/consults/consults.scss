@@ -1848,3 +1848,59 @@
     width: calc(100% - 7.6rem) !important;
     transition: all .3s;
 }
+
+/* 상담일시 수정정 모달(팝업) */
+.consults .modal {
+    &.select-datetime {
+        > .inner {
+            .con-wrap {
+                width: 100%;
+                min-height: 50vh;
+                @include flexbox(column, flex-start, flex-start);
+                gap: 1.2rem;
+                .setting {
+                    position: relative;
+                    width: 100%;
+                    padding-top: 3rem;
+                    @include flexbox(row, center, flex-start);
+                    gap: 1.2rem;
+                    > div {
+                        width: calc(50% - .6rem);
+                        @include flexbox(column, flex-start, flex-start);
+                        gap: 1.2rem;
+                        > label, > span {
+                            position: relative;
+                            font-size: 1.6rem;
+                            font-weight: 700;
+                            color: $gray950;
+                            &.necessary {
+                                &::after {
+                                    content: "*";
+                                    font-size: 1.6rem;
+                                    font-weight: 700;
+                                    color: #FF0606;
+                                }
+                            }
+                        }
+                        .select-wrap {
+                            width: 100%;
+                            .select-box {
+                                width: 100%;
+                            }
+                        }
+                    }
+                }
+                .warning {
+                    padding-left: .8rem;
+                    font-size: 1.4rem;
+                    font-weight: 500;
+                    color: #FF0606;
+                    display: none;
+                    &.on {
+                        display: block;
+                    }
+                }
+            }
+        }
+    }
+}

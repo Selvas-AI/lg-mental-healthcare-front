@@ -795,6 +795,7 @@
 .sessions .modal {
     &.select-datetime {
         > .inner {
+            max-width: inherit;
             .con-wrap {
                 width: 100%;
                 min-height: 50vh;

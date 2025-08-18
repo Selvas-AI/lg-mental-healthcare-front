@@ -144,10 +144,7 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
       }
       
       // sessionDate 형식: "2025-08-05 10:30"
-      const sessionDate = `${dateStr} ${timeStr}`;
-      
-      console.log('전송될 sessionDate:', sessionDate); // 디버깅용
-      
+      const sessionDate = `${dateStr} ${timeStr}`;      
       const sessionData = {
         sessionDate: sessionDate
       };
@@ -302,9 +299,9 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
               />
             </div>
           </div>
-          <p className={`warning ${showWarning ? "on" : ""}`}>
+          {/* <p className={`warning ${showWarning ? "on" : ""}`}>
             이미 해당 일시에 작성된 상담이 있습니다.
-          </p>
+          </p> */}
         </div>
         <div className="btn-wrap">
           <button 

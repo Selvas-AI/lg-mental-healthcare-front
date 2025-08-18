@@ -12,7 +12,7 @@ export const mapSessionNoteToState = (data, setters) => {
   const {
     setCurrentRisk, setPastRisk, setRiskScale,
     setRiskFactors, setRiskFactorEtc,
-    setSymptoms,
+    setSymptoms, setCustomSymptoms,
     setMainProblem, setSessionContent, setCounselorOpinion, setObservation,
     setGoal, setNextPlan, setConcern, setCaseConcept,
   } = setters;
@@ -42,6 +42,57 @@ export const mapSessionNoteToState = (data, setters) => {
     adhd: data.adhd ?? null,
     ptsd: data.ptsd ?? null,
   });
+
+  // 커스텀 증상 복원 (symptom01~04에서 customSymptoms 배열로 변환)
+  if (typeof setCustomSymptoms === 'function') {
+    const customSymptoms = [];
+    
+    // symptom01
+    if (data.symptom01Active && data.symptom01Name?.trim()) {
+      customSymptoms.push({
+        id: 'custom-01',
+        name: data.symptom01Name.trim(),
+        editing: false,
+        error: false,
+        score: data.symptom01Severity ?? 0
+      });
+    }
+    
+    // symptom02
+    if (data.symptom02Active && data.symptom02Name?.trim()) {
+      customSymptoms.push({
+        id: 'custom-02',
+        name: data.symptom02Name.trim(),
+        editing: false,
+        error: false,
+        score: data.symptom02Severity ?? 0
+      });
+    }
+    
+    // symptom03
+    if (data.symptom03Active && data.symptom03Name?.trim()) {
+      customSymptoms.push({
+        id: 'custom-03',
+        name: data.symptom03Name.trim(),
+        editing: false,
+        error: false,
+        score: data.symptom03Severity ?? 0
+      });
+    }
+    
+    // symptom04
+    if (data.symptom04Active && data.symptom04Name?.trim()) {
+      customSymptoms.push({
+        id: 'custom-04',
+        name: data.symptom04Name.trim(),
+        editing: false,
+        error: false,
+        score: data.symptom04Severity ?? 0
+      });
+    }
+    
+    setCustomSymptoms(customSymptoms);
+  }
 
   if (typeof setMainProblem === 'function') setMainProblem(data.chiefComplaintText || '');
   if (typeof setSessionContent === 'function') setSessionContent(data.sessionSummaryText || '');

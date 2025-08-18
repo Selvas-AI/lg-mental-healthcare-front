@@ -36,7 +36,7 @@ function Sessions() {
   const fold = useRecoilValue(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   // 내담자 관리 커스텀 훅 사용
-  const { saveClient, saveMemo, toastMessage, showToast } = useClientManager();
+  const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
   const [sessionStatus, setSessionStatus] = useState(1); // 1: 진행중, 0: 종결
   const [clientListData, setClientListData] = useState([]); // ClientList 전용 데이터
   const [sessionData, setSessionData] = useRecoilState(sessionDataState); // 회기 데이터 (Recoil)
@@ -196,19 +196,13 @@ function Sessions() {
           setIsEmpty(sessionResponse.data.length === 0);
         }
         
-        setToastMessage('회기가 등록되었습니다.');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 2000);
+        showToastMessage('회기가 등록되었습니다.');
       } else {
-        setToastMessage(response.message || '회기 등록에 실패했습니다.');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 2000);
+        showToastMessage(response.message || '회기 등록에 실패했습니다.');
       }
     } catch (error) {
       console.error('회기 등록 오류:', error);
-      setToastMessage('회기 등록 중 오류가 발생했습니다.');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      showToastMessage('회기 등록 중 오류가 발생했습니다.');
     } finally {
       setRecordSelectOpen(false);
     }

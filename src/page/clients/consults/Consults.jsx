@@ -1,8 +1,8 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, supportPanelState, currentSessionState } from "@/recoil";
+import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sessionMngFind, sessionFind, clientFind } from '@/api/apiCaller';
+import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import './consults.scss';
 
@@ -17,6 +17,7 @@ import AiPanelCommon from '@/components/AiPanelCommon';
 import SurveySendModal from './psychologicalTest/components/SurveySendModal';
 import ToastPop from '@/components/ToastPop';
 import EditorModal from '../components/EditorModal';
+import RecordSelectModal from '../sessions/RecordSelectModal';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel'},
@@ -37,6 +38,8 @@ function Consults() {
   const client = clients.find(c => String(c.clientSeq) === String(clientId));
   const [masked, setMasked] = useRecoilState(maskingState);
   const setCurrentSession = useSetRecoilState(currentSessionState);
+  const setSessionDataRecoil = useSetRecoilState(sessionDataState);
+  const [editOpen, setEditOpen] = useState(false);
   
   // URL 쿼리 파라미터에서 탭 인덱스 가져오기 (기본값: 0)
   const getTabIndexFromParam = (tabParam) => {
@@ -47,6 +50,39 @@ function Consults() {
       'document': 3
     };
     return tabMap[tabParam] !== undefined ? tabMap[tabParam] : 0;
+  };
+
+  // 회기 일시 수정 트리거 (SessionSelect에서 호출)
+  const handleOpenEdit = () => {
+    setEditOpen(true);
+  };
+
+  // 회기 일시 수정 저장 처리
+  const handleEditSave = async (recordData) => {
+    try {
+      if (!clientId) return;
+      const payload = {
+        clientSeq: parseInt(clientId, 10),
+        sessionDate: recordData.sessionDate,
+        sessionStatus: recordData.sessionStatus,
+        // memo: recordData.memo,
+        // isLast: false, //true면 종결처리
+      };
+      const res = await sessionCurrentUpdate(payload);
+      if (res?.code === 200) {
+        // 수정 성공 후 최신 회기 목록으로 Recoil 상태 갱신
+        const listRes = await sessionList(parseInt(clientId, 10));
+        if (listRes?.code === 200 && Array.isArray(listRes.data)) {
+          setSessionDataRecoil(listRes.data);
+        }
+      } else {
+        console.warn('회기 일시 수정 실패', res);
+      }
+    } catch (e) {
+      console.error('회기 일시 수정 중 오류', e);
+    } finally {
+      setEditOpen(false);
+    }
   };
   
   const [activeTab, setActiveTab] = useState(getTabIndexFromParam(tabParam));
@@ -252,6 +288,7 @@ function Consults() {
                 setSupportPanel={setSupportPanel}
                 sessionMngData={activeTab === 0 ? sessionMngData : undefined}
                 sessionData={activeTab === 0 ? sessionData : undefined}
+                onOpenEdit={handleOpenEdit}
               />
             </div>
           </div>
@@ -269,7 +306,7 @@ function Consults() {
         initialData={editClient}
       />
       {showUploadModal && (
-        <UploadModal setShowUploadModal={setShowUploadModal} />
+        <UploadModal setShowUploadModal={setShowUploadModal} sessionSeq={sessionSeq}/>
       )}
       {/* AI 종합 의견 생성 패널 UI */}
       <AiPanelCommon
@@ -310,6 +347,11 @@ function Consults() {
         placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
         maxLength={500}
         initialValue={client?.memo || ""}
+      />
+      <RecordSelectModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSave={handleEditSave}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>
