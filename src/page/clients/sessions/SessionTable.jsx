@@ -100,7 +100,7 @@ function SessionTable({ clientId, sessionData}) {
                       // 페이지 이동
                       navigate(`/clients/consults?clientId=${clientId}&sessionSeq=${session.sessionSeq}`);
                     }}>
-                      {session.sessionNo}회기
+                      {session.sessionType === 'LAST' ? '종결회기' : `${session.sessionNo}회기`}
                     </a>
                   </td>
                   <td className={statusClass}>

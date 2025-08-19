@@ -76,7 +76,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     if (open && initialData) {
       // API 응답에서 guardian 필드를 guardians로 매핑
       let guardians = initialData.guardian || initialData.guardians;
-      if (!Array.isArray(guardians) || !guardians.every(g => typeof g === 'object' && g !== null && 'guardianRelation' in g && 'guardianName' in g && 'guardianContact' in g)) {
+      // 빈 배열이거나 스키마 불일치시 기본 1개 생성
+      if (!Array.isArray(guardians) || guardians.length === 0 || !guardians.every(g => typeof g === 'object' && g !== null && 'guardianRelation' in g && 'guardianName' in g && 'guardianContact' in g)) {
         guardians = [{ guardianRelation: '', guardianName: '', guardianContact: '' }];
       }
       let birthYear = '', birthMonth = '', birthDay = '';
@@ -218,7 +219,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     const safeForm = {
       ...form,
       memo,
-      guardians: Array.isArray(form.guardians) && form.guardians.every(g => typeof g === 'object')
+      // 최소 1개 보장하여 전송
+      guardians: Array.isArray(form.guardians) && form.guardians.length > 0 && form.guardians.every(g => typeof g === 'object')
         ? form.guardians
         : [{ guardianRelation: '', guardianName: '', guardianContact: '' }]
     };
@@ -367,8 +369,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                 </li>
                 <li>
                   <label>보호자 정보</label>
-                  {/* 배열이 아니거나 객체가 아닌 값이 들어올 경우 방어적 처리 */}
-                  {(Array.isArray(form.guardians) ? form.guardians : []).map((g, idx) => {
+                  {/* 최소 1개는 항상 보이도록 처리 */}
+                  {(Array.isArray(form.guardians) && form.guardians.length > 0 ? form.guardians : [{ guardianRelation: '', guardianName: '', guardianContact: '' }]).map((g, idx) => {
                     const guardian = (g && typeof g === 'object') ? g : { guardianRelation: '', guardianName: '', guardianContact: '' };
 
                     const indexStr = String(idx + 1).padStart(2, '0');

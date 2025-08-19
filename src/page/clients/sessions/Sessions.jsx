@@ -4,7 +4,7 @@ import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { maskingState, clientsState, foldState, supportPanelState, sessionDataState, currentSessionState } from "@/recoil";
-import { clientSearch, clientFind, sessionList, clientUpdateMemo, sessionCreate } from '../../../api/apiCaller';
+import { clientSearch, clientFind, sessionList, clientUpdateMemo, sessionCreate, sessionCurrentUpdate } from '../../../api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
@@ -15,6 +15,7 @@ import emptyFace from "@/assets/images/common/empty_face.svg";
 import TimelinePanel from "./TimelinePanel";
 import SessionTable from "./SessionTable";
 import RecordSelectModal from "./RecordSelectModal";
+import EditorConfirm from "../components/EditorConfirm";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -43,6 +44,7 @@ function Sessions() {
   const setCurrentSession = useSetRecoilState(currentSessionState); // 현재 선택된 세션
   const [sessionLoading, setSessionLoading] = useState(false); // 회기 데이터 로딩 상태
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
+  const [endConfirmOpen, setEndConfirmOpen] = useState(false); // 종결 확인 모달 상태
 
   // 페이지 로드 시 내담자 목록 fetch
   useEffect(() => {
@@ -234,6 +236,47 @@ function Sessions() {
     }
   };
 
+  // 종결 처리 모달 열기
+  const handleSessionEnd = () => {
+    if (!clientId) return;
+    setEndConfirmOpen(true);
+  };
+
+  // 종결 처리
+  const handleSessionEndConfirm = async () => {
+    if (!clientId) return;
+    try {
+      const response = await sessionCurrentUpdate({
+        clientSeq: parseInt(clientId),
+        isLast: true
+      });
+
+      if (response.code === 200) {
+        // 회기 목록 다시 불러오기
+        const sessionResponse = await sessionList(parseInt(clientId));
+        if (sessionResponse.code === 200 && Array.isArray(sessionResponse.data)) {
+          setSessionData(sessionResponse.data);
+          setIsEmpty(sessionResponse.data.length === 0);
+        }
+        showToastMessage('종결 처리가 완료되었습니다.');
+      } else {
+        showToastMessage(response.message || '종결 처리에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('종결 처리 오류:', error);
+      showToastMessage('종결 처리 중 오류가 발생했습니다.');
+    } finally {
+      setEndConfirmOpen(false);
+    }
+  };
+
+  // 가장 최근 회기가 종결 회기인지 확인
+  const isLastSessionEnded = () => {
+    if (!sessionData || sessionData.length === 0) return false;
+    // 가장 최근 회기 (첫 번째 요소)의 sessionType이 'LAST'인지 확인
+    return sessionData[0]?.sessionType === 'LAST';
+  };
+
   return (
     <>
       <ClientList
@@ -242,6 +285,7 @@ function Sessions() {
         fold={fold}
         sessionStatus={sessionStatus}
         onStatusChange={handleStatusChange}
+        masked={masked}
       />
       <div className="inner">
         <div className="move-up">
@@ -277,7 +321,15 @@ function Sessions() {
               >
                 회기 등록
               </button>
-              <button className="type05 white" type="button">종결</button>
+              <button 
+                className="type05 white" 
+                type="button"
+                disabled={isLastSessionEnded()}
+                onClick={handleSessionEnd}
+                style={isLastSessionEnded() ? { pointerEvents: 'none', color: '#b6b6b6', backgroundColor: '#eeeeee' } : {}}
+              >
+                진행중 회기 종결
+              </button>
             </div>
             <button className="type05" type="button" onClick={() => {
               setTimelineOpen(true);
@@ -331,6 +383,14 @@ function Sessions() {
         placeholder="예 : 충동행동이 있으며, 항정신성 약물을 복용 중임"
         maxLength={500}
         initialValue={client?.memo || ""}
+      />
+      <EditorConfirm
+        open={endConfirmOpen}
+        onClose={() => setEndConfirmOpen(false)}
+        onCancel={() => setEndConfirmOpen(false)}
+        onConfirm={handleSessionEndConfirm}
+        title="진행중 회기 종결"
+        message="진행중인 회기를 종결하시겠습니까?"
       />
     </>
   );

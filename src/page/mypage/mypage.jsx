@@ -197,7 +197,7 @@ export default function MyPage() {
   return (
     <>
       <Header title="마이페이지" scroll={scroll} fold={fold} />
-      <div className="inner">
+      <div className="inner mypage">
         <div className="move-up">
           <strong className="page-title">마이페이지</strong>
           <button className="save-btn type07 black" type="button" onClick={handleUpdate}>
