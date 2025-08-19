@@ -66,7 +66,7 @@ function Consults() {
         sessionDate: recordData.sessionDate,
         sessionStatus: recordData.sessionStatus,
         // memo: recordData.memo,
-        // isLast: false, //true면 종결처리
+        isLast: false, //true면 종결처리
       };
       const res = await sessionCurrentUpdate(payload);
       if (res?.code === 200) {
