@@ -2,7 +2,7 @@ import { useRecoilState } from "recoil";
 import ClientsTable from "./components/ClientsTable";
 import "./clients.scss";
 import EmptyClients from "./components/EmptyClients";
-import { clientsState } from "@/recoil";
+import { clientsState, maskingState } from "@/recoil";
 import { useState, useEffect } from "react";
 import ClientRegisterModal from "./components/ClientRegisterModal";
 import EditorModal from "./components/EditorModal";
@@ -22,6 +22,7 @@ function Clients() {
   const [totalClientsExist, setTotalClientsExist] = useState(false); // 전체 내담자 존재 여부
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [masked, setMasked] = useRecoilState(maskingState);
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo } = useClientManager();
@@ -101,7 +102,7 @@ function Clients() {
           <div className="switch-wrap">
             <label>
               <span>개인정보 보호</span>
-              <input role="switch" name="switch" type="checkbox" defaultChecked />
+              <input role="switch" name="switch" type="checkbox" checked={masked} onChange={e => setMasked(e.target.checked)} />
             </label>
           </div>
         </div>

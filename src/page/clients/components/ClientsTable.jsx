@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useRecoilState } from "recoil";
-import { clientsState } from "@/recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { clientsState, maskingState } from "@/recoil";
 import { clientSearch } from "@/api/apiCaller";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
 function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoClient, onCloseMemo }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [clients, setClients] = useRecoilState(clientsState);
+  const masked = useRecoilValue(maskingState);
   const [searchValue, setSearchValue] = useState("");
   const [filteredClients, setFilteredClients] = useState(clients);
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc': 오름차순, 'desc': 내림차순
@@ -78,6 +79,15 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     });
   };
 
+  // 이름 마스킹 함수
+  const maskName = (name) => {
+    if (!name) return '';
+    if (name.length <= 1) return '*';
+    if (name.length === 2) return name[0] + '*';
+    const mid = Math.floor(name.length / 2);
+    return name.slice(0, mid) + '*' + name.slice(mid + 1);
+  };
+
   // 전화번호 포맷팅 함수 (01012345678 -> 010-1234-5678)
   const formatPhoneNumber = (phone) => {
     if (!phone) return '';
@@ -86,6 +96,17 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
       return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
     }
     return phone; // 11자리가 아니면 원본 반환
+  };
+
+  // 전화번호 마스킹 함수 (가운데 자리 마스킹)
+  const maskPhoneNumber = (phone) => {
+    if (!phone) return '***-****-****';
+    const digits = phone.replace(/\D/g, ''); // 숫자만 추출
+    if (digits.length === 11) {
+      return `${digits.slice(0,3)}-****-${digits.slice(7,11)}`;
+    }
+    // fallback: 기존 값에 하이픈만 마스킹
+    return phone.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3');
   };
 
   // TODO 목록 생성 함수 (currentSession의 false인 값만 표시)
@@ -283,10 +304,10 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                       <Link
                         to={`/clients/sessions?clientId=${client.clientSeq}`}
                       >
-                        {client.clientName}{client.nickname && `(${client.nickname})`}
+                        {masked ? maskName(client.clientName) : client.clientName}{client.nickname && `(${client.nickname})`}
                       </Link>
                     </td>
-                    <td>{formatPhoneNumber(client.contactNumber)}</td>
+                    <td>{masked ? maskPhoneNumber(client.contactNumber) : formatPhoneNumber(client.contactNumber)}</td>
                     <td>
                       {client.currentSession === null ? (
                         <span className="text-[#32D074]">신규</span>

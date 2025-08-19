@@ -242,6 +242,7 @@ function Sessions() {
         fold={fold}
         sessionStatus={sessionStatus}
         onStatusChange={handleStatusChange}
+        masked={masked}
       />
       <div className="inner">
         <div className="move-up">

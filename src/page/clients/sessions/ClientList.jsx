@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 
-function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange }) {
+function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange, masked }) {
   const [search, setSearch] = useState("");
+  
+  // 이름 마스킹 함수
+  const maskName = (name) => {
+    if (!name) return '';
+    if (name.length <= 1) return '*';
+    if (name.length === 2) return name[0] + '*';
+    const mid = Math.floor(name.length / 2);
+    return name.slice(0, mid) + '*' + name.slice(mid + 1);
+  };
+  
   const filtered = clients.filter(client => {
     const clientName = client.clientName || '';
     const nickname = client.nickname || '';
@@ -58,7 +68,7 @@ function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange }) 
                       onSelect && onSelect(client);
                     }}
                   >
-                    {client.clientName}{client.nickname ? ` (${client.nickname})` : ""}
+                    {masked ? maskName(client.clientName) : client.clientName}{client.nickname ? ` (${client.nickname})` : ""}
                   </a>
                 </li>
               ))
