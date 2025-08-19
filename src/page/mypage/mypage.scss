@@ -27,14 +27,15 @@
     }
   
     .form-content {
-      width: 100%;
+      width: 60rem;
+      margin: 0 auto;
       margin-bottom: 0;
   
       .input-wrap {
         width: 100%;
         @include flexbox(column, flex-start, flex-start);
         gap: .6rem;
-        margin-bottom: 1rem;
+        margin-bottom: 2rem;
         label {
           font-weight: 700;
           color: $gray800;
