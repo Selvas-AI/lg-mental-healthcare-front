@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from "date-fns/locale";
 import CustomSelect from '@/components/CustomSelect';
 
-const RecordSelectModal = ({ open, onClose, onSave }) => {
+const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
   const [selectedRecord, setSelectedRecord] = useState("");
   const [currentStep, setCurrentStep] = useState(2); // 1: 녹음파일 선택(주석처리), 2: 날짜/시간 선택
   const [selectedDate, setSelectedDate] = useState(null);
@@ -82,6 +82,35 @@ const RecordSelectModal = ({ open, onClose, onSave }) => {
   };
   
   const timeOptions = generateTimeOptions();
+
+  // 초기 sessionDate 파싱: "YYYY-MM-DD HH:MM" -> Date, "오전/오후 H:MM"
+  const parseInitialSession = (sessionStr) => {
+    if (!sessionStr || typeof sessionStr !== 'string') return { date: null, timeLabel: "" };
+    const [datePart, timePart] = sessionStr.split(' ');
+    if (!datePart || !timePart) return { date: null, timeLabel: "" };
+    const [y, m, d] = datePart.split('-').map(n => parseInt(n, 10));
+    const [hh, mm] = timePart.split(':').map(n => parseInt(n, 10));
+    if (isNaN(y) || isNaN(m) || isNaN(d) || isNaN(hh) || isNaN(mm)) return { date: null, timeLabel: "" };
+    const dateObj = new Date(y, m - 1, d);
+    const period = hh < 12 ? '오전' : '오후';
+    let displayHour = hh % 12;
+    if (displayHour === 0) displayHour = 12; // 0 또는 12시는 12 표시
+    const timeLabel = `${period} ${displayHour}:${String(mm).padStart(2, '0')}`;
+    return { date: dateObj, timeLabel };
+  };
+
+  // 모달이 열릴 때 초기값 세팅
+  useEffect(() => {
+    if (open) {
+      if (initialSessionDate) {
+        const { date, timeLabel } = parseInitialSession(initialSessionDate);
+        if (date) setSelectedDate(date);
+        if (timeLabel && timeOptions.includes(timeLabel)) setSelectedTime(timeLabel);
+      }
+      setCurrentStep(2);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialSessionDate]);
 
   // const handleRecordSelect = (recordId) => {
   //   setSelectedRecord(recordId);

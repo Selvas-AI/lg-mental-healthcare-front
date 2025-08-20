@@ -121,48 +121,48 @@ function Recordings() {
         <div className="move-up">
           <strong className="page-title">3회기 녹취록</strong>
           <div className="flex-wrap">
-              {/* 녹음내용 검색 컴포넌트 */}
-              <SearchTranscript
-                targetRef={speakWrapRef}
-                transcript={transcriptDummy}
-                onSearch={handleSearch}
-                searchKeyword={searchKeyword}
-              />
-              {/* 수정/저장 버튼 토글 */}
-              <button className={`record-edit-btn type07 black ${!editMode ? 'on' : ''}`} type="button" onClick={() => setEditMode(true)}>수정</button>
-              <button className={`record-save-btn type07 black ${editMode ? 'on' : ''}`} type="button" onClick={handleSave}>저장</button>
+            {/* 녹음내용 검색 컴포넌트 */}
+            <SearchTranscript
+              targetRef={speakWrapRef}
+              transcript={transcriptDummy}
+              onSearch={handleSearch}
+              searchKeyword={searchKeyword}
+            />
+            {/* 수정/저장 버튼 토글 */}
+            <button className={`record-edit-btn type07 black ${!editMode ? 'on' : ''}`} type="button" onClick={() => setEditMode(true)}>수정</button>
+            <button className={`record-save-btn type07 black ${editMode ? 'on' : ''}`} type="button" onClick={handleSave}>저장</button>
           </div>
         </div>
         <div className="tab-menu">
           <div className="tab-list-wrap">
             <div>
-                <ul className="tab-list" role="tablist" style={{ cursor: 'pointer' }}>
-                    <li
-                      className={activeTab === "recordings" ? 'on' : ''}
-                      role="tab"
-                      ref={el => tabListRef.current[0] = el}
-                    >
-                        <a onClick={() => setActiveTab("recordings")}>녹취내용</a>
-                    </li>
-                    <li
-                      className={activeTab === "aianalysis" ? 'on' : ''}
-                      role="tab"
-                      ref={el => tabListRef.current[1] = el}
-                    >
-                        <a onClick={() => setActiveTab("aianalysis")}>AI 분석</a>
-                    </li>
-                </ul>
-                <div className="tab-indicator" ref={tabIndicatorRef}></div>
+              <ul className="tab-list" role="tablist" style={{ cursor: 'pointer' }}>
+                <li
+                  className={activeTab === "recordings" ? 'on' : ''}
+                  role="tab"
+                  ref={el => tabListRef.current[0] = el}
+                >
+                  <a onClick={() => setActiveTab("recordings")}>녹취내용</a>
+                </li>
+                <li
+                  className={activeTab === "aianalysis" ? 'on' : ''}
+                  role="tab"
+                  ref={el => tabListRef.current[1] = el}
+                >
+                  <a onClick={() => setActiveTab("aianalysis")}>AI 분석</a>
+                </li>
+              </ul>
+              <div className="tab-indicator" ref={tabIndicatorRef}></div>
             </div>
             <div className="info-bar">
-                <p className="info">2024.09.28(토) 오후 2시</p>
-                <a className="panel-btn" onClick={() => {
-                  setShowSectionSummary(true);
-                  setShowAiCreatePanel(false);
-                  setSupportPanel(true);
-                }} style={{cursor:'pointer'}}>
-                  구간 요약
-                </a>
+              <p className="info">2024.09.28(토) 오후 2시</p>
+              <a className="panel-btn" onClick={() => {
+                setShowSectionSummary(true);
+                setShowAiCreatePanel(false);
+                setSupportPanel(true);
+              }} style={{cursor:'pointer'}}>
+                구간 요약
+              </a>
             </div>
           </div>
           <div className="tab-cont">

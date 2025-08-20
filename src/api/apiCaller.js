@@ -124,7 +124,7 @@ export const timelineList = async (clientSeq) => {
     return await axiosIns.get('/api/timeline/list', { params: { clientSeq } })
 }
 
-//? ===== 인증 관련 API =====
+//? ===== 사용자 인증 API =====
 // 상담자 등록(회원가입)
 export const authRegister = async (userData) => {
     return await axiosIns.post('/api/auth/regist', userData)

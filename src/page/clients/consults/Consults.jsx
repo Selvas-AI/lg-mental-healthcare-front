@@ -75,11 +75,14 @@ function Consults() {
         if (listRes?.code === 200 && Array.isArray(listRes.data)) {
           setSessionDataRecoil(listRes.data);
         }
+        showToastMessage('회기 일시가 수정되었습니다.');
       } else {
         console.warn('회기 일시 수정 실패', res);
+        showToastMessage(res?.message || '회기 일시 수정에 실패했습니다.');
       }
     } catch (e) {
       console.error('회기 일시 수정 중 오류', e);
+      showToastMessage('회기 일시 수정 중 오류가 발생했습니다.');
     } finally {
       setEditOpen(false);
     }
@@ -99,7 +102,7 @@ function Consults() {
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
   
   // 내담자 관리 커스텀 훅 사용
-  const { saveClient, saveMemo, toastMessage, showToast } = useClientManager();
+  const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
   
   // clientId가 있을 때 특정 내담자 데이터 조회 (새로고침 대응)
   useEffect(() => {
@@ -352,6 +355,7 @@ function Consults() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSave={handleEditSave}
+        initialSessionDate={sessionData?.sessionDate}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>
