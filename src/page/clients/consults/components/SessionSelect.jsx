@@ -9,6 +9,14 @@ function SessionSelect({ options = [], onSelect, onEdit }) {
       : 0;
   const [selectedIdx, setSelectedIdx] = useState(initialIndex);
 
+  // options가 변경될 때 selectedIdx 업데이트
+  useEffect(() => {
+    const newSelectedIndex = options.findIndex((opt) => opt.selected);
+    if (newSelectedIndex >= 0) {
+      setSelectedIdx(newSelectedIndex);
+    }
+  }, [options]);
+
   const handleSelect = (idx) => {
     setSelectedIdx(idx);
     if (onSelect) onSelect(options[idx], idx);
@@ -36,6 +44,13 @@ function SessionSelect({ options = [], onSelect, onEdit }) {
   };
 
   const selectedOption = options[selectedIdx] || options[0];
+  
+  // 가장 최신 회기인지 확인 (sessionNo가 가장 높은 회기)
+  const isLatestSession = () => {
+    if (!selectedOption || !options.length) return false;
+    const maxSessionNo = Math.max(...options.map(opt => opt.sessionNo));
+    return selectedOption.sessionNo === maxSessionNo;
+  };
 
   return (
     <div className="top-info">
@@ -63,7 +78,9 @@ function SessionSelect({ options = [], onSelect, onEdit }) {
         )}
       />
       <span className="datetime-info">{formatDate(selectedOption?.sessionDate)}</span>
-      <a className="edit-btn cursor-pointer" onClick={() => onEdit && onEdit(selectedOption)}>수정</a>
+      {isLatestSession() && (
+        <a className="edit-btn cursor-pointer" onClick={() => onEdit && onEdit(selectedOption)}>수정</a>
+      )}
     </div>
   );
 }

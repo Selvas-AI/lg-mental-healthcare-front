@@ -8,7 +8,7 @@ import CounselLog from "../counselLog/CounselLog";
 import SessionSelect from "./SessionSelect";
 import warningFace from "@/assets/images/common/warning_face.svg";
 //상담관리
-function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData, onOpenEdit }) {
+function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData, audioData, onOpenEdit, setShowAiSummary, setSupportPanel }) {
   const [isNoshow, setIsNoshow] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,17 +36,26 @@ function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: pr
 
     fetchSessionData();
   }, [clientId, sessionData, setSessionData]);
-  // sessionNo 역순으로 정렬하여 sessionOptions 생성
+  // 현재 선택된 회기의 sessiongroupSeq와 동일한 그룹의 회기들만 필터링하여 sessionOptions 생성
   const sessionOptions = useMemo(() => {
     if (!sessionData || sessionData.length === 0) return [];
     
-    return [...sessionData] // 배열 복사
+    // 현재 선택된 회기의 sessiongroupSeq 찾기
+    const currentSessionGroupSeq = currentSession?.sessiongroupSeq;
+    
+    // sessiongroupSeq가 없으면 모든 회기 표시 (기본 동작)
+    const filteredSessions = currentSessionGroupSeq 
+      ? sessionData.filter(session => session.sessiongroupSeq === currentSessionGroupSeq)
+      : sessionData;
+    
+    return [...filteredSessions] // 배열 복사
       .sort((a, b) => b.sessionNo - a.sessionNo) // sessionNo 역순 정렬 (큰 번호부터)
       .map(session => ({
         session: `${session.sessionNo}회기`,
         sessionSeq: session.sessionSeq,
         sessionNo: session.sessionNo,
         sessionDate: session.sessionDate, // 세션 날짜 추가
+        sessiongroupSeq: session.sessiongroupSeq, // 그룹 정보 추가
         selected: currentSession?.sessionSeq === session.sessionSeq // 현재 선택된 세션과 비교
       }));
   }, [sessionData, currentSession]);
@@ -66,7 +75,14 @@ function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: pr
         <SessionSelect options={sessionOptions} onSelect={handleSessionSelect} onEdit={onOpenEdit} />
         {!isNoshow ? 
         <>
-          <Transcript setShowUploadModal={setShowUploadModal} sessionMngData={sessionMngData} sessionData={propSessionData} />
+          <Transcript 
+            setShowUploadModal={setShowUploadModal} 
+            sessionMngData={sessionMngData} 
+            sessionData={propSessionData}
+            audioData={audioData}
+            setShowAiSummary={setShowAiSummary}
+            setSupportPanel={setSupportPanel}
+          />
           <CounselLog setIsNoshow={setIsNoshow} sessionMngData={sessionMngData} sessionData={propSessionData} />
         </> : 
         <>

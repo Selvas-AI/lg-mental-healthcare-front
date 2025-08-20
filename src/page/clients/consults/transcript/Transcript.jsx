@@ -6,13 +6,10 @@ import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
 import { useNavigate, useLocation } from "react-router-dom";
 import TranscriptBox from "./TranscriptBox";
-import { audioFind } from "@/api/apiCaller";
 
-function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
+function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData, setShowAiSummary, setSupportPanel }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const sessionSeq = query.get('sessionSeq');
   const [audioFileExists, setAudioFileExists] = useState(false);
   
   // sessionMngData에서 실제 데이터 추출
@@ -30,25 +27,14 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
   const isAiAnalysisDone = sessionData?.todoAiAnalysisDone === true;
   const isAiAnalysisChecked = sessionData?.todoAiAnalysisCheck === true;
   
-  // 녹음파일 조회 API 호출
+  // audioData props를 통해 오디오 파일 존재 여부 확인
   useEffect(() => {
-    const fetchAudioData = async () => {
-      try {
-        const findResponse = await audioFind(sessionSeq);
-        if (findResponse.code === 200 && findResponse.data && isTranscriptCreated) {
-          setAudioFileExists(true);
-        }
-      } catch (error) {
-        if (error.response?.status === 400) {
-          setAudioFileExists(false);
-        }
-      }
-    };
-
-    if (isTranscriptCreated) {
-      fetchAudioData();
+    if (isTranscriptCreated && audioData) {
+      setAudioFileExists(true);
+    } else {
+      setAudioFileExists(false);
     }
-  }, [sessionSeq, isTranscriptCreated]);
+  }, [audioData, isTranscriptCreated]);
   
   // JSON 파싱 함수
   const parseJsonSafely = (jsonString) => {
@@ -86,8 +72,16 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
   
   const transcriptData = getTranscriptData();
 
+  const handleNavigateAudio = () => {
+    // 현재 URL의 쿼리 파라미터를 유지하면서 이동
+    navigate(`/clients/recordings${location.search}`);
+  };
+
   const handleAIGenerate = () => {
-    navigate('/clients/recordings');
+    if (setShowAiSummary && setSupportPanel) {
+      setShowAiSummary(true);
+      setSupportPanel(true);
+    }
   };
 
   const handleUpload = () => {
@@ -110,9 +104,16 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
           ) : (
             <a className="file-delete-btn cursor-pointer" onClick={handleDelete}>녹취파일 삭제</a>
           )}
-          <button className="type05" type="button" onClick={handleAIGenerate}>
-            녹취록 상세
-          </button>
+          {!audioFileExists && (
+            <button className="type05" type="button" onClick={() => alert('업로드 된 녹취록이 없습니다. 녹취록을 먼저 업로드 해주세요.')}>
+              녹취록 상세
+            </button>
+          )}
+          {audioFileExists && (
+            <button className="type05" type="button" onClick={handleNavigateAudio}>
+              녹취록 상세
+            </button>
+          )}
         </div>
       </div>
       {!audioFileExists && (
@@ -135,7 +136,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
               <li>4. 발화빈도</li>
               <li>5. 스트레스 징후</li>
             </ul>
-            <button className="type01 h40" type="button">
+            <button className="type01 h40" type="button" onClick={handleAIGenerate}>
               <span>AI 생성하기</span>
             </button>
           </div>
@@ -152,7 +153,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData }) {
               <li>4. 발화빈도</li>
               <li>5. 스트레스 징후</li>
             </ul>
-            <button className="type01 h40" type="button">
+            <button className="type01 h40" type="button" onClick={handleAIGenerate}>
               <span>AI 생성하기</span>
             </button>
           </div>

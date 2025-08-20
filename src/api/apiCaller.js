@@ -18,7 +18,7 @@ export const sessionFind = async (clientSeq, sessionSeq) => {
     })
 }
 
-//! 현재 진행중인 회기 목록 조회
+//! 현재 진행중인 회기 목록 조회 ?????
 export const sessionCurrentList = async (clientSeq) => {
     return await axiosIns.get('/api/session/currentList', { params: { clientSeq } })
 }
@@ -118,13 +118,24 @@ export const sessionNoteUpdate = async (sessionNoteData) => {
     return await axiosIns.post('/api/sessionNote/update', sessionNoteData)
 }
 
+//? ===== 녹취록 관리 API =====
+// 녹취록 내용 조회
+export const transcriptFind = async (sessionSeq) => {
+    return await axiosIns.get('/api/transcript/find', { params: { sessionSeq } })
+}
+
+// 녹취록 내용 수정
+export const transcriptUpdate = async (transcriptData) => {
+    return await axiosIns.post('/api/transcript/update', transcriptData)
+}
+
 //? ===== 타임라인 정보 조회 API =====
 // 타임라인 정보 목록 조회
 export const timelineList = async (clientSeq) => {
     return await axiosIns.get('/api/timeline/list', { params: { clientSeq } })
 }
 
-//? ===== 인증 관련 API =====
+//? ===== 사용자 인증 API =====
 // 상담자 등록(회원가입)
 export const authRegister = async (userData) => {
     return await axiosIns.post('/api/auth/regist', userData)
@@ -141,9 +152,12 @@ export const audioFind = async (sessionSeq) => {
     return await axiosIns.get('/api/audio/find', { params: { sessionSeq } })
 }
 
-//! 녹음파일 다운로드
+// 녹음파일 다운로드
 export const audioDownload = async (sessionSeq) => {
-    return await axiosIns.get('/api/audio/download', { params: { sessionSeq } })
+    return await axiosIns.get('/api/audio/download', { 
+        params: { sessionSeq },
+        responseType: 'blob'
+    })
 }
 
 // 녹음파일 등록

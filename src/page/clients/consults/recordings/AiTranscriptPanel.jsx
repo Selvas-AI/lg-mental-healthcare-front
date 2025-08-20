@@ -12,15 +12,19 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData }
         <strong>1. 상담 요약</strong>
       </div>
       <div className="complete-cont">
-        <div>20세 남성으로 원인 모를 불안감으로 불면증으로 호소 하고 있다. 엄마와의 부정적인 경험으로 인한 트라우마가 있으며 낮은 자존감으로 대인관계의 어려움을 겪고 있다.</div>
+        <div>{AiSummaryData.summary || '-'}</div>
       </div>
       <div className="complete-tit">
         <strong>2. 고민주제</strong>
       </div>
       <div className="complete-cont">
-        <div className="bullet-line">원인을 알 수 없는 불안감 호소</div>
-        <div className="bullet-line">간헐적 불면증</div>
-        <div className="bullet-line">낮은 자존감으로 인한 대인관계 어려움</div>
+        {Array.isArray(AiSummaryData.issue) && AiSummaryData.issue.length > 0 ? (
+          AiSummaryData.issue.map((item, index) => (
+            <div key={index} className="bullet-line">{item}</div>
+          ))
+        ) : (
+          <div className="bullet-line">-</div>
+        )}
       </div>
       <div className="complete-tit"><strong>3. 키워드 분석</strong></div>
       <div className="complete-cont visual-wrap">

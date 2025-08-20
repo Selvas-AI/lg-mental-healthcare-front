@@ -9,7 +9,6 @@ function SessionTable({ clientId, sessionData}) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
 
-
   return (
     <div className="tb-wrap">
       <table>
