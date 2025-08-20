@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import "./recordings.scss";
-import TestAudio from "@/assets/audio/test_audio.mp3";
 
 // 위험키워드 감지
 const dangerKeywords = ['자살'];
@@ -15,7 +14,7 @@ function timeToSeconds(timeStr) {
   return min * 60 + sec;
 }
 
-function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightInfo, currentIndex, editMode, onChangeTranscript }) {
+function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightInfo, currentIndex, editMode, onChangeTranscript, audioUrl }) {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   // 각 발화별 editor ref 배열
@@ -26,6 +25,8 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
   const [dragging, setDragging] = useState(false);
   // 클릭한 content idx만 에디터로
   const [editingIdx, setEditingIdx] = useState(null);
+  // 오디오 로드 상태
+  const [audioLoaded, setAudioLoaded] = useState(false);
 
   // 현재 재생시간에 해당하는 current 인덱스 계산
   const currentIdx = React.useMemo(() => {
@@ -75,16 +76,43 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const loaded = () => setDuration(audio.duration);
+    const loaded = () => {
+      setDuration(audio.duration);
+      setAudioLoaded(true);
+    };
+    const loadStart = () => {
+      setAudioLoaded(false);
+    };
+    const error = (e) => {
+      setAudioLoaded(false);
+    };
+    
     audio.addEventListener("loadedmetadata", loaded);
-    return () => audio.removeEventListener("loadedmetadata", loaded);
-  }, []);
+    audio.addEventListener("loadstart", loadStart);
+    audio.addEventListener("error", error);
+    
+    return () => {
+      audio.removeEventListener("loadedmetadata", loaded);
+      audio.removeEventListener("loadstart", loadStart);
+      audio.removeEventListener("error", error);
+    };
+  }, [audioUrl]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
-    playing ? audio.play() : audio.pause();
-  }, [playing]);
+    if (!audio || !audioLoaded) return;
+    
+    if (playing) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          setPlaying(false);
+        });
+      }
+    } else {
+      audio.pause();
+    }
+  }, [playing, audioLoaded]);
 
   const handleTimeUpdate = () => {
     if (!dragging) setCurrent(audioRef.current.currentTime);
@@ -282,7 +310,7 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
             <div className="inner">
               <audio
                 ref={audioRef}
-                src={TestAudio}
+                src={audioUrl}
                 onTimeUpdate={handleTimeUpdate}
                 onEnded={handleEnded}
                 onLoadedMetadata={e => setDuration(e.target.duration)}
@@ -316,7 +344,12 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
                         type="button"
                         aria-label="재생 버튼"
                         onClick={() => setPlaying(true)}
-                        style={{ display: playing ? 'none' : 'block' }}
+                        disabled={!audioLoaded || !audioUrl}
+                        style={{ 
+                          display: playing ? 'none' : 'block',
+                          opacity: (!audioLoaded || !audioUrl) ? 0.5 : 1,
+                          cursor: (!audioLoaded || !audioUrl) ? 'not-allowed' : 'pointer'
+                        }}
                       ></button>
                     )}
                     {playing && (

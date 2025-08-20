@@ -9,6 +9,14 @@ function SessionSelect({ options = [], onSelect, onEdit }) {
       : 0;
   const [selectedIdx, setSelectedIdx] = useState(initialIndex);
 
+  // options가 변경될 때 selectedIdx 업데이트
+  useEffect(() => {
+    const newSelectedIndex = options.findIndex((opt) => opt.selected);
+    if (newSelectedIndex >= 0) {
+      setSelectedIdx(newSelectedIndex);
+    }
+  }, [options]);
+
   const handleSelect = (idx) => {
     setSelectedIdx(idx);
     if (onSelect) onSelect(options[idx], idx);

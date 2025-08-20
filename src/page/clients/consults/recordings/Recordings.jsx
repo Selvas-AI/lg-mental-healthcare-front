@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import './recordings.scss';
 import RecordingsPlayer from "./RecordingsPlayer";
 import SearchTranscript from "./SearchTranscript";
@@ -8,6 +8,8 @@ import { useSetRecoilState, useRecoilState } from 'recoil';
 import { supportPanelState, recordingsTabState } from '@/recoil';
 import AiAnalysis from "./AiAnalysis";
 import AiTranscriptPanel from "./AiTranscriptPanel";
+import { audioDownload } from '@/api/apiCaller';
+import { useLocation } from 'react-router-dom';
 
 // 화자별 녹취 더미데이터
 const transcriptDummyInit = [
@@ -68,6 +70,10 @@ const AiSummaryData = {
 };
 
 function Recordings() {
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const sessionSeq = query.get('sessionSeq');
+  
   const tabListRef = useRef([]); // 각 탭 li 참조 배열 추가
   const [activeTab, setActiveTab] = useRecoilState(recordingsTabState);
   const tabIndicatorRef = useRef(null);
@@ -77,6 +83,44 @@ function Recordings() {
   const [showSectionSummary, setShowSectionSummary] = useState(false);
   const [showAiCreatePanel, setShowAiCreatePanel] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  
+  // 오디오 URL 상태
+  const [audioUrl, setAudioUrl] = useState(null);
+  
+  // 컴포넌트 마운트 시 오디오 파일 로드
+  useEffect(() => {
+    const loadAudioFile = async () => {
+      if (sessionSeq) {
+        try {
+          const response = await audioDownload(sessionSeq);
+          
+          // response 자체가 Blob인 경우 처리
+          if (response instanceof Blob) {
+            const audioBlob = new Blob([response], { type: 'audio/mpeg' });
+            const audioObjectUrl = URL.createObjectURL(audioBlob);
+            setAudioUrl(audioObjectUrl);
+          }
+          // 기존 방식 (response.data가 Blob인 경우)
+          else if (response?.status === 200 && response.data instanceof Blob) {
+            const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+            const audioObjectUrl = URL.createObjectURL(audioBlob);
+            setAudioUrl(audioObjectUrl);
+          }
+        } catch (error) {
+          // 오디오 파일 로드 에러는 사용자 UI에서 필요 시 처리
+        }
+      }
+    };
+
+    loadAudioFile();
+    
+    // 컴포넌트 언마운트 시 메모리 정리
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [sessionSeq]);
   
   // 수정 가능한 transcript 상태
   const [transcriptDummy, setTranscriptDummy] = useState(transcriptDummyInit);
@@ -176,6 +220,7 @@ function Recordings() {
                 currentIndex={currentIndex}
                 editMode={editMode}
                 onChangeTranscript={handleChangeTranscript}
+                audioUrl={audioUrl}
               />
             )}
             {/* AI 분석 */}

@@ -18,7 +18,7 @@ export const sessionFind = async (clientSeq, sessionSeq) => {
     })
 }
 
-//! 현재 진행중인 회기 목록 조회
+//! 현재 진행중인 회기 목록 조회 ?????
 export const sessionCurrentList = async (clientSeq) => {
     return await axiosIns.get('/api/session/currentList', { params: { clientSeq } })
 }
@@ -141,9 +141,12 @@ export const audioFind = async (sessionSeq) => {
     return await axiosIns.get('/api/audio/find', { params: { sessionSeq } })
 }
 
-//! 녹음파일 다운로드
+// 녹음파일 다운로드
 export const audioDownload = async (sessionSeq) => {
-    return await axiosIns.get('/api/audio/download', { params: { sessionSeq } })
+    return await axiosIns.get('/api/audio/download', { 
+        params: { sessionSeq },
+        responseType: 'blob'
+    })
 }
 
 // 녹음파일 등록
