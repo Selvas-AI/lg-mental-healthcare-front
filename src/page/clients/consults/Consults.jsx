@@ -2,7 +2,7 @@ import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList } from '@/api/apiCaller';
+import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import './consults.scss';
 
@@ -99,6 +99,7 @@ function Consults() {
   const [showSurveySendModal, setShowSurveySendModal] = useState(false);
   const [sessionMngData, setSessionMngData] = useState(null);
   const [sessionData, setSessionData] = useState(null);
+  const [audioData, setAudioData] = useState(null); // 오디오 데이터 상태
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
   
   // 내담자 관리 커스텀 훅 사용
@@ -164,15 +165,16 @@ function Consults() {
     }
   }, [activeTab]);
 
-  // sessionSeq가 있을 때 상담관리 데이터와 회기 데이터 병렬 조회
+  // sessionSeq가 있을 때 상담관리 데이터와 회기 데이터, 오디오 데이터 병렬 조회
   useEffect(() => {
     const fetchSessionData = async () => {
       if (sessionSeq && clientId) {
         try {
-          // 두 API를 병렬로 호출
-          const [sessionMngResponse, sessionResponse] = await Promise.all([
+          // 세 API를 병렬로 호출
+          const [sessionMngResponse, sessionResponse, audioResponse] = await Promise.all([
             sessionMngFind(sessionSeq),           // Transcript용 상담관리 데이터
-            sessionFind(clientId, sessionSeq)     // TODO 관리용 회기 데이터
+            sessionFind(clientId, sessionSeq),   // TODO 관리용 회기 데이터
+            audioFind(sessionSeq).catch(() => null) // 오디오 데이터 (에러 시 null)
           ]);
           
           // 상담관리 데이터 설정
@@ -192,14 +194,23 @@ function Consults() {
             setSessionData(null);
             setCurrentSession(null);
           }
+          
+          // 오디오 데이터 설정
+          if (audioResponse?.code === 200) {
+            setAudioData(audioResponse.data);
+          } else {
+            setAudioData(null);
+          }
         } catch (error) {
           console.error('데이터 조회 오류:', error);
           setSessionMngData(null);
           setSessionData(null);
+          setAudioData(null);
         }
       } else {
         setSessionMngData(null);
         setSessionData(null);
+        setAudioData(null);
         setCurrentSession(null);
       }
     };
@@ -291,6 +302,7 @@ function Consults() {
                 setSupportPanel={setSupportPanel}
                 sessionMngData={activeTab === 0 ? sessionMngData : undefined}
                 sessionData={activeTab === 0 ? sessionData : undefined}
+                audioData={activeTab === 0 ? audioData : undefined}
                 onOpenEdit={handleOpenEdit}
               />
             </div>

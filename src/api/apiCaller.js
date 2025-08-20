@@ -118,6 +118,17 @@ export const sessionNoteUpdate = async (sessionNoteData) => {
     return await axiosIns.post('/api/sessionNote/update', sessionNoteData)
 }
 
+//? ===== 녹취록 관리 API =====
+// 녹취록 내용 조회
+export const transcriptFind = async (sessionSeq) => {
+    return await axiosIns.get('/api/transcript/find', { params: { sessionSeq } })
+}
+
+// 녹취록 내용 수정
+export const transcriptUpdate = async (transcriptData) => {
+    return await axiosIns.post('/api/transcript/update', transcriptData)
+}
+
 //? ===== 타임라인 정보 조회 API =====
 // 타임라인 정보 목록 조회
 export const timelineList = async (clientSeq) => {

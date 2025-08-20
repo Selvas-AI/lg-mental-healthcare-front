@@ -8,66 +8,33 @@ import { useSetRecoilState, useRecoilState } from 'recoil';
 import { supportPanelState, recordingsTabState } from '@/recoil';
 import AiAnalysis from "./AiAnalysis";
 import AiTranscriptPanel from "./AiTranscriptPanel";
-import { audioDownload } from '@/api/apiCaller';
+import { audioDownload, transcriptFind, audioFind, sessionFind, sessionMngFind } from '@/api/apiCaller';
 import { useLocation } from 'react-router-dom';
 
-// 화자별 녹취 더미데이터
-const transcriptDummyInit = [
-  {
-    speaker: 'speaker01',
-    name: '발화자1',
-    time: '00:01',
-    content: '안녕하세요 어떤 이유로 상담을 하게 되셨나요?'
-  },
-  {
-    speaker: 'speaker02',
-    name: '발화자2',
-    time: '00:08',
-    content: '아는 언니가 여기에 다녔었는데 저한테 받아볼 생각이 없냐고 해서요. 제가 요즘 이유 없이 불안하고 잠에 드는 것이 힘들어요.\n자존감이 낮아서 가족이나 친구들에게 털어 놓는 것이 많이 어렵고요.\n최근엔 잠까지 못자게 되면서 하루종일 에너지도 없고 아침에 일어나는게 일단 너무 힘들어요.'
-  },
-  {
-    speaker: 'speaker01',
-    name: '발화자1',
-    time: '05:01',
-    content: '그동안 정말 고민도 많고 힘드셨을 것 같아요.\n가족이나 친구들한테 쉽게 고민을 털어놓기 어렵다고 하셨는데 혹시 고민을 털어 놨을 때 부정적인 피드백을 받으신 적이 있으실까요?'
-  },
-  {
-    speaker: 'speaker02',
-    name: '발화자2',
-    time: '09:11',
-    content: '엄마한테 이런 고민을 이야기한 적이 있었는데요. 원래 사는 것이 힘든 거다. 내가 더 힘들다.\n너는 뭐가 그렇게 힘드냐고 타박을 받은 적이 있어요.\n그래서 그 이후로 이런 이야기는 안하게 되고요. 친구들한테도 이야기하기 어려워졌어요.\n괜히 이런 이야기하면 약한 사람 같고 친구들한테 우울한 이야기를 하는게 미안하기도 하고요.\n자살은 어떤걸까? 라는 생각이 들었던 것 같아요.'
-  },
-  {
-    speaker: 'speaker01',
-    name: '발화자1',
-    time: '18:29',
-    content: '그런 일들이 있으셨군요.\n힘든 이야기를 꺼낸 건데 엄마한테 그런 이야기를 들으면 속상하고 더이상 이야기하고 싶지 않은 기분이 들었을 것 같아요.\n그때 심정이 어떠셨을까요?'
-  },
-];
-
-const AiSummaryData = {
-    summary: "최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잦고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잦고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잦고, 스스로에 대한 매우 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵고 회사업무 시 고충으로 다가온다고함. 가장 불편한 부분이 이런점이라고 꼽으며 개선 가능 여부를 물어봄. 일상생활에 집중하기 어렵다고 호소함",
-    issue: ["원인을 알 수 없는 불안감 호소", "간헐적 불면증", "낮은 자존감으로 인한 대인관계 어려움", "자신에 대한 부정적인 생각", "고충", "개선 가능 여부"],
-    keyword: [
-      { text: '힘들어', freq: 18, x: 240, y: 70 },
-      { text: '트라우마', freq: 16, x: 370, y: 70 },
-      { text: '죽고싶은', freq: 12, x: 155, y: 100 },
-      { text: '괴롭힘', freq: 12, x: 100, y: 50 },
-      { text: '우울감', freq: 11, x: 50, y: 100 },
-      { text: '잘했다', freq: 10, x: 35, y: 35 },
-      { text: '엄마', freq: 9, x: 165, y: 35 },
-      { text: '후회', freq: 8, x: 308, y: 110 },
-      { text: '사랑', freq: 8, x: 310, y: 25 }
-    ],
-    frequency: {
-      counselor: { minutes: 12},
-      client: { minutes: 45}
-    },
-    stress: {
-      data: [2.5, 6.2, 4.8, 3.5, 9, 4.2, 5.5],
-      labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
-    }
-};
+// 기본 더미 데이터
+// const defaultAiSummaryData = {
+//     // summary: "최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잎고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잎고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잎고, 스스로에 대한 매우 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵고 회사업무 시 고충으로 다가온다고함. 가장 불편한 부분이 이런점이라고 꼽으며 개선 가능 여부를 물어봄. 일상생활에 집중하기 어렵다고 호소함",
+//     // issue: ["원인을 알 수 없는 불안감 호소", "간헐적 불면증", "낮은 자존감으로 인한 대인관계 어려움", "자신에 대한 부정적인 생각", "고충", "개선 가능 여부"],
+//     keyword: [
+//       { text: '힘들어', freq: 18, x: 240, y: 70 },
+//       { text: '트라우마', freq: 16, x: 370, y: 70 },
+//       { text: '죽고싶은', freq: 12, x: 155, y: 100 },
+//       { text: '괴롭힘', freq: 12, x: 100, y: 50 },
+//       { text: '우울감', freq: 11, x: 50, y: 100 },
+//       { text: '잘했다', freq: 10, x: 35, y: 35 },
+//       { text: '엄마', freq: 9, x: 165, y: 35 },
+//       { text: '후회', freq: 8, x: 308, y: 110 },
+//       { text: '사랑', freq: 8, x: 310, y: 25 }
+//     ],
+//     frequency: {
+//       counselor: { minutes: 12},
+//       client: { minutes: 45}
+//     },
+//     stress: {
+//       data: [2.5, 6.2, 4.8, 3.5, 9, 4.2, 5.5],
+//       labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
+//     }
+// };
 
 function Recordings() {
   const location = useLocation();
@@ -78,6 +45,7 @@ function Recordings() {
   const [activeTab, setActiveTab] = useRecoilState(recordingsTabState);
   const tabIndicatorRef = useRef(null);
   const speakWrapRef = useRef();
+  const recordingsPlayerRef = useRef(); // RecordingsPlayer 참조
   const [searchKeyword, setSearchKeyword] = useState("");
   const [highlightInfo, setHighlightInfo] = useState(null);
   const [showSectionSummary, setShowSectionSummary] = useState(false);
@@ -86,7 +54,54 @@ function Recordings() {
   
   // 오디오 URL 상태
   const [audioUrl, setAudioUrl] = useState(null);
+  // 녹취 데이터 상태
+  const [transcript, setTranscript] = useState([]);
+  // 녹음 생성 시간 상태
+  const [recordingDate, setRecordingDate] = useState('');
+  // 회기 번호 상태 (sessionData에서 가져오기)
+  const [sessionNumber, setSessionNumber] = useState('');
+  // AI 요약 데이터 상태
+  const [aiSummaryData, setAiSummaryData] = useState('');
   
+  // sessionSeq로 회기 정보 및 상담관리 데이터 가져오기
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (sessionSeq) {
+        const clientId = query.get('clientId');
+        if (clientId) {
+          try {
+            // 회기 정보와 상담관리 데이터 병렬 조회
+            const [sessionResponse, sessionMngResponse] = await Promise.all([
+              sessionFind(clientId, sessionSeq),
+              sessionMngFind(sessionSeq)
+            ]);
+            
+            // 회기 번호 설정
+            if (sessionResponse.code === 200 && sessionResponse.data?.sessionNo) {
+              setSessionNumber(sessionResponse.data.sessionNo);
+            }
+            
+            // 상담관리 데이터로 AI 요약 데이터 업데이트
+            if (sessionMngResponse.code === 200 && sessionMngResponse.data) {
+              const mngData = sessionMngResponse.data;
+              setAiSummaryData(prev => ({
+                ...prev,
+                summary: mngData.sectionSummaryText || prev.summary,
+                issue: mngData.issueList || prev.issue,
+                keyword: mngData.keywordList || prev.keyword,
+                frequency: mngData.frequencyData || prev.frequency,
+                stress: mngData.stressData || prev.stress
+              }));
+            }
+          } catch (error) {
+            console.error('데이터 조회 실패:', error);
+          }
+        }
+      }
+    };
+    fetchSessionData();
+  }, [sessionSeq]);
+
   // 컴포넌트 마운트 시 오디오 파일 로드
   useEffect(() => {
     const loadAudioFile = async () => {
@@ -122,8 +137,64 @@ function Recordings() {
     };
   }, [sessionSeq]);
   
-  // 수정 가능한 transcript 상태
-  const [transcriptDummy, setTranscriptDummy] = useState(transcriptDummyInit);
+  // sessionSeq 변경 시 녹음 정보 로드
+  useEffect(() => {
+    const loadAudioInfo = async () => {
+      if (!sessionSeq) {
+        setRecordingDate('');
+        return;
+      }
+      try {
+        const res = await audioFind(sessionSeq);
+        const data = res?.data ?? res;
+        
+        if (data?.createdTime) {
+          setRecordingDate(formatDateToKorean(data.createdTime));
+        } else {
+          setRecordingDate('');
+        }
+      } catch (_) {
+        setRecordingDate('');
+      }
+    };
+    loadAudioInfo();
+  }, [sessionSeq]);
+  
+  // sessionSeq 변경 시 녹취 데이터 로드
+  useEffect(() => {
+    reloadTranscript();
+  }, [sessionSeq]);
+
+  // 초를 MM:SS 형태로 변환하는 유틸 함수
+  const formatSecondsToTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // 날짜를 한국어 형식으로 변환하는 함수
+  const formatDateToKorean = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[date.getDay()];
+      
+      const hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const period = hours < 12 ? '오전' : '오후';
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      
+      return `${year}.${month}.${day}(${weekday}) ${period} ${displayHours}시${minutes !== '00' ? ` ${minutes}분` : ''}`;
+    } catch (error) {
+      return '';
+    }
+  };
   // 수정 모드
   const [editMode, setEditMode] = useState(false);
   // 토스트 메시지 상태
@@ -136,7 +207,7 @@ function Recordings() {
   };
   // 텍스트 수정 핸들러
   const handleChangeTranscript = (idx, newContent) => {
-    setTranscriptDummy(prev => prev.map((item, i) => i === idx ? { ...item, content: newContent } : item));
+    setTranscript(prev => prev.map((item, i) => i === idx ? { ...item, content: newContent } : item));
   };
   
   // 탭 indicator 이동 효과
@@ -152,8 +223,164 @@ function Recordings() {
     }
   }, [activeTab]);
 
-  // 저장 버튼 클릭 시
-  const handleSave = () => {
+  // 상단 저장 버튼 클릭 시 - RecordingsPlayer의 저장 함수 호출
+  const handleSave = async () => {
+    if (recordingsPlayerRef.current?.handleSaveTranscript) {
+      await recordingsPlayerRef.current.handleSaveTranscript();
+    }
+  };
+
+  // transcriptText를 transcript 배열로 파싱하는 함수
+  const parseTranscriptText = (transcriptText) => {
+    if (!transcriptText) return [];
+    
+    const lines = transcriptText.split('\n').filter(line => line.trim());
+    return lines.map((line, index) => {
+      // [시간] 발화자명: 내용 형태를 파싱
+      const match = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.*)$/);
+      if (match) {
+        const [, time, name, content] = match;
+        const speaker = name.includes('발화자1') ? 'spk_0' : 'spk_1';
+        return {
+          speaker,
+          name: name.trim(),
+          time: time.trim(),
+          content: content.trim()
+        };
+      }
+      // 파싱 실패 시 기본값
+      return {
+        speaker: `spk_${index % 2}`,
+        name: `발화자${(index % 2) + 1}`,
+        time: '00:00',
+        content: line
+      };
+    });
+  };
+
+  // transcript 데이터에서 발화자별 발화 시간을 계산하는 함수
+  const calculateSpeakingTime = (transcriptData) => {
+    
+    if (!Array.isArray(transcriptData) || transcriptData.length === 0) {
+      return { counselor: { minutes: 0 }, client: { minutes: 0 } };
+    }
+
+    let counselorSeconds = 0;
+    let clientSeconds = 0;
+
+    for (let i = 0; i < transcriptData.length; i++) {
+      const current = transcriptData[i];
+      const next = transcriptData[i + 1];
+      
+      const currentTime = timeToSeconds(current.time);
+      const nextTime = next ? timeToSeconds(next.time) : currentTime + estimateSpeechDuration(current.content);
+      
+      const duration = Math.max(0, nextTime - currentTime);
+      
+      if (current.speaker === 'spk_0' || current.name.includes('발화자1')) {
+        counselorSeconds += duration;
+      } else {
+        clientSeconds += duration;
+      }
+    }
+
+    const result = {
+      counselor: { minutes: Math.round(counselorSeconds / 60 * 100) / 100 },
+      client: { minutes: Math.round(clientSeconds / 60 * 100) / 100 }
+    };
+    
+    return result;
+  };
+
+  // MM:SS 형식의 시간을 초로 변환
+  const timeToSeconds = (timeStr) => {
+    if (!timeStr || timeStr === '00:00') return 0;
+    const parts = timeStr.split(':');
+    if (parts.length !== 2) return 0;
+    const minutes = parseInt(parts[0]) || 0;
+    const seconds = parseInt(parts[1]) || 0;
+    return minutes * 60 + seconds;
+  };
+
+  // 텍스트 길이로 발화 시간 추정 (한글 기준 초당 3-4자)
+  const estimateSpeechDuration = (text) => {
+    if (!text) return 2; // 기본 2초
+    const charCount = text.length;
+    const estimatedSeconds = Math.max(2, charCount / 3.5); // 초당 3.5자 기준
+    return Math.min(estimatedSeconds, 30); // 최대 30초로 제한
+  };
+
+  // 최신 transcript 데이터 다시 로드
+  const reloadTranscript = async () => {
+    if (!sessionSeq) return;
+    try {
+      const res = await transcriptFind(sessionSeq);
+      const data = res?.data ?? res;
+      
+      // sectionSummaryText를 aiSummaryData.summary로 대체
+      if (data?.sectionSummaryText) {
+        setAiSummaryData(prev => ({
+          ...prev,
+          summary: data.sectionSummaryText
+        }));
+      }
+      
+      // 회기 번호 설정 (sessionSeq로부터 추출 또는 API 응답에서 가져오기)
+      if (data?.sessionNo) {
+        setSessionNumber(data.sessionNo);
+      }
+      
+      // transcriptText가 있으면 파싱해서 사용
+      if (data?.transcriptText) {
+        const parsedTranscript = parseTranscriptText(data.transcriptText);
+        setTranscript(parsedTranscript);
+        
+        // 발화 시간 계산 및 AI 요약 데이터 업데이트
+        const frequencyData = calculateSpeakingTime(parsedTranscript);
+        setAiSummaryData(prev => {
+          const updated = {
+            ...prev,
+            frequency: frequencyData
+          };
+          return updated;
+        });
+      }
+      // transcriptJson이 있으면 기존 방식으로 파싱 (초기 로드용)
+      else if (data?.transcriptJson) {
+        try {
+          const transcriptData = JSON.parse(data.transcriptJson);
+          const audioSegments = transcriptData?.results?.audioSegments || [];
+          
+          const convertedTranscript = audioSegments.map((segment, index) => ({
+            speaker: segment.speaker_label || `spk_${index}`,
+            name: segment.speaker_label === 'spk_0' ? '발화자1' : '발화자2',
+            time: formatSecondsToTime(parseFloat(segment.start_time || 0)),
+            content: segment.transcript || ''
+          }));
+          
+          setTranscript(convertedTranscript);
+          
+          // transcriptJson에서도 발화 시간 계산
+          const frequencyData = calculateSpeakingTime(convertedTranscript);
+          setAiSummaryData(prev => ({
+            ...prev,
+            frequency: frequencyData
+          }));
+        } catch (parseError) {
+          console.error('transcriptJson 파싱 오류:', parseError);
+          setTranscript([]);
+        }
+      } else {
+        setTranscript([]);
+      }
+    } catch (error) {
+      console.error('transcript 재로드 오류:', error);
+    }
+  };
+
+  // RecordingsPlayer에서 API 성공 후 호출되는 콜백
+  const handleSaveSuccess = async () => {
+    await reloadTranscript(); // 최신 데이터 다시 로드
     setEditMode(false);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
@@ -163,12 +390,12 @@ function Recordings() {
     <>
       <div className="inner">
         <div className="move-up">
-          <strong className="page-title">3회기 녹취록</strong>
+          <strong className="page-title">{sessionNumber ? `${sessionNumber}회기 녹취록` : '녹취록'}</strong>
           <div className="flex-wrap">
             {/* 녹음내용 검색 컴포넌트 */}
             <SearchTranscript
               targetRef={speakWrapRef}
-              transcript={transcriptDummy}
+              transcript={transcript}
               onSearch={handleSearch}
               searchKeyword={searchKeyword}
             />
@@ -199,7 +426,7 @@ function Recordings() {
               <div className="tab-indicator" ref={tabIndicatorRef}></div>
             </div>
             <div className="info-bar">
-              <p className="info">2024.09.28(토) 오후 2시</p>
+              <p className="info">{recordingDate || '날짜 정보 없음'}</p>
               <a className="panel-btn" onClick={() => {
                 setShowSectionSummary(true);
                 setShowAiCreatePanel(false);
@@ -213,20 +440,23 @@ function Recordings() {
             {/* 녹취내용 */}
             {activeTab === "recordings" && (
               <RecordingsPlayer
+                ref={recordingsPlayerRef}
                 speakWrapRef={speakWrapRef}
-                transcript={transcriptDummy}
+                transcript={transcript}
                 searchKeyword={searchKeyword}
                 highlightInfo={highlightInfo}
                 currentIndex={currentIndex}
                 editMode={editMode}
                 onChangeTranscript={handleChangeTranscript}
                 audioUrl={audioUrl}
+                sessionSeq={sessionSeq}
+                onSave={handleSaveSuccess}
               />
             )}
             {/* AI 분석 */}
             {activeTab === "aianalysis" && (
               <AiAnalysis 
-                AiSummaryData={AiSummaryData}
+                AiSummaryData={aiSummaryData}
                 onAiCreateClick={() => {
                   setShowAiCreatePanel(true);
                   setShowSectionSummary(false);
@@ -246,7 +476,7 @@ function Recordings() {
       </div>
       <AiTranscriptPanel 
         status="complete"
-        AiSummaryData={AiSummaryData}
+        AiSummaryData={aiSummaryData}
         open={showAiCreatePanel} 
         onClose={() => {
           setShowAiCreatePanel(false); 

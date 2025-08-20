@@ -6,13 +6,10 @@ import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
 import { useNavigate, useLocation } from "react-router-dom";
 import TranscriptBox from "./TranscriptBox";
-import { audioFind } from "@/api/apiCaller";
 
-function Transcript({ setShowUploadModal, sessionMngData, sessionData, setShowAiSummary, setSupportPanel }) {
+function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData, setShowAiSummary, setSupportPanel }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const sessionSeq = query.get('sessionSeq');
   const [audioFileExists, setAudioFileExists] = useState(false);
   
   // sessionMngData에서 실제 데이터 추출
@@ -30,25 +27,14 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, setShowAi
   const isAiAnalysisDone = sessionData?.todoAiAnalysisDone === true;
   const isAiAnalysisChecked = sessionData?.todoAiAnalysisCheck === true;
   
-  // 녹음파일 조회 API 호출
+  // audioData props를 통해 오디오 파일 존재 여부 확인
   useEffect(() => {
-    const fetchAudioData = async () => {
-      try {
-        const findResponse = await audioFind(sessionSeq);
-        if (findResponse.code === 200 && findResponse.data && isTranscriptCreated) {
-          setAudioFileExists(true);
-        }
-      } catch (error) {
-        if (error.response?.status === 400) {
-          setAudioFileExists(false);
-        }
-      }
-    };
-
-    if (isTranscriptCreated) {
-      fetchAudioData();
+    if (isTranscriptCreated && audioData) {
+      setAudioFileExists(true);
+    } else {
+      setAudioFileExists(false);
     }
-  }, [sessionSeq, isTranscriptCreated]);
+  }, [audioData, isTranscriptCreated]);
   
   // JSON 파싱 함수
   const parseJsonSafely = (jsonString) => {

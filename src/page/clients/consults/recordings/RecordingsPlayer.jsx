@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { transcriptUpdate } from '@/api/apiCaller';
 import "./recordings.scss";
 
 // 위험키워드 감지
@@ -14,7 +15,7 @@ function timeToSeconds(timeStr) {
   return min * 60 + sec;
 }
 
-function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightInfo, currentIndex, editMode, onChangeTranscript, audioUrl }) {
+const RecordingsPlayer = forwardRef(({ speakWrapRef, transcript, searchKeyword, highlightInfo, currentIndex, editMode, onChangeTranscript, audioUrl, sessionSeq, onSave }, ref) => {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   // 각 발화별 editor ref 배열
@@ -202,6 +203,57 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
   }, [editingIdx, editMode]);
 
   const [isComposing, setIsComposing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // transcript 데이터를 transcriptText 형식으로 변환
+  const convertTranscriptToText = (transcriptData) => {
+    return transcriptData.map(item => {
+      const speakerName = item.name || '발화자';
+      const time = item.time || '00:00';
+      const content = item.content || '';
+      return `[${time}] ${speakerName}: ${content}`;
+    }).join('\n');
+  };
+
+  // 녹취록 저장 함수
+  const handleSaveTranscript = async () => {
+    if (!sessionSeq) {
+      console.error('sessionSeq가 없습니다.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const transcriptText = convertTranscriptToText(transcript);
+      const payload = {
+        sessionSeq: parseInt(sessionSeq, 10),
+        transcriptText: transcriptText,
+        //sectionSummaryText: '' //! 추후 작업
+      };
+
+      const response = await transcriptUpdate(payload);
+      
+      if (response?.code === 200) {
+        // 저장 성공 시 부모 컴포넌트의 onSave 콜백 호출
+        if (onSave) {
+          onSave();
+        }
+      } else {
+        console.error('녹취록 저장 실패:', response?.message);
+        alert('녹취록 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('녹취록 저장 중 오류:', error);
+      alert('녹취록 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // ref를 통해 외부에서 handleSaveTranscript 호출 가능하도록 설정
+  useImperativeHandle(ref, () => ({
+    handleSaveTranscript
+  }));
 
   const handleInput = e => {
     if (!isComposing) {
@@ -226,7 +278,7 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
               {transcript.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`speaker ${item.speaker}${idx === currentIdx ? ' current' : ''}${!editMode && isDangerContent(item.content) ? ' stress-highlights' : ''}`}
+                  className={`speaker ${item.speaker === 'spk_0' ? 'speaker01' : 'speaker02'}${idx === currentIdx ? ' current' : ''}${!editMode && isDangerContent(item.content) ? ' stress-highlights' : ''}`}
                 >
                   <div className="info">
                     <span className="speaker-id">{item.name}</span>
@@ -245,6 +297,7 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
                           onCompositionEnd={handleCompositionEnd}
                           style={{
                             width: '100%',
+                            minHeight: '42px', // 최소 높이 설정 (한 줄 높이)
                             height: 'auto',
                             whiteSpace: 'pre-wrap',
                             overflowWrap: 'break-word',
@@ -255,7 +308,8 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
                             border: '1px solid #7A8A93',
                             boxSizing: 'border-box',
                             transition: 'box-shadow 0.2s',
-                            marginBottom: '0'
+                            marginBottom: '0',
+                            lineHeight: '1.5' // 라인 높이 명시
                           }}
                           autoFocus
                         />
@@ -372,12 +426,28 @@ function RecordingsPlayer({ speakWrapRef, transcript, searchKeyword, highlightIn
                     <span id="total-time">{formatTime(duration)}</span>
                   </div>
                 </div>
+                {editMode && (
+                  <div className="save-btn-wrap" style={{ marginTop: '16px', textAlign: 'center' }}>
+                    <button 
+                      className="save-transcript-btn type01 h40"
+                      type="button"
+                      onClick={handleSaveTranscript}
+                      disabled={isSaving}
+                      style={{
+                        opacity: isSaving ? 0.6 : 1,
+                        cursor: isSaving ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {isSaving ? '저장 중...' : '녹취록 저장'}
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+});
 
 export default RecordingsPlayer;

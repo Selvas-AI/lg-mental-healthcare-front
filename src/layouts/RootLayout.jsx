@@ -7,6 +7,7 @@ import Footer from "./Footer";
 import { Outlet, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { recordingsTabState } from "@/recoil/commonAtom";
+import { sessionFind } from "@/api/apiCaller";
 
 const MOBILE_WIDTH = 1280;
 const RootLayout = () => {
@@ -17,6 +18,7 @@ const RootLayout = () => {
   const activeTab = useRecoilValue(recordingsTabState);
   const isRecordingsPage = location.pathname.startsWith('/clients/recordings') || location.pathname.startsWith('/clients/sessions') || location.pathname.startsWith('/mypage');
   const showFooter = !isRecordingsPage || activeTab === 'aianalysis';
+  const [sessionNumber, setSessionNumber] = useState('');
 
   // main, footer의 className을 상태별로 조합
   function getMainClass() {
@@ -89,21 +91,49 @@ const RootLayout = () => {
     return "";
   })();
 
+  // 녹취록 페이지에서 회기 번호 가져오기
+  useEffect(() => {
+    const fetchSessionNumber = async () => {
+      if (location.pathname === '/clients/recordings') {
+        const query = new URLSearchParams(location.search);
+        const sessionSeq = query.get('sessionSeq');
+        const clientId = query.get('clientId');
+        
+        if (sessionSeq && clientId) {
+          try {
+            const response = await sessionFind(clientId, sessionSeq);
+            if (response.code === 200 && response.data?.sessionNo) {
+              setSessionNumber(response.data.sessionNo);
+            }
+          } catch (error) {
+            console.error('회기 정보 조회 실패:', error);
+          }
+        }
+      } else {
+        setSessionNumber(''); // 다른 페이지에서는 초기화
+      }
+    };
+    fetchSessionNumber();
+  }, [location.pathname, location.search]);
+
   // 페이지별 타이틀 매핑
-  const pathTitleMap = {
-    '/': '홈',
-    '/schedule': '스케줄 관리',
-    '/clients': '내담자 관리',
-    '/document': '문서 관리',
-    '/mypage': '마이페이지',
-    '/support': '고객지원',
-    '/clients/consults': '상담관리',
-    '/clients/sessions': '회기 목록',
-    '/clients/recordings': '3회기 녹취록',
-    '/clients/consults/detail': '3회기 상담일지',
-    '/clients/consults/psychologicalTestDetail': 'PHQ-9 우울 검사 결과',
+  const getPageTitle = () => {
+    const pathTitleMap = {
+      '/': '홈',
+      '/schedule': '스케줄 관리',
+      '/clients': '내담자 관리',
+      '/document': '문서 관리',
+      '/mypage': '마이페이지',
+      '/support': '고객지원',
+      '/clients/consults': '상담관리',
+      '/clients/sessions': '회기 목록',
+      '/clients/recordings': sessionNumber ? `${sessionNumber}회기 녹취록` : '녹취록',
+      '/clients/consults/detail': '3회기 상담일지',
+      '/clients/consults/psychologicalTestDetail': 'PHQ-9 우울 검사 결과',
+    };
+    return pathTitleMap[location.pathname] || '';
   };
-  const pageTitle = pathTitleMap[location.pathname] || '';
+  const pageTitle = getPageTitle();
 
   return (
     <div className={`wrapper ${pageClass}`}>
