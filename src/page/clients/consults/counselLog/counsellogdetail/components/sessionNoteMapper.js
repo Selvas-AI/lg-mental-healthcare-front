@@ -15,6 +15,7 @@ export const mapSessionNoteToState = (data, setters) => {
     setSymptoms, setCustomSymptoms,
     setMainProblem, setSessionContent, setCounselorOpinion, setObservation,
     setGoal, setNextPlan, setConcern, setCaseConcept,
+    setAiGeneratedData,
   } = setters;
 
   if (typeof setCurrentRisk === 'function') setCurrentRisk(data.currentRiskLevel ? String(data.currentRiskLevel) : '');
@@ -102,4 +103,23 @@ export const mapSessionNoteToState = (data, setters) => {
   if (typeof setNextPlan === 'function') setNextPlan(data.nextSessionPlanText || '');
   if (typeof setConcern === 'function') setConcern(data.clientConcernsText || '');
   if (typeof setCaseConcept === 'function') setCaseConcept(data.caseConceptualizationText || '');
+
+  // AI 생성 데이터 파싱 및 설정
+  if (typeof setAiGeneratedData === 'function') {
+    const aiData = { nextPlan: null };
+    
+    // nextSessionPlanAi 파싱
+    if (data.nextSessionPlanAi) {
+      try {
+        const parsedData = JSON.parse(data.nextSessionPlanAi);
+        if (parsedData.llm_answer || parsedData.llm_feedback) {
+          aiData.nextPlan = parsedData;
+        }
+      } catch (error) {
+        console.error('nextSessionPlanAi 파싱 오류:', error);
+      }
+    }
+    
+    setAiGeneratedData(aiData);
+  }
 };

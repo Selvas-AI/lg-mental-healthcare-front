@@ -14,6 +14,7 @@ import HistoryPanel from './components/HistoryPanel';
 import RiskSection from './components/RiskSection';
 import SymptomTable from './components/SymptomTable';
 import { mapSessionNoteToState as mapSessionNoteToStateUtil } from './components/sessionNoteMapper';
+import { useAiPanel } from './hooks/useAiPanel';
 import './notes.scss';
 
 function CounselLogDetail() {
@@ -29,41 +30,32 @@ function CounselLogDetail() {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-  // 상담일지 데이터 로컬 상태 제거 (Recoil 캐시 사용)
-  // AI Panel 더미 데이터 
-  const aiPanelConfigs = {
-    mainProblem: {
-      title: '주호소 문제 AI 생성',
-      infoMessage: '주호소 문제의 내용이 생성 완료되었습니다.',
-      renderComplete: () => (
-        <div className="complete-cont">
-          <div className="bullet-line">최근 업무에 대한 자신감 저하와 대인관계 스트레스로 인해 불면과 식욕 저하가 지속되고 있음.</div>
-          <div className="bullet-line">상사의 평가에 민감하게 반응하며, “나는 늘 부족하다”는 생각에서 벗어나지 못함.</div>
-          <div className="bullet-line">특히 팀 회의 이후 무기력함이 심화되어 일상생활에도 영향을 줌.</div>
-        </div>
-      )
-    },
-    sessionContent: {
-      title: '상담내용 AI 생성',
-      infoMessage: '상담내용이 생성 완료되었습니다.',
-      renderComplete: () => (
-        <div className="complete-cont">
-          상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.
-        </div>
-      )
-    },
-    nextPlan: {
-      title: '차회기 상담 계획 AI 생성',
-      infoMessage: '차회기 상담 계획이 생성 완료되었습니다.',
-      renderComplete: () => (
-        <div className="complete-cont">
-          <div className="bullet-line">차회기에는 이완훈련 및 대인관계 기술 훈련을 진행할 예정입니다.</div>
-          <div className="bullet-line">내담자가 실생활에서 적용할 수 있는 구체적 전략을 안내하고, 실습 과제를 제시합니다.</div>
-        </div>
-      )
-    }
+  // Toast 상태
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+
+  // Toast 표시 함수
+  const showToastMessage = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000); // 3초 후 자동 숨김
   };
-  const [aiPanelKey, setAiPanelKey] = useState(null);
+
+  // AI Panel 훅 사용
+  const {
+    aiPanelKey,
+    openedPanel: aiOpenedPanel,
+    aiGeneratedData,
+    setAiGeneratedData,
+    getAiPanelConfigs,
+    handleOpenAiPanel,
+    handleClosePanel: handleCloseAiPanel,
+    handleAiConfirm: handleAiConfirmBase,
+    handleAiSkip,
+    setOpenedPanel: setAiOpenedPanel
+  } = useAiPanel(sessionSeq, showToastMessage);
   // 상담일지 폼 상태들
   const [currentRisk, setCurrentRisk] = useState('');
   const [pastRisk, setPastRisk] = useState('');
@@ -88,16 +80,12 @@ function CounselLogDetail() {
   const [concern, setConcern] = useState('');
   const [caseConcept, setCaseConcept] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
-  const [openedPanel, setOpenedPanel] = useState(null); // 'guide' | 'history' | 'ai' | null
+  const [openedPanel, setOpenedPanel] = useState(null); // 'guide' | 'history' | null (ai는 useAiPanel에서 관리)
   const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
   const [fold, setFold] = useRecoilState(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   const [currentSession, setCurrentSession] = useRecoilState(currentSessionState);
   const [sessionNote, setSessionNote] = useRecoilState(sessionNoteState);
-  
-  // Toast 상태
-  const [toastMessage, setToastMessage] = useState('');
-  const [showToast, setShowToast] = useState(false);
 
   // 날짜 포맷팅 함수
   const formatDate = (dateStr) => {
@@ -146,25 +134,14 @@ function CounselLogDetail() {
     setSupportPanel(true);
   };
 
-  const handleOpenAiPanel = (key) => {
-    setAiPanelKey(key);
-    setOpenedPanel('ai');
-    setSupportPanel(true);
-  };
-
   const handleClosePanel = () => {
     setOpenedPanel(null);
     setSupportPanel(false);
-    setAiPanelKey(null);
   };
 
-  // Toast 표시 함수
-  const showToastMessage = (message) => {
-    setToastMessage(message);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000); // 3초 후 자동 숨김
+  // AI 패널 확정하기 콜백 (setNextPlan 전달)
+  const handleAiConfirm = () => {
+    handleAiConfirmBase(setNextPlan);
   };
 
   const handleSave = async () => {
@@ -360,6 +337,7 @@ function CounselLogDetail() {
       setNextPlan,
       setConcern,
       setCaseConcept,
+      setAiGeneratedData,
     });
   };
 
@@ -679,17 +657,20 @@ function CounselLogDetail() {
       />
       <AiPanelCommon
         isCounselLog={true}
-        open={openedPanel === 'ai'}
-        onClose={handleClosePanel}
+        open={aiOpenedPanel === 'ai'}
+        onClose={handleCloseAiPanel}
         status="complete"
-        title={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].title : 'AI 종합 의견 생성'}
+        title={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].title : 'AI 종합 의견 생성'}
         description={'상담 녹취록을 바탕으로 AI가 생성한 내용입니다.'}
-        infoMessage={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].infoMessage : 'AI 종합 의견이 생성되었습니다.'}
+        infoMessage={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].infoMessage : 'AI 종합 의견이 생성되었습니다.'}
         keyInfo
         keyInfoText={'AI 생성을 통해 상담일지 작성 시 도움 받을 수 있어요.'}
-        renderComplete={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].renderComplete : () => (
+        renderComplete={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].renderComplete : () => (
           <div className="complete-cont"></div>
         )}
+        onConfirm={handleAiConfirm}
+        onSkip={handleAiSkip}
+        sessionSeq={sessionSeq}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>
