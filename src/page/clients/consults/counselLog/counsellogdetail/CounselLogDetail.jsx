@@ -14,7 +14,7 @@ import HistoryPanel from './components/HistoryPanel';
 import RiskSection from './components/RiskSection';
 import SymptomTable from './components/SymptomTable';
 import { mapSessionNoteToState as mapSessionNoteToStateUtil } from './components/sessionNoteMapper';
-import { useAiPanel } from './hooks/useAiPanel';
+import { useAiPanel } from './hooks/useAiPanel.jsx';
 import './notes.scss';
 
 function CounselLogDetail() {
