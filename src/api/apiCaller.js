@@ -71,7 +71,7 @@ export const dislikeCodeList = async () => {
 
 //! Dislike 정보 수정
 export const dislikeUpdate = async (params) => {
-    return await axiosIns.post('/api/dislike/update', { params })
+    return await axiosIns.post('/api/dislike/update', params)
 }
 
 //! Dislike 정보 삭제
