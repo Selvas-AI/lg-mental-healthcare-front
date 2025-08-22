@@ -47,6 +47,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
       result = clients;
     } else {
       result = clients.filter(client => {
+        if (!client || !client.clientName) return false;
         const clientName = client.clientName || '';
         return clientName.includes(keyword);
       });
@@ -66,10 +67,10 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
 
   // 정렬 함수
   const sortClientsByName = (clientList, order) => {
-    return [...clientList].sort((a, b) => {
-      // undefined 값 안전 처리
-      const nameA = a.clientName || '';
-      const nameB = b.clientName || '';
+    return [...clientList].filter(client => client !== null && client !== undefined).sort((a, b) => {
+      // null, undefined 값 안전 처리
+      const nameA = (a && a.clientName) || '';
+      const nameB = (b && b.clientName) || '';
       
       if (order === 'asc') {
         return nameA.localeCompare(nameB);
@@ -111,7 +112,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
 
   // TODO 목록 생성 함수 (currentSession의 false인 값만 표시)
   const generateTodos = (client) => {
-    if (!client.currentSession) return [];
+    if (!client || !client.currentSession) return [];
     
     const session = client.currentSession;
     const todos = [];

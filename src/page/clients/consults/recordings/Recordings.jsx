@@ -62,6 +62,8 @@ function Recordings() {
   const [sessionNumber, setSessionNumber] = useState('');
   // AI 요약 데이터 상태
   const [aiSummaryData, setAiSummaryData] = useState('');
+  // 구간 요약 데이터 상태
+  const [sectionSummaryData, setSectionSummaryData] = useState([]);
   
   // sessionSeq로 회기 정보 및 상담관리 데이터 가져오기
   useEffect(() => {
@@ -240,7 +242,7 @@ function Recordings() {
       const match = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.*)$/);
       if (match) {
         const [, time, name, content] = match;
-        const speaker = name.includes('발화자1') ? 'spk_0' : 'spk_1';
+        const speaker = name.includes('발화자1') ? 'counselor' : 'client';
         return {
           speaker,
           name: name.trim(),
@@ -277,7 +279,7 @@ function Recordings() {
       
       const duration = Math.max(0, nextTime - currentTime);
       
-      if (current.speaker === 'spk_0' || current.name.includes('발화자1')) {
+      if (current.speaker === 'counselor' || current.name.includes('발화자1')) {
         counselorSeconds += duration;
       } else {
         clientSeconds += duration;
@@ -302,12 +304,11 @@ function Recordings() {
     return minutes * 60 + seconds;
   };
 
-  // 텍스트 길이로 발화 시간 추정 (한글 기준 초당 3-4자)
   const estimateSpeechDuration = (text) => {
-    if (!text) return 2; // 기본 2초
+    if (!text) return 2;
     const charCount = text.length;
-    const estimatedSeconds = Math.max(2, charCount / 3.5); // 초당 3.5자 기준
-    return Math.min(estimatedSeconds, 30); // 최대 30초로 제한
+    const estimatedSeconds = Math.max(2, charCount / 3.5);
+    return Math.min(estimatedSeconds, 30);
   };
 
   // 최신 transcript 데이터 다시 로드
@@ -323,6 +324,21 @@ function Recordings() {
           ...prev,
           summary: data.sectionSummaryText
         }));
+      }
+      
+      // sectionSummaryJson을 파싱하여 llm_answer 데이터를 구간 요약 데이터로 설정
+      if (data?.sectionSummaryJson) {
+        try {
+          const sectionSummary = JSON.parse(data.sectionSummaryJson);
+          if (sectionSummary?.llm_answer) {
+            setSectionSummaryData(sectionSummary.llm_answer);
+          }
+        } catch (parseError) {
+          console.error('sectionSummaryJson 파싱 오류:', parseError);
+          setSectionSummaryData([]);
+        }
+      } else {
+        setSectionSummaryData([]);
       }
       
       // 회기 번호 설정 (sessionSeq로부터 추출 또는 API 응답에서 가져오기)
@@ -353,7 +369,7 @@ function Recordings() {
           
           const convertedTranscript = audioSegments.map((segment, index) => ({
             speaker: segment.speaker_label || `spk_${index}`,
-            name: segment.speaker_label === 'spk_0' ? '발화자1' : '발화자2',
+            name: segment.speaker_label === 'counselor' ? '발화자1' : '발화자2',
             time: formatSecondsToTime(parseFloat(segment.start_time || 0)),
             content: segment.transcript || ''
           }));
@@ -470,7 +486,8 @@ function Recordings() {
           onClose={() => {
             setShowSectionSummary(false);
             setSupportPanel(false);
-          }} 
+          }}
+          sectionData={sectionSummaryData}
         />
         <ToastPop message="변경사항이 녹취록에 저장 되었습니다." showToast={showToast} />
       </div>

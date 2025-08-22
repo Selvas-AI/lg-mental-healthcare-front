@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import IconLoading from "@/assets/images/common/loading.svg";
 import CharacterImg from "@/assets/images/common/character.svg";
 import CharacterBkImg from "@/assets/images/common/character_bk.svg";
 import EditorModal from '../page/clients/components/EditorModal';
+import { dislikeCodeList } from '@/api/apiCaller';
 
 function AiPanelCommon({
   open,
@@ -16,27 +17,41 @@ function AiPanelCommon({
   renderComplete, // 완료시 결과 영역 렌더 함수
   isRecordings = false,
   isCounselLog = false,
+  onConfirm, // 확정하기 콜백
+  onSkip, // 생략하기 콜백
+  sessionSeq, // dislikeUpdate API 호출용
 }) {
   const [showSkipReason, setShowSkipReason] = useState(false);
-  const [selectedReasons, setSelectedReasons] = useState([]);
+  const [selectedReason, setSelectedReason] = useState(''); // 단일 선택으로 변경
   const [showDirectInputModal, setShowDirectInputModal] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
   const [directInput, setDirectInput] = useState("");  // 직접입력 상태
-  const skipReasons = [
-    "약간의 수정이 필요해요",
-    "정확하지 않아요.",
-    "보완이 필요해요",
-    "너무 단순해요",
-    "올바른 사실이 아니에요",
-    "맥락을 잘못 파악 했어요",
-    "문제의 소지가 있는 표현이 있어요",
-  ];
+  const [skipReasons, setSkipReasons] = useState([]); // 동적으로 로드
+
+  // dislikeCodeList API 호출하여 skipReasons 로드
+  useEffect(() => {
+    const loadSkipReasons = async () => {
+      try {
+        const response = await dislikeCodeList();
+        if (response.code === 200 && response.data) {
+          setSkipReasons(response.data);
+        }
+      } catch (error) {
+        console.error('skipReasons 로드 실패:', error);
+      }
+    };
+    loadSkipReasons();
+  }, []);
 
   const handleSaveDirectInput = () => {
-    // TODO: 저장 처리
+    // 직접입력 저장 시 onSkip 콜백 호출
+    if (onSkip && directInput.trim()) {
+      onSkip(null, directInput.trim()); // code는 null, text는 직접입력 내용
+    }
     setShowDirectInputModal(false);
     setDirectInput("");
+    setShowSkipReason(false);
   };
 
   // 생략하기 버튼 클릭
@@ -44,23 +59,29 @@ function AiPanelCommon({
     setShowSkipReason(true);
   };
 
-    // 생략 사유 토글
-  const handleReasonClick = (reason) => {
-    setSelectedReasons((prev) => {
-      if (prev.includes(reason)) {
-        return prev.filter((r) => r !== reason);
-      } else {
-        return [...prev, reason];
-      }
-    });
+  // 확정하기 버튼 클릭
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+    }
   };
 
-    // 직접입력 버튼 클릭
+  // 생략 사유 선택 (단일 선택, 즉시 API 호출)
+  const handleReasonClick = (reason) => {
+    setSelectedReason(reason.code);
+    // 선택 즉시 onSkip 콜백 호출
+    if (onSkip) {
+      onSkip(reason.code, null); // code는 선택된 코드, text는 null
+    }
+    setShowSkipReason(false);
+  };
+
+  // 직접입력 버튼 클릭
   const handleDirectInput = () => {
     setShowDirectInputModal(true);
   };
 
-    // 직접입력 모달 닫기
+  // 직접입력 모달 닫기
   const handleCloseDirectInput = () => {
     setShowDirectInputModal(false);
   };
@@ -131,7 +152,7 @@ function AiPanelCommon({
                     </div>
                   </div>
                   <div className="tooltip-wrap">
-                    <button className="type09" type="button" onMouseEnter={() => setShowTooltip2(true)} onMouseLeave={() => setShowTooltip2(false)}>확정하기</button>
+                    <button className="type09" type="button" onClick={handleConfirm} onMouseEnter={() => setShowTooltip2(true)} onMouseLeave={() => setShowTooltip2(false)}>확정하기</button>
                     <div className={`tooltip${showTooltip2 ? " show" : ""}`}>
                       <p>적절한 분석인 경우에는 확정하기를 통해<br />본문에 반영 할 수 있어요.<br /></p>
                       <p>약간의 수정이 필요한 경우에는 <br />확정하기 후 수정이 가능해요.</p>
@@ -148,12 +169,12 @@ function AiPanelCommon({
                   <div className="reason-wrap">
                     <ul>
                       {skipReasons.map((reason) => (
-                        <li key={reason}>
+                        <li key={reason.code}>
                           <a
-                            className={"link-btn cursor-pointer" + (selectedReasons.includes(reason) ? " on" : "")}
+                            className={"link-btn cursor-pointer" + (selectedReason === reason.code ? " on" : "")}
                             onClick={() => handleReasonClick(reason)}
                           >
-                            {reason}
+                            {reason.value}
                           </a>
                         </li>
                       ))}
@@ -166,7 +187,7 @@ function AiPanelCommon({
                         </a>
                       </li>
                     </ul>
-                    <p className={"select-complete" + (selectedReasons.length > 0 ? " on" : "")}>피드백을 주셔서 감사합니다.</p>
+                    <p className={"select-complete" + (selectedReason ? " on" : "")}>피드백을 주셔서 감사합니다.</p>
                   </div>
                 </div>
               </div>

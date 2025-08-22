@@ -1,7 +1,22 @@
 import React from "react";
 import './recordings.scss';
 
-function SectionSummaryPanel({ open, onClose }) {
+function SectionSummaryPanel({ open, onClose, sectionData = [] }) {
+  
+  // 시간을 MM:SS 형식으로 변환하는 함수
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '00:00';
+    const time = parseFloat(timeStr);
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+  
+  // 위험 발언 감지 함수
+  const isDangerousRemark = (summary) => {
+    const dangerousKeywords = ['죽고싶', '자살', '죽음', '살아있는게 의미', '죽어버리고', '사라지고'];
+    return dangerousKeywords.some(keyword => summary.includes(keyword));
+  };
   
   return (
     <div className={"support-panel section-summary" + (open ? " on" : "")}>
@@ -17,58 +32,35 @@ function SectionSummaryPanel({ open, onClose }) {
         </div>
         <div className="panel-cont">
           <div className="inner">
-            <div className="section-info">
-              <div className="topic-wrap">
-                <span className="topic">상담 계기</span>
-                <div className="time">
-                  <span>00:00</span> ~ <span>01:13</span>
+            {sectionData.length > 0 ? (
+              sectionData.map((section, index) => (
+                <div key={index} className="section-info">
+                  <div className="topic-wrap">
+                    <span className="topic">{section.대화주제}</span>
+                    <div className="time">
+                      <span>{formatTime(section.시작시간)}</span> ~ <span>{formatTime(section.종료시간)}</span>
+                    </div>
+                  </div>
+                  <div className="summary">
+                    {section.대화요약?.map((summary, summaryIndex) => (
+                      <div key={summaryIndex} className="bullet-line">
+                        {isDangerousRemark(summary) ? (
+                          <strong className="dangerous-remark">{summary}</strong>
+                        ) : (
+                          summary
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="section-info">
+                <div className="summary">
+                  <div className="bullet-line">구간 요약 데이터가 없습니다.</div>
                 </div>
               </div>
-              <div className="summary">
-                <div className="bullet-line">아는 언니의 소개로 상담 결심</div>
-                <div className="bullet-line">불면증으로 고생</div>
-                <div className="bullet-line">낮은 자존감으로 인한 대인관계 어려움</div>
-              </div>
-            </div>
-            <div className="section-info">
-              <div className="topic-wrap">
-                <span className="topic">엄마와의 불화</span>
-                <div className="time">
-                  <span>05:01</span> ~ <span>09:11</span>
-                </div>
-              </div>
-              <div className="summary">
-                <div className="bullet-line">엄마에게 고민하는 부분을 말했지만 타박 받음.</div>
-                <div className="bullet-line">이후 고민에 대해서 아무에게도 얘기하지 않게 됨</div>
-              </div>
-            </div>
-            <div className="section-info">
-              <div className="topic-wrap">
-                <span className="topic">외로움을 이겨내기 위한 노력</span>
-                <div className="time">
-                  <span>12:00</span> ~ <span>18:00</span>
-                </div>
-              </div>
-              <div className="summary">
-                <div className="bullet-line">스스로 취미를 가지려고 노력함</div>
-                <div className="bullet-line">아무도 몰래 정신과를 내원하여 약물 처방을 받음</div>
-              </div>
-            </div>
-            <div className="section-info">
-              <div className="topic-wrap">
-                <span className="topic">당시 감정 변화</span>
-                <div className="time">
-                  <span>22:28</span> ~ <span>25:32</span>
-                </div>
-              </div>
-              <div className="summary">
-                <div className="bullet-line">
-                  <strong className="dangerous-remark">‘죽고 싶을 만큼 외롭고 힘들었어요. 이럴 거면 살아 있는게 의미 있나 싶었어요.’ (위험발언 22:28)</strong>
-                </div>
-                <div className="bullet-line">자살을 고민할 정도로 힘든 시간을 보냄</div>
-                <div className="bullet-line">남겨질 소중한 가족들과 친구들이 생각나서 괴로움을 느낌</div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -278,7 +278,7 @@ const RecordingsPlayer = forwardRef(({ speakWrapRef, transcript, searchKeyword, 
               {transcript.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`speaker ${item.speaker === 'spk_0' ? 'speaker01' : 'speaker02'}${idx === currentIdx ? ' current' : ''}${!editMode && isDangerContent(item.content) ? ' stress-highlights' : ''}`}
+                  className={`speaker ${item.speaker === 'counselor' ? 'speaker01' : 'speaker02'}${idx === currentIdx ? ' current' : ''}${!editMode && isDangerContent(item.content) ? ' stress-highlights' : ''}`}
                 >
                   <div className="info">
                     <span className="speaker-id">{item.name}</span>

@@ -12,8 +12,10 @@ import CustomTextareaBlock from './components/CustomTextareaBlock';
 import GuidePanel from './components/GuidePanel';
 import HistoryPanel from './components/HistoryPanel';
 import RiskSection from './components/RiskSection';
+import EditorConfirm from './../../../components/EditorConfirm';
 import SymptomTable from './components/SymptomTable';
 import { mapSessionNoteToState as mapSessionNoteToStateUtil } from './components/sessionNoteMapper';
+import { useAiPanel } from './components/useAiPanel.jsx';
 import './notes.scss';
 
 function CounselLogDetail() {
@@ -29,41 +31,31 @@ function CounselLogDetail() {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-  // 상담일지 데이터 로컬 상태 제거 (Recoil 캐시 사용)
-  // AI Panel 더미 데이터 
-  const aiPanelConfigs = {
-    mainProblem: {
-      title: '주호소 문제 AI 생성',
-      infoMessage: '주호소 문제의 내용이 생성 완료되었습니다.',
-      renderComplete: () => (
-        <div className="complete-cont">
-          <div className="bullet-line">최근 업무에 대한 자신감 저하와 대인관계 스트레스로 인해 불면과 식욕 저하가 지속되고 있음.</div>
-          <div className="bullet-line">상사의 평가에 민감하게 반응하며, “나는 늘 부족하다”는 생각에서 벗어나지 못함.</div>
-          <div className="bullet-line">특히 팀 회의 이후 무기력함이 심화되어 일상생활에도 영향을 줌.</div>
-        </div>
-      )
-    },
-    sessionContent: {
-      title: '상담내용 AI 생성',
-      infoMessage: '상담내용이 생성 완료되었습니다.',
-      renderComplete: () => (
-        <div className="complete-cont">
-          상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.상담내용이 생성되었습니다.
-        </div>
-      )
-    },
-    nextPlan: {
-      title: '차회기 상담 계획 AI 생성',
-      infoMessage: '차회기 상담 계획이 생성 완료되었습니다.',
-      renderComplete: () => (
-        <div className="complete-cont">
-          <div className="bullet-line">차회기에는 이완훈련 및 대인관계 기술 훈련을 진행할 예정입니다.</div>
-          <div className="bullet-line">내담자가 실생활에서 적용할 수 있는 구체적 전략을 안내하고, 실습 과제를 제시합니다.</div>
-        </div>
-      )
-    }
+  // Toast 상태
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+
+  // Toast 표시 함수
+  const showToastMessage = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000); // 3초 후 자동 숨김
   };
-  const [aiPanelKey, setAiPanelKey] = useState(null);
+
+  // AI Panel 훅 사용
+  const {
+    aiPanelKey,
+    openedPanel: aiOpenedPanel,
+    setAiGeneratedData,
+    getAiPanelConfigs,
+    handleOpenAiPanel,
+    handleClosePanel: handleCloseAiPanel,
+    handleAiConfirm: handleAiConfirmBase,
+    handleAiSkip,
+    setOpenedPanel: setAiOpenedPanel
+  } = useAiPanel(sessionSeq, showToastMessage);
   // 상담일지 폼 상태들
   const [currentRisk, setCurrentRisk] = useState('');
   const [pastRisk, setPastRisk] = useState('');
@@ -88,16 +80,20 @@ function CounselLogDetail() {
   const [concern, setConcern] = useState('');
   const [caseConcept, setCaseConcept] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
-  const [openedPanel, setOpenedPanel] = useState(null); // 'guide' | 'history' | 'ai' | null
+  const [openedPanel, setOpenedPanel] = useState(null); // 'guide' | 'history' | null (ai는 useAiPanel에서 관리)
   const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
   const [fold, setFold] = useRecoilState(foldState);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   const [currentSession, setCurrentSession] = useRecoilState(currentSessionState);
   const [sessionNote, setSessionNote] = useRecoilState(sessionNoteState);
-  
-  // Toast 상태
-  const [toastMessage, setToastMessage] = useState('');
-  const [showToast, setShowToast] = useState(false);
+
+  // 공통 확인 모달 (alert 대체)
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const showConfirm = (message) => {
+    setConfirmMessage(message);
+    setConfirmOpen(true);
+  };
 
   // 날짜 포맷팅 함수
   const formatDate = (dateStr) => {
@@ -137,34 +133,27 @@ function CounselLogDetail() {
   };
 
   const handleOpenGuidePanel = () => {
+    // 다른 패널 닫기 후 가이드 패널 열기
+    try { handleCloseAiPanel(); } catch (e) {}
     setOpenedPanel('guide');
     setSupportPanel(true);
   };
 
   const handleOpenHistoryPanel = () => {
+    // 다른 패널 닫기 후 히스토리 패널 열기
+    try { handleCloseAiPanel(); } catch (e) {}
     setOpenedPanel('history');
-    setSupportPanel(true);
-  };
-
-  const handleOpenAiPanel = (key) => {
-    setAiPanelKey(key);
-    setOpenedPanel('ai');
     setSupportPanel(true);
   };
 
   const handleClosePanel = () => {
     setOpenedPanel(null);
     setSupportPanel(false);
-    setAiPanelKey(null);
   };
 
-  // Toast 표시 함수
-  const showToastMessage = (message) => {
-    setToastMessage(message);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000); // 3초 후 자동 숨김
+  // AI 패널 확정하기 콜백 (setNextPlan, setMainProblem, setSessionContent 전달)
+  const handleAiConfirm = () => {
+    handleAiConfirmBase(setNextPlan, setMainProblem, setSessionContent);
   };
 
   const handleSave = async () => {
@@ -176,26 +165,26 @@ function CounselLogDetail() {
     // 필수 입력값 검증
     // 1. 자살, 위기 상황의 긴급도 - 현재 위기 상황, 과거 위기 상황, 위험요인, 위기 단계 모두 체크
     if (!currentRisk) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     if (!pastRisk) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     if (riskFactors.length === 0) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     if (!riskScale) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     
     // 2. 현재 증상의 심각도 - 모든 증상에 대해 점수가 입력되어야 함
     const allSymptomsCompleted = Object.values(symptoms).every(v => v !== null && v !== undefined);
     if (!allSymptomsCompleted) {
-      alert('현재 증상의 심각도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('현재 증상의 심각도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     
@@ -216,27 +205,27 @@ function CounselLogDetail() {
 
     for (const field of textRequiredFields) {
       if (!field.value) {
-        alert(`${field.name}을 입력하지 않았습니다. 입력 후 저장해 주세요.`);
+        showConfirm(`${field.name}을 입력하지 않았습니다. 입력 후 저장해 주세요.`);
         return;
       }
     }
 
     // 글자수 제한 검증
     const characterLimitFields = [
-      { value: mainProblem, name: '주호소 문제', limit: 1000 },
-      { value: sessionContent, name: '상담내용', limit: 2000 },
-      { value: counselorOpinion, name: '상담사 소견', limit: 2000 },
-      { value: observation, name: '객관적 관찰', limit: 1000 },
-      { value: goal, name: '상담 목표', limit: 1000 },
-      { value: nextPlan, name: '차회기 상담 계획', limit: 1000 },
-      { value: concern, name: '고민되는 점', limit: 1000 },
-      { value: caseConcept, name: '사례개념화', limit: 2000 },
+      { value: mainProblem, name: '주호소 문제', limit: 500 },
+      { value: sessionContent, name: '상담내용', limit: 500 },
+      { value: counselorOpinion, name: '상담사 소견', limit: 500 },
+      { value: observation, name: '객관적 관찰', limit: 500 },
+      { value: goal, name: '상담 목표', limit: 500 },
+      { value: nextPlan, name: '차회기 상담 계획', limit: 500 },
+      { value: concern, name: '고민되는 점', limit: 500 },
+      { value: caseConcept, name: '사례개념화', limit: 500 },
       { value: riskFactorEtc, name: '위험요인 기타', limit: 100 }
     ];
 
     for (const field of characterLimitFields) {
       if (field.value && field.value.length > field.limit) {
-        alert(`${field.name}의 내용이 입력 가능 글자수를 초과했습니다. 글자수를 줄인 후 저장해주세요.`);
+        showConfirm(`${field.name}의 내용이 입력 가능 글자수를 초과했습니다. 글자수를 줄인 후 저장해주세요.`);
         return;
       }
     }
@@ -360,6 +349,7 @@ function CounselLogDetail() {
       setNextPlan,
       setConcern,
       setCaseConcept,
+      setAiGeneratedData,
     });
   };
 
@@ -473,7 +463,9 @@ function CounselLogDetail() {
               <span>상담일시</span> : <span>{getSessionDateTime()}</span>
             </p>
           </div>
-          <a className="panel-btn cursor-pointer" onClick={handleOpenHistoryPanel}>이전 회기 기록</a>
+          {currentSession?.sessionOrder !== 1 && (
+            <a className="panel-btn cursor-pointer" onClick={handleOpenHistoryPanel}>이전 회기 기록</a>
+          )}
         </div>
         <div className="form-section">
           <div className="step-nav">
@@ -560,7 +552,11 @@ function CounselLogDetail() {
               id="step03"
               title="주호소 문제"
               rightButton
-              onAiClick={() => handleOpenAiPanel('mainProblem')}
+              onAiClick={() => {
+                // 가이드/히스토리 패널 닫고 AI 패널 열기
+                setOpenedPanel(null);
+                handleOpenAiPanel('mainProblem');
+              }}
             >
               <CustomTextareaBlock
                 placeholder="주호소 문제를 입력해 주세요."
@@ -576,7 +572,10 @@ function CounselLogDetail() {
               <div className="step-conts">
                 <div id="step04-1" className="step-title sub">
                   <strong className="necessary">상담내용</strong>
-                  <button className="type01 h36" type="button" onClick={() => handleOpenAiPanel('sessionContent')}>
+                  <button className="type01 h36" type="button" onClick={() => {
+                    setOpenedPanel(null);
+                    handleOpenAiPanel('sessionContent');
+                  }}>
                       <span>AI 생성하기</span>
                   </button>
                 </div>
@@ -619,7 +618,10 @@ function CounselLogDetail() {
             </CounselLogStep>
             <CounselLogStep id="step07" title="차회기 상담 계획" 
               rightButton
-              onAiClick={() => handleOpenAiPanel('nextPlan')}
+              onAiClick={() => {
+                setOpenedPanel(null);
+                handleOpenAiPanel('nextPlan');
+              }}
             >
               <div className="step-conts">
                 <CustomTextareaBlock
@@ -676,22 +678,35 @@ function CounselLogDetail() {
       <HistoryPanel
         open={openedPanel === 'history'}
         onClose={handleClosePanel}
+        clientId={clientId}
+        currentSessionSeq={sessionSeq}
       />
       <AiPanelCommon
         isCounselLog={true}
-        open={openedPanel === 'ai'}
-        onClose={handleClosePanel}
+        open={aiOpenedPanel === 'ai'}
+        onClose={handleCloseAiPanel}
         status="complete"
-        title={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].title : 'AI 종합 의견 생성'}
+        title={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].title : 'AI 종합 의견 생성'}
         description={'상담 녹취록을 바탕으로 AI가 생성한 내용입니다.'}
-        infoMessage={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].infoMessage : 'AI 종합 의견이 생성되었습니다.'}
+        infoMessage={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].infoMessage : 'AI 종합 의견이 생성되었습니다.'}
         keyInfo
         keyInfoText={'AI 생성을 통해 상담일지 작성 시 도움 받을 수 있어요.'}
-        renderComplete={aiPanelKey && aiPanelConfigs[aiPanelKey] ? aiPanelConfigs[aiPanelKey].renderComplete : () => (
+        renderComplete={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].renderComplete : () => (
           <div className="complete-cont"></div>
         )}
+        onConfirm={handleAiConfirm}
+        onSkip={handleAiSkip}
+        sessionSeq={sessionSeq}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
+      <EditorConfirm
+        open={confirmOpen}
+        title="안내"
+        message={confirmMessage}
+        confirmText="확인"
+        onConfirm={() => setConfirmOpen(false)}
+        onClose={() => setConfirmOpen(false)}
+      />
     </>
   )
 }
