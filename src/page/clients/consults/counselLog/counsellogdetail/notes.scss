@@ -672,6 +672,18 @@
                 }
             }
         }
+    }.empty-history {
+        @include flexbox(column, center, center);
+        gap: 1.2rem;
+        img {
+            width: 8.5rem;
+            height: 7.9rem;
+            object-fit: contain;
+        }
+        .empty-info {
+            font-weight: 500;
+            color: $gray400;
+        }
     }
     /* 탭 메뉴 */
     .tab-menu {

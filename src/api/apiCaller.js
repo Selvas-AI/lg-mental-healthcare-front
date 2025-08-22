@@ -59,17 +59,17 @@ export const clientExamSave = async (params) => {
 }
 
 //? ===== Dislike 관리 API =====
-//! Dislike 정보 조회
+// Dislike 정보 조회
 export const dislikeFind = async (sessionSeq) => {
     return await axiosIns.get('/api/dislike/find', { params: { sessionSeq } })
 }
 
-//! Dislike 선택항목 조회
+// Dislike 선택항목 조회
 export const dislikeCodeList = async () => {
     return await axiosIns.get('/api/dislike/codeList')
 }
 
-//! Dislike 정보 수정
+// Dislike 정보 수정
 export const dislikeUpdate = async (params) => {
     return await axiosIns.post('/api/dislike/update', params)
 }

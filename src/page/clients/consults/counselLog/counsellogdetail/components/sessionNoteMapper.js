@@ -106,7 +106,7 @@ export const mapSessionNoteToState = (data, setters) => {
 
   // AI 생성 데이터 파싱 및 설정
   if (typeof setAiGeneratedData === 'function') {
-    const aiData = { nextPlan: null };
+    const aiData = { nextPlan: null, mainProblem: null, sessionContent: null };
     
     // nextSessionPlanAi 파싱
     if (data.nextSessionPlanAi) {
@@ -117,6 +117,30 @@ export const mapSessionNoteToState = (data, setters) => {
         }
       } catch (error) {
         console.error('nextSessionPlanAi 파싱 오류:', error);
+      }
+    }
+    
+    // chiefComplaintAi 파싱
+    if (data.chiefComplaintAi) {
+      try {
+        const parsedData = JSON.parse(data.chiefComplaintAi);
+        if (parsedData.llm_answer || parsedData.llm_feedback) {
+          aiData.mainProblem = parsedData;
+        }
+      } catch (error) {
+        console.error('chiefComplaintAi 파싱 오류:', error);
+      }
+    }
+    
+    // sessionSummaryAi 파싱
+    if (data.sessionSummaryAi) {
+      try {
+        const parsedData = JSON.parse(data.sessionSummaryAi);
+        if (parsedData.llm_answer || parsedData.llm_feedback) {
+          aiData.sessionContent = parsedData;
+        }
+      } catch (error) {
+        console.error('sessionSummaryAi 파싱 오류:', error);
       }
     }
     
