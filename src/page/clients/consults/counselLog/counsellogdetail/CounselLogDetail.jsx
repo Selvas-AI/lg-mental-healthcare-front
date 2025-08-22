@@ -12,9 +12,10 @@ import CustomTextareaBlock from './components/CustomTextareaBlock';
 import GuidePanel from './components/GuidePanel';
 import HistoryPanel from './components/HistoryPanel';
 import RiskSection from './components/RiskSection';
+import EditorConfirm from './../../../components/EditorConfirm';
 import SymptomTable from './components/SymptomTable';
 import { mapSessionNoteToState as mapSessionNoteToStateUtil } from './components/sessionNoteMapper';
-import { useAiPanel } from './hooks/useAiPanel.jsx';
+import { useAiPanel } from './components/useAiPanel.jsx';
 import './notes.scss';
 
 function CounselLogDetail() {
@@ -47,7 +48,6 @@ function CounselLogDetail() {
   const {
     aiPanelKey,
     openedPanel: aiOpenedPanel,
-    aiGeneratedData,
     setAiGeneratedData,
     getAiPanelConfigs,
     handleOpenAiPanel,
@@ -87,6 +87,14 @@ function CounselLogDetail() {
   const [currentSession, setCurrentSession] = useRecoilState(currentSessionState);
   const [sessionNote, setSessionNote] = useRecoilState(sessionNoteState);
 
+  // 공통 확인 모달 (alert 대체)
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const showConfirm = (message) => {
+    setConfirmMessage(message);
+    setConfirmOpen(true);
+  };
+
   // 날짜 포맷팅 함수
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -125,11 +133,15 @@ function CounselLogDetail() {
   };
 
   const handleOpenGuidePanel = () => {
+    // 다른 패널 닫기 후 가이드 패널 열기
+    try { handleCloseAiPanel(); } catch (e) {}
     setOpenedPanel('guide');
     setSupportPanel(true);
   };
 
   const handleOpenHistoryPanel = () => {
+    // 다른 패널 닫기 후 히스토리 패널 열기
+    try { handleCloseAiPanel(); } catch (e) {}
     setOpenedPanel('history');
     setSupportPanel(true);
   };
@@ -139,9 +151,9 @@ function CounselLogDetail() {
     setSupportPanel(false);
   };
 
-  // AI 패널 확정하기 콜백 (setNextPlan 전달)
+  // AI 패널 확정하기 콜백 (setNextPlan, setMainProblem, setSessionContent 전달)
   const handleAiConfirm = () => {
-    handleAiConfirmBase(setNextPlan);
+    handleAiConfirmBase(setNextPlan, setMainProblem, setSessionContent);
   };
 
   const handleSave = async () => {
@@ -153,26 +165,26 @@ function CounselLogDetail() {
     // 필수 입력값 검증
     // 1. 자살, 위기 상황의 긴급도 - 현재 위기 상황, 과거 위기 상황, 위험요인, 위기 단계 모두 체크
     if (!currentRisk) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     if (!pastRisk) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     if (riskFactors.length === 0) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     if (!riskScale) {
-      alert('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('자살, 위기 상황의 긴급도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     
     // 2. 현재 증상의 심각도 - 모든 증상에 대해 점수가 입력되어야 함
     const allSymptomsCompleted = Object.values(symptoms).every(v => v !== null && v !== undefined);
     if (!allSymptomsCompleted) {
-      alert('현재 증상의 심각도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
+      showConfirm('현재 증상의 심각도를 입력하지 않았습니다. 입력 후 저장해 주세요.');
       return;
     }
     
@@ -193,27 +205,27 @@ function CounselLogDetail() {
 
     for (const field of textRequiredFields) {
       if (!field.value) {
-        alert(`${field.name}을 입력하지 않았습니다. 입력 후 저장해 주세요.`);
+        showConfirm(`${field.name}을 입력하지 않았습니다. 입력 후 저장해 주세요.`);
         return;
       }
     }
 
     // 글자수 제한 검증
     const characterLimitFields = [
-      { value: mainProblem, name: '주호소 문제', limit: 1000 },
-      { value: sessionContent, name: '상담내용', limit: 2000 },
-      { value: counselorOpinion, name: '상담사 소견', limit: 2000 },
-      { value: observation, name: '객관적 관찰', limit: 1000 },
-      { value: goal, name: '상담 목표', limit: 1000 },
-      { value: nextPlan, name: '차회기 상담 계획', limit: 1000 },
-      { value: concern, name: '고민되는 점', limit: 1000 },
-      { value: caseConcept, name: '사례개념화', limit: 2000 },
+      { value: mainProblem, name: '주호소 문제', limit: 500 },
+      { value: sessionContent, name: '상담내용', limit: 500 },
+      { value: counselorOpinion, name: '상담사 소견', limit: 500 },
+      { value: observation, name: '객관적 관찰', limit: 500 },
+      { value: goal, name: '상담 목표', limit: 500 },
+      { value: nextPlan, name: '차회기 상담 계획', limit: 500 },
+      { value: concern, name: '고민되는 점', limit: 500 },
+      { value: caseConcept, name: '사례개념화', limit: 500 },
       { value: riskFactorEtc, name: '위험요인 기타', limit: 100 }
     ];
 
     for (const field of characterLimitFields) {
       if (field.value && field.value.length > field.limit) {
-        alert(`${field.name}의 내용이 입력 가능 글자수를 초과했습니다. 글자수를 줄인 후 저장해주세요.`);
+        showConfirm(`${field.name}의 내용이 입력 가능 글자수를 초과했습니다. 글자수를 줄인 후 저장해주세요.`);
         return;
       }
     }
@@ -451,7 +463,9 @@ function CounselLogDetail() {
               <span>상담일시</span> : <span>{getSessionDateTime()}</span>
             </p>
           </div>
-          <a className="panel-btn cursor-pointer" onClick={handleOpenHistoryPanel}>이전 회기 기록</a>
+          {currentSession?.sessionOrder !== 1 && (
+            <a className="panel-btn cursor-pointer" onClick={handleOpenHistoryPanel}>이전 회기 기록</a>
+          )}
         </div>
         <div className="form-section">
           <div className="step-nav">
@@ -538,7 +552,11 @@ function CounselLogDetail() {
               id="step03"
               title="주호소 문제"
               rightButton
-              onAiClick={() => handleOpenAiPanel('mainProblem')}
+              onAiClick={() => {
+                // 가이드/히스토리 패널 닫고 AI 패널 열기
+                setOpenedPanel(null);
+                handleOpenAiPanel('mainProblem');
+              }}
             >
               <CustomTextareaBlock
                 placeholder="주호소 문제를 입력해 주세요."
@@ -554,7 +572,10 @@ function CounselLogDetail() {
               <div className="step-conts">
                 <div id="step04-1" className="step-title sub">
                   <strong className="necessary">상담내용</strong>
-                  <button className="type01 h36" type="button" onClick={() => handleOpenAiPanel('sessionContent')}>
+                  <button className="type01 h36" type="button" onClick={() => {
+                    setOpenedPanel(null);
+                    handleOpenAiPanel('sessionContent');
+                  }}>
                       <span>AI 생성하기</span>
                   </button>
                 </div>
@@ -597,7 +618,10 @@ function CounselLogDetail() {
             </CounselLogStep>
             <CounselLogStep id="step07" title="차회기 상담 계획" 
               rightButton
-              onAiClick={() => handleOpenAiPanel('nextPlan')}
+              onAiClick={() => {
+                setOpenedPanel(null);
+                handleOpenAiPanel('nextPlan');
+              }}
             >
               <div className="step-conts">
                 <CustomTextareaBlock
@@ -654,6 +678,8 @@ function CounselLogDetail() {
       <HistoryPanel
         open={openedPanel === 'history'}
         onClose={handleClosePanel}
+        clientId={clientId}
+        currentSessionSeq={sessionSeq}
       />
       <AiPanelCommon
         isCounselLog={true}
@@ -673,6 +699,14 @@ function CounselLogDetail() {
         sessionSeq={sessionSeq}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
+      <EditorConfirm
+        open={confirmOpen}
+        title="안내"
+        message={confirmMessage}
+        confirmText="확인"
+        onConfirm={() => setConfirmOpen(false)}
+        onClose={() => setConfirmOpen(false)}
+      />
     </>
   )
 }
