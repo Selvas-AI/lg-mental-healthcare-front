@@ -157,14 +157,26 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
 
       // 패널 타입에 따라 파라미터 설정
       if (aiPanelKey === 'nextPlan') {
-        params.nextSessionPlanCode = nextSessionPlanCode;
-        params.nextSessionPlanText = nextSessionPlanText;
+        if (nextSessionPlanCode != null && nextSessionPlanCode !== '') {
+          params.nextSessionPlanCode = nextSessionPlanCode;
+        }
+        if (nextSessionPlanText != null && nextSessionPlanText !== '') {
+          params.nextSessionPlanText = nextSessionPlanText;
+        }
       } else if (aiPanelKey === 'mainProblem') {
-        params.chiefComplaintCode = chiefComplaintCode;
-        params.chiefComplaintText = chiefComplaintText;
+        if (chiefComplaintCode != null && chiefComplaintCode !== '') {
+          params.chiefComplaintCode = chiefComplaintCode;
+        }
+        if (chiefComplaintText != null && chiefComplaintText !== '') {
+          params.chiefComplaintText = chiefComplaintText;
+        }
       } else if (aiPanelKey === 'sessionContent') {
-        params.sessionSummaryCode = sessionSummaryCode;
-        params.sessionSummaryText = sessionSummaryText;
+        if (sessionSummaryCode != null && sessionSummaryCode !== '') {
+          params.sessionSummaryCode = sessionSummaryCode;
+        }
+        if (sessionSummaryText != null && sessionSummaryText !== '') {
+          params.sessionSummaryText = sessionSummaryText;
+        }
       }
 
       const response = await dislikeUpdate(params);

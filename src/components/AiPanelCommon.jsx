@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from 'react-dom';
 import IconLoading from "@/assets/images/common/loading.svg";
 import CharacterImg from "@/assets/images/common/character.svg";
 import CharacterBkImg from "@/assets/images/common/character_bk.svg";
 import EditorModal from '../page/clients/components/EditorModal';
-import { dislikeCodeList } from '@/api/apiCaller';
+import { dislikeCodeList, dislikeFind } from '@/api/apiCaller';
 
 function AiPanelCommon({
   open,
@@ -19,7 +20,11 @@ function AiPanelCommon({
   isCounselLog = false,
   onConfirm, // 확정하기 콜백
   onSkip, // 생략하기 콜백
-  sessionSeq, // dislikeUpdate API 호출용
+  sessionSeq, // dislike API 호출용
+  currentFieldKeys, // { codeKey: 'counselingSummaryCode', textKey: 'counselingSummaryText' } 등
+  openSkipTrigger, // 외부에서 생략 사유 UI 열기 트리거
+  hideBottomActions = false, // 하단 공용 버튼 숨김 여부
+  skipAnchorEl, // 생략 사유 UI를 렌더링할 외부 앵커 엘리먼트 (있으면 해당 위치에 포털로 렌더)
 }) {
   const [showSkipReason, setShowSkipReason] = useState(false);
   const [selectedReason, setSelectedReason] = useState(''); // 단일 선택으로 변경
@@ -28,6 +33,7 @@ function AiPanelCommon({
   const [showTooltip2, setShowTooltip2] = useState(false);
   const [directInput, setDirectInput] = useState("");  // 직접입력 상태
   const [skipReasons, setSkipReasons] = useState([]); // 동적으로 로드
+  const [existingSkip, setExistingSkip] = useState(null); // { code, text } or null
 
   // dislikeCodeList API 호출하여 skipReasons 로드
   useEffect(() => {
@@ -44,6 +50,58 @@ function AiPanelCommon({
     loadSkipReasons();
   }, []);
 
+  // 패널이 열릴 때 dislikeFind로 기존 생략 데이터 조회
+  useEffect(() => {
+    const fetchExistingSkip = async () => {
+      if (!open || !sessionSeq || !currentFieldKeys) return;
+      try {
+        const resp = await dislikeFind(sessionSeq);
+        const data = resp?.data ?? null;
+        if (data && (currentFieldKeys.codeKey || currentFieldKeys.textKey)) {
+          const codeValue = currentFieldKeys.codeKey ? data[currentFieldKeys.codeKey] : undefined;
+          const textValue = currentFieldKeys.textKey ? data[currentFieldKeys.textKey] : undefined;
+          if ((codeValue && String(codeValue).trim() !== '') || (textValue && String(textValue).trim() !== '')) {
+            setExistingSkip({ code: codeValue, text: textValue });
+            // 기존 데이터가 있어도 자동으로 펼치지 않음 (요청사항)
+            // 코드가 있으면 선택 상태만 유지하여 사용자가 열었을 때 표시되도록 함
+            if (codeValue) setSelectedReason(codeValue);
+            return;
+          }
+        }
+        // 없으면 초기화
+        setExistingSkip(null);
+        // setShowSkipReason(false);
+        setSelectedReason('');
+      } catch (e) {
+        setExistingSkip(null);
+        setShowSkipReason(false);
+        setSelectedReason('');
+      }
+    };
+    fetchExistingSkip();
+  }, [open, sessionSeq, currentFieldKeys]);
+
+  // 외부 트리거로 생략 사유 UI 열기
+  const prevTriggerRef = useRef(null);
+  const [isFirstMount, setIsFirstMount] = useState(true);
+  
+  useEffect(() => {
+    if (!open) return;
+    
+    // 첫 마운트 시점은 무시
+    if (isFirstMount) {
+      prevTriggerRef.current = openSkipTrigger;
+      setIsFirstMount(false);
+      return;
+    }
+    
+    // 트리거 값이 변경되었을 때만 열기
+    if (prevTriggerRef.current !== openSkipTrigger && openSkipTrigger != null) {
+      setShowSkipReason(true);
+      prevTriggerRef.current = openSkipTrigger;
+    }
+  }, [openSkipTrigger, open, isFirstMount]);
+
   const handleSaveDirectInput = () => {
     // 직접입력 저장 시 onSkip 콜백 호출
     if (onSkip && directInput.trim()) {
@@ -54,7 +112,7 @@ function AiPanelCommon({
     setShowSkipReason(false);
   };
 
-  // 생략하기 버튼 클릭
+  // 생략하기 버튼 클릭 - 조회는 하지 않고 단순 펼침만 수행
   const handleSkip = () => {
     setShowSkipReason(true);
   };
@@ -144,52 +202,66 @@ function AiPanelCommon({
                   </div> : null}
                   {renderComplete()}
                 </div>}
-                <div className="btn-wrap">
-                  <div className="tooltip-wrap">
-                    <button className="type04 skip-btn" type="button" onClick={handleSkip} onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>생략하기</button>
-                    <div className={`tooltip${showTooltip ? " show" : ""}`}>
-                      결과가 정확하지 않거나 적절하지 않은 경우에는<br />생략하기를 선택 할 수 있어요.
+                {!hideBottomActions && (
+                  <div className="btn-wrap">
+                    <div className="tooltip-wrap">
+                      <button className="type04 skip-btn" type="button" onClick={handleSkip} onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>생략하기</button>
+                      <div className={`tooltip${showTooltip ? " show" : ""}`}>
+                        결과가 정확하지 않거나 적절하지 않은 경우에는<br />생략하기를 선택 할 수 있어요.
+                      </div>
+                    </div>
+                    <div className="tooltip-wrap">
+                      <button className="type09" type="button" onClick={handleConfirm} onMouseEnter={() => setShowTooltip2(true)} onMouseLeave={() => setShowTooltip2(false)}>확정하기</button>
+                      <div className={`tooltip${showTooltip2 ? " show" : ""}`}>
+                        <p>적절한 분석인 경우에는 확정하기를 통해<br />본문에 반영 할 수 있어요.<br /></p>
+                        <p>약간의 수정이 필요한 경우에는 <br />확정하기 후 수정이 가능해요.</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="tooltip-wrap">
-                    <button className="type09" type="button" onClick={handleConfirm} onMouseEnter={() => setShowTooltip2(true)} onMouseLeave={() => setShowTooltip2(false)}>확정하기</button>
-                    <div className={`tooltip${showTooltip2 ? " show" : ""}`}>
-                      <p>적절한 분석인 경우에는 확정하기를 통해<br />본문에 반영 할 수 있어요.<br /></p>
-                      <p>약간의 수정이 필요한 경우에는 <br />확정하기 후 수정이 가능해요.</p>
-                    </div>
-                  </div>
-                </div>
+                )}
                 <div className="bottom-info" style={showSkipReason ? { display: "none" } : {}}>
                   <p>
                     AI는 실수 할 수 있어요. 내담자에게 적절한 내용인지 확인하세요.<br />상담사님의 의견을 바탕으로 지속적으로 개선되고 있어요.
                   </p>
                 </div>
-                <div className="skip-reason" style={showSkipReason ? { display: "block" } : {}}>
-                  <p className="reason-tit">생락하려는 이유가 무엇인가요? 자세히 알려주세요.</p>
-                  <div className="reason-wrap">
-                    <ul>
-                      {skipReasons.map((reason) => (
-                        <li key={reason.code}>
-                          <a
-                            className={"link-btn cursor-pointer" + (selectedReason === reason.code ? " on" : "")}
-                            onClick={() => handleReasonClick(reason)}
-                          >
-                            {reason.value}
-                          </a>
-                        </li>
-                      ))}
-                      <li>
-                        <a
-                          className={"link-btn cursor-pointer"}
-                          onClick={handleDirectInput}
-                        >
-                          직접입력
-                        </a>
-                      </li>
-                    </ul>
-                    <p className={"select-complete" + (selectedReason ? " on" : "")}>피드백을 주셔서 감사합니다.</p>
-                  </div>
-                </div>
+                {showSkipReason && (() => {
+                  const content = (
+                    <div className="skip-reason" style={{ display: "block" }}>
+                      <p className="reason-tit">생락하려는 이유가 무엇인가요? 자세히 알려주세요.</p>
+                      {null}
+                      <div className="reason-wrap">
+                        <ul>
+                          {skipReasons.map((reason) => (
+                            <li key={reason.code}>
+                              <a
+                                className={"link-btn cursor-pointer" + (selectedReason === reason.code ? " on" : "")}
+                                onClick={() => handleReasonClick(reason)}
+                              >
+                                {reason.value}
+                              </a>
+                            </li>
+                          ))}
+                          <li>
+                            <a
+                              className={"link-btn cursor-pointer"}
+                              onClick={handleDirectInput}
+                            >
+                              직접입력
+                            </a>
+                          </li>
+                        </ul>
+                        <p className={"select-complete" + (selectedReason ? " on" : "")}>피드백을 주셔서 감사합니다.</p>
+                      </div>
+                    </div>
+                  );
+                  
+                  // skipAnchorEl이 유효한 DOM 요소인지 확인 후 포털 렌더링
+                  if (skipAnchorEl && skipAnchorEl.nodeType === Node.ELEMENT_NODE) {
+                    return createPortal(content, skipAnchorEl);
+                  } else {
+                    return content;
+                  }
+                })()}
               </div>
             )}
           </div>

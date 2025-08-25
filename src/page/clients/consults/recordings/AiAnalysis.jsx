@@ -4,7 +4,7 @@ import FrequencyBox from './../transcript/FrequencyBox';
 import StressBox from './../transcript/StressBox';
 import CustomTextarea from '@/components/CustomTextarea';
 
-function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
+function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeIssue }) {
 
   return (
     <div className="tab-panel ai-analysis on" role="tabpanel">
@@ -16,7 +16,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
               <strong>1. 상담요약</strong>
               <div className="btn-wrap">
                 {!AiSummaryData.summary ? <a className="edit-btn" >직접 입력</a> : null}
-                <button className="type01 h36" type="button" onClick={onAiCreateClick}>
+                <button className="type01 h36" type="button" onClick={() => onAiCreateClick(1)}>
                   <span>AI 생성하기</span>
                 </button>
               </div>
@@ -28,6 +28,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
                 value={AiSummaryData.summary}
                 placeholder="상담요약을 입력해주세요."
                 className="editor-wrap"
+                onChange={(e) => onChangeSummary && onChangeSummary(e?.target ? e.target.value : e)}
               />
             )}
           </div>
@@ -37,7 +38,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
               <strong>2. 고민주제</strong>
               <div className="btn-wrap">
                 {!AiSummaryData.issue ? <a className="edit-btn" >직접 입력</a> : null}
-                <button className="type01 h36" type="button" onClick={onAiCreateClick}>
+                <button className="type01 h36" type="button" onClick={() => onAiCreateClick(2)}>
                   <span>AI 생성하기</span>
                 </button>
               </div>
@@ -49,6 +50,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
                 value={AiSummaryData.issue}
                 placeholder="상담요약을 입력해주세요."
                 className="editor-wrap"
+                onChange={(e) => onChangeIssue && onChangeIssue(e?.target ? e.target.value : e)}
               />
             )}
           </div>
@@ -62,7 +64,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
               <div className="keyword box">
                 <div className="box-tit">
                   <strong>3. 키워드 분석</strong>
-                  <button className="type01 h36" type="button" onClick={onAiCreateClick}>
+                  <button className="type01 h36" type="button" onClick={() => onAiCreateClick(3)}>
                     <span>AI 생성하기</span>
                   </button>
                 </div>
@@ -78,7 +80,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
               <div className="frequency box">
                 <div className="box-tit">
                   <strong>4. 발화빈도</strong>
-                  <button className="type01 h36" type="button" onClick={onAiCreateClick}>
+                  <button className="type01 h36" type="button" onClick={() => onAiCreateClick(4)}>
                     <span>AI 생성하기</span>
                   </button>
                 </div>
@@ -92,7 +94,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData }) {
               <div className="stress box">
                 <div className="box-tit">
                   <strong>5. 스트레스 징후</strong>
-                  <button className="type01 h36" type="button" onClick={onAiCreateClick}>
+                  <button className="type01 h36" type="button" onClick={() => onAiCreateClick(5)}>
                     <span>AI 생성하기</span>
                   </button>
                 </div>

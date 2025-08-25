@@ -147,7 +147,12 @@ export const authLogin = async (credentials) => {
 }
 
 //? ===== 녹음파일 관리 API =====
-// 녹음파일 조회
+//! 녹음파일 목록 조회 ?????
+export const audioListAll = async () => {
+    return await axiosIns.get('/api/audio/listAll')
+}
+
+// 녹음파일 메타정보 조회
 export const audioFind = async (sessionSeq) => {
     return await axiosIns.get('/api/audio/find', { params: { sessionSeq } })
 }
@@ -165,6 +170,11 @@ export const audioUpload = async (audioData) => {
     return await axiosIns.post('/api/audio/upload', audioData)
 }
 
+//! 녹음파일 삭제
+export const audioDelete = async (sessionSeq) => {
+    return await axiosIns.post('/api/audio/delete', { params: { sessionSeq } })
+}
+
 //? ===== 상담관리 API =====
 // 상담관리 조회
 export const sessionMngFind = async (sessionSeq) => {
@@ -172,7 +182,7 @@ export const sessionMngFind = async (sessionSeq) => {
         params: { sessionSeq }
     })
 }
-//! 상담관리 수정
+// 상담관리 수정
 export const sessionMngUpdate = async (sessionMngData) => {
     return await axiosIns.post('/api/sessionMng/update', sessionMngData)
 }
