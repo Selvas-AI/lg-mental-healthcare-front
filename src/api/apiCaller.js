@@ -20,12 +20,17 @@ export const sessionFind = async (clientSeq, sessionSeq) => {
 
 //! 현재 진행중인 회기 목록 조회 ?????
 export const sessionCurrentList = async (clientSeq) => {
-    return await axiosIns.get('/api/session/currentList', { params: { clientSeq } })
+    return await axiosIns.get('/api/session/currentList', { clientSeq })
 }
 
-// 현재 회기 정보 수정 (종결처리)
+// 현재 회기 정보 수정
 export const sessionCurrentUpdate = async (params) => {
     return await axiosIns.post('/api/session/update', params)
+}
+
+// 현재 진행중인 회기그룹 종결 처리
+export const sessionGroupComplete = async (clientSeq) => {
+    return await axiosIns.post('/api/session/groupComplete', { clientSeq })
 }
 
 // 신규 회기 등록
@@ -34,10 +39,12 @@ export const sessionCreate = async (sessionData) => {
 }
 
 //? ===== 상담사(내정보) 관리 API =====
+// 상담사(내정보) 정보 조회
 export const counselorFind = async () => {
     return await axiosIns.get('/api/counselor/find')
 }
 
+// 상담사(내정보) 정보 수정
 export const counselorUpdate = async (params) => {
     return await axiosIns.post('/api/counselor/update', { params })
 }
@@ -170,9 +177,9 @@ export const audioUpload = async (audioData) => {
     return await axiosIns.post('/api/audio/upload', audioData)
 }
 
-//! 녹음파일 삭제
+// 녹음파일 삭제
 export const audioDelete = async (sessionSeq) => {
-    return await axiosIns.post('/api/audio/delete', { params: { sessionSeq } })
+    return await axiosIns.post('/api/audio/delete', { sessionSeq })
 }
 
 //? ===== 상담관리 API =====
