@@ -339,6 +339,7 @@ function Consults() {
                 audioData={activeTab === 0 ? audioData : undefined}
                 onOpenEdit={handleOpenEdit}
                 onRequestAudioDelete={() => setConfirmOpen(true)}
+                showToastMessage={showToastMessage}
               />
             </div>
           </div>
@@ -356,7 +357,39 @@ function Consults() {
         initialData={editClient}
       />
       {showUploadModal && (
-        <UploadModal setShowUploadModal={setShowUploadModal} sessionSeq={sessionSeq}/>
+        <UploadModal
+          setShowUploadModal={setShowUploadModal}
+          sessionSeq={sessionSeq}
+          showToastMessage={showToastMessage}
+          onUploadSuccess={async (audioInfo, file) => {
+            try {
+              // 업로드 성공 토스트 (부모에서 표시)
+              showToastMessage(`"${file?.name || '파일'}" 파일이 성공적으로 업로드되었습니다.`);
+
+              // 업로드 직후 최신 세션/오디오 정보 재조회하여 상태 갱신
+              if (sessionSeq && clientId) {
+                const [sessionResponse, audioResponse] = await Promise.all([
+                  sessionFind(clientId, sessionSeq).catch(() => null),
+                  audioFind(sessionSeq).catch(() => null),
+                ]);
+                if (sessionResponse?.code === 200) {
+                  setSessionData(sessionResponse.data);
+                  setCurrentSession(sessionResponse.data);
+                }
+                if (audioResponse?.code === 200) {
+                  setAudioData(audioResponse.data);
+                } else if (audioInfo) {
+                  // fallback: 업로드 응답 데이터로 즉시 세팅
+                  setAudioData(audioInfo);
+                }
+              } else if (audioInfo) {
+                setAudioData(audioInfo);
+              }
+            } catch (e) {
+              console.error('업로드 후 상태 갱신 오류:', e);
+            }
+          }}
+        />
       )}
       {/* AI 종합 의견 생성 패널 UI */}
       <AiPanelCommon

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { audioUpload } from '@/api/apiCaller';
 
-function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess }) {
+function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess, showToastMessage }) {
   const dropzoneRef = useRef(null);
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
@@ -16,7 +16,7 @@ function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess }) {
     if (!file) return;
     
     if (!sessionSeq) {
-      alert('회기 정보가 없습니다.');
+      showToastMessage && showToastMessage('회기 정보가 없습니다.');
       return;
     }
 
@@ -32,19 +32,15 @@ function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess }) {
       const response = await audioUpload(formData);
       
       if (response.code === 200) {
-        alert(`"${file.name}" 파일이 성공적으로 업로드되었습니다.`);
+        // 부모 컴포넌트에 업로드 성공 알림 및 토스트는 부모에서 표시
+        onUploadSuccess && onUploadSuccess(response.data, file);
         setShowUploadModal(false);
-        
-        // 부모 컴포넌트에 업로드 성공 알림
-        if (onUploadSuccess) {
-          onUploadSuccess(response.data);
-        }
       } else {
-        alert(`업로드 실패: ${response.message || '알 수 없는 오류'}`);
+        showToastMessage && showToastMessage(`업로드 실패: ${response.message || '알 수 없는 오류'}`);
       }
     } catch (error) {
       console.error('파일 업로드 오류:', error);
-      alert('파일 업로드 중 오류가 발생했습니다.');
+      showToastMessage && showToastMessage('파일 업로드 중 오류가 발생했습니다.');
     } finally {
       setUploading(false);
     }

@@ -6,8 +6,9 @@ import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
 import { useNavigate, useLocation } from "react-router-dom";
 import TranscriptBox from "./TranscriptBox";
+// 삭제 동작은 부모(Consults)에서 처리
 
-function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData, setShowAiSummary, setSupportPanel }) {
+function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData, setShowAiSummary, setSupportPanel, onRequestAudioDelete, showToastMessage }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [audioFileExists, setAudioFileExists] = useState(false);
@@ -36,12 +37,19 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     }
   }, [audioData, isTranscriptCreated]);
   
-  // JSON 파싱 함수
-  const parseJsonSafely = (jsonString) => {
+  // JSON 파싱 함수 (문자열/객체 모두 안전 처리, 후행 콤마 제거)
+  const parseJsonSafely = (input) => {
     try {
-      return jsonString ? JSON.parse(jsonString) : null;
+      if (input == null) return null;
+      if (typeof input === 'object') return input; // 이미 객체/배열인 경우 그대로 반환
+      if (typeof input !== 'string') return null;
+      const trimmed = input.trim();
+      if (!trimmed) return null;
+      // 후행 콤마 제거: {"a":1,} 또는 [1,2,]
+      const normalized = trimmed.replace(/,(\s*[}\]])/g, '$1');
+      return JSON.parse(normalized);
     } catch (error) {
-      console.error('JSON 파싱 오류:', error);
+      // console.warn('JSON 파싱 실패(무시):', error);
       return null;
     }
   };
@@ -89,7 +97,11 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
   };
 
   const handleDelete = () => {
-    // TODO: 녹취파일 삭제 로직
+    if (typeof onRequestAudioDelete === 'function') {
+      onRequestAudioDelete();
+    } else {
+      showToastMessage && showToastMessage('삭제 확인 모달을 표시할 수 없습니다.');
+    }
   };
 
   return (
@@ -105,7 +117,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
             <a className="file-delete-btn cursor-pointer" onClick={handleDelete}>녹취파일 삭제</a>
           )}
           {!audioFileExists && (
-            <button className="type05" type="button" onClick={() => alert('업로드 된 녹취록이 없습니다. 녹취록을 먼저 업로드 해주세요.')}>
+            <button className="type05" type="button" onClick={() => showToastMessage && showToastMessage('업로드 된 녹취록이 없습니다. 녹취록을 먼저 업로드 해주세요.')}>
               녹취록 상세
             </button>
           )}
@@ -142,7 +154,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
           </div>
         </div>
       )}
-      {isAiAnalysisDone && !isAiAnalysisChecked && (
+      {audioFileExists && isAiAnalysisDone && !isAiAnalysisChecked && (
         <div className="transcript-board">
           <div className="create-board">
             <strong>AI가 녹취록 생성을 완료 하였습니다.</strong>
@@ -159,7 +171,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
           </div>
         </div>
       )}
-      {isAiAnalysisChecked && (
+      {audioFileExists && isAiAnalysisChecked && (
         <div className="transcript-board">
           <div className="dashboard">
             {/* 주호소 문제 */}

@@ -8,7 +8,7 @@ import CounselLog from "../counselLog/CounselLog";
 import SessionSelect from "./SessionSelect";
 import warningFace from "@/assets/images/common/warning_face.svg";
 //상담관리
-function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData, audioData, onOpenEdit, setShowAiSummary, setSupportPanel, onRequestAudioDelete }) {
+function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: propSessionData, audioData, onOpenEdit, setShowAiSummary, setSupportPanel, onRequestAudioDelete, showToastMessage }) {
   const [isNoshow, setIsNoshow] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -83,6 +83,7 @@ function CounselManagement({ setShowUploadModal, sessionMngData, sessionData: pr
             setShowAiSummary={setShowAiSummary}
             setSupportPanel={setSupportPanel}
             onRequestAudioDelete={onRequestAudioDelete}
+            showToastMessage={showToastMessage}
           />
           <CounselLog setIsNoshow={setIsNoshow} sessionMngData={sessionMngData} sessionData={propSessionData} />
         </> : 
