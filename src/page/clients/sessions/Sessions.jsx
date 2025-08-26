@@ -4,7 +4,7 @@ import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { maskingState, clientsState, foldState, supportPanelState, sessionDataState, currentSessionState } from "@/recoil";
-import { clientSearch, clientFind, sessionList, clientUpdateMemo, sessionCreate, sessionCurrentUpdate } from '../../../api/apiCaller';
+import { clientSearch, clientFind, sessionList, clientUpdateMemo, sessionCreate, sessionCurrentUpdate, sessionGroupComplete } from '../../../api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
@@ -246,10 +246,22 @@ function Sessions() {
   const handleSessionEndConfirm = async () => {
     if (!clientId) return;
     try {
-      const response = await sessionCurrentUpdate({
-        clientSeq: parseInt(clientId),
-        isLast: true
-      });
+      // 가장 최신 회기 정보 확인
+      if (!Array.isArray(sessionData) || sessionData.length === 0) {
+        showToastMessage('종결 처리할 회기 정보가 없습니다.');
+        return;
+      }
+      const latest = sessionData[0];
+      if (!latest?.sessionSeq) {
+        showToastMessage('회기 식별자(sessionSeq)를 확인할 수 없습니다.');
+        return;
+      }
+      if (latest?.sessionType === 'LAST') {
+        showToastMessage('이미 종결된 회기입니다.');
+        return;
+      }
+
+      const response = await sessionGroupComplete(parseInt(clientId, 10));
 
       if (response.code === 200) {
         // 회기 목록 다시 불러오기
