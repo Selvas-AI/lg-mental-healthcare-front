@@ -1,6 +1,6 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState } from "@/recoil";
+import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
@@ -135,6 +135,7 @@ function Consults() {
   const [audioData, setAudioData] = useState(null); // 오디오 데이터 상태
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
   const [confirmOpen, setConfirmOpen] = useState(false); // 공통 확인 모달 (녹취파일 삭제 등)
+  const [globalEditorConfirm, setGlobalEditorConfirm] = useRecoilState(editorConfirmState);
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
@@ -447,6 +448,15 @@ function Consults() {
         onConfirm={handleConfirmDeleteAudio}
         onCancel={() => setConfirmOpen(false)}
         onClose={() => setConfirmOpen(false)}
+      />
+      {/* 전역 EditorConfirm (다른 페이지/컴포넌트에서 텍스트만 바꿔 열기) */}
+      <EditorConfirm
+        open={globalEditorConfirm.open}
+        title={globalEditorConfirm.title || '안내'}
+        message={globalEditorConfirm.message || ''}
+        confirmText={globalEditorConfirm.confirmText || '확인'}
+        onConfirm={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
+        onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>

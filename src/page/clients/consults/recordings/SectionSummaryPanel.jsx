@@ -1,7 +1,51 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import './recordings.scss';
+import IconLoading from "@/assets/images/common/loading.svg";
 
 function SectionSummaryPanel({ open, onClose, sectionData = [] }) {
+  // 로딩 상태 관리 및 최초 오픈 여부 저장
+  const [status, setStatus] = useState('complete');
+  const firstOpenShownRef = useRef(false);
+  const openTimerRef = useRef(null);
+  const STORAGE_KEY = 'aiPanelSeen:sectionSummary';
+  
+  // 마운트 시 localStorage에서 최초 본 여부 동기화
+  useEffect(() => {
+    try {
+      firstOpenShownRef.current = localStorage.getItem(STORAGE_KEY) === '1';
+    } catch (_) {
+      // storage 사용 불가 시 무시
+    }
+  }, []);
+  
+  // 패널 오픈 시 최초 1회 2초 로딩 처리
+  useEffect(() => {
+    if (open) {
+      if (!firstOpenShownRef.current) {
+        firstOpenShownRef.current = true;
+        try { localStorage.setItem(STORAGE_KEY, '1'); } catch (_) {}
+        setStatus('creating');
+        if (openTimerRef.current) clearTimeout(openTimerRef.current);
+        openTimerRef.current = setTimeout(() => {
+          setStatus('complete');
+          openTimerRef.current = null;
+        }, 2000);
+      } else {
+        setStatus('complete');
+      }
+    } else {
+      if (openTimerRef.current) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (openTimerRef.current) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+    };
+  }, [open]);
   
   // 시간을 MM:SS 형식으로 변환하는 함수
   const formatTime = (timeStr) => {
@@ -27,41 +71,50 @@ function SectionSummaryPanel({ open, onClose, sectionData = [] }) {
             <button className="close-btn" type="button" aria-label="닫기" onClick={onClose}></button>
           </div>
           <div className="info" style={{ background: "#FCF5FF" }}>
-            <p style={{ color: "#C53EFF" }}>상담 녹취록을 바탕으로 AI가 요약한 내용입니다.</p>
+            {status === 'creating' ? (
+              <div className="creating" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <img src={IconLoading} alt="로딩" />
+                <p style={{ color: "#C53EFF", margin: 0 }}>AI가 생성하고 있습니다.</p>
+              </div>
+            ) : (
+              <p style={{ color: "#C53EFF" }}>상담 녹취록을 바탕으로 AI가 요약한 내용입니다.</p>
+            )}
           </div>
         </div>
         <div className="panel-cont">
-          <div className="inner">
-            {sectionData.length > 0 ? (
-              sectionData.map((section, index) => (
-                <div key={index} className="section-info">
-                  <div className="topic-wrap">
-                    <span className="topic">{section.대화주제}</span>
-                    <div className="time">
-                      <span>{formatTime(section.시작시간)}</span> ~ <span>{formatTime(section.종료시간)}</span>
+          {status === 'complete' && (
+            <div className="inner">
+              {sectionData.length > 0 ? (
+                  sectionData.map((section, index) => (
+                    <div key={index} className="section-info">
+                      <div className="topic-wrap">
+                        <span className="topic">{section.대화주제}</span>
+                        <div className="time">
+                          <span>{formatTime(section.시작시간)}</span> ~ <span>{formatTime(section.종료시간)}</span>
+                        </div>
+                      </div>
+                      <div className="summary">
+                        {section.대화요약?.map((summary, summaryIndex) => (
+                          <div key={summaryIndex} className="bullet-line">
+                            {isDangerousRemark(summary) ? (
+                              <strong className="dangerous-remark">{summary}</strong>
+                            ) : (
+                              summary
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="section-info">
+                    <div className="summary">
+                      <div className="bullet-line">구간 요약 데이터가 없습니다.</div>
                     </div>
                   </div>
-                  <div className="summary">
-                    {section.대화요약?.map((summary, summaryIndex) => (
-                      <div key={summaryIndex} className="bullet-line">
-                        {isDangerousRemark(summary) ? (
-                          <strong className="dangerous-remark">{summary}</strong>
-                        ) : (
-                          summary
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="section-info">
-                <div className="summary">
-                  <div className="bullet-line">구간 요약 데이터가 없습니다.</div>
-                </div>
-              </div>
-            )}
-          </div>
+                )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -41,3 +41,14 @@ export const sessionNoteState = atom({
     }
   ],
 });
+
+// 전역 EditorConfirm 모달 상태
+export const editorConfirmState = atom({
+  key: 'editorConfirmState',
+  default: {
+    open: false,
+    title: '',
+    message: '',
+    confirmText: '확인',
+  },
+});

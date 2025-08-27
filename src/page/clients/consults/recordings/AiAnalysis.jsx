@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 // import KeywordBox from './../transcript/KeywordBox';
 import KeywordBubblePack from './../transcript/KeywordBubblePack';
 import FrequencyBox from './../transcript/FrequencyBox';
@@ -107,7 +107,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeI
                     <span>AI 생성하기</span>
                   </button> */}
                 </div>
-                <div className="empty-board">[AI 생성하기]를 선택하면<br/>AI가 생성한 분석 자료를 확인 할 수 있어요.</div>
+                <div className="empty-board">스트레스 징후 데이터가 없습니다.</div>
               </div>
               )}
           </div>

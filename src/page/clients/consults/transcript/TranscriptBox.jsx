@@ -14,26 +14,54 @@ function TranscriptBox({
   const [expanded, setExpanded] = useState(false);
   const boxExplainRef = useRef();
 
+  // 8.7rem을 px로 계산하는 유틸
+  const CLAMP_REM = 8.7;
+  const getClampPx = () => {
+    const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize || '16');
+    return CLAMP_REM * rootFontSize;
+  };
+
   // before-create면 토글/애니메이션 동작 자체를 막음
   const handleToggle = () => {
     if (isBeforeCreate) return;
 
     const box = boxExplainRef.current;
     if (!box) return;
+    // 공통 스타일
+    box.style.overflow = 'hidden';
+    box.style.transition = "max-height 0.3s cubic-bezier(0.4,0,0.2,1)";
+
     if (expanded) {
-      // 접기: 현재 높이에서 8.7rem로 부드럽게 축소
-      box.style.maxHeight = box.scrollHeight + "px";
+      // 접기: none -> 현재 높이로 설정 후 다음 프레임에 clamp로 축소
+      const current = box.scrollHeight;
+      box.style.maxHeight = current + 'px';
+      // reflow 강제
+      // eslint-disable-next-line no-unused-expressions
+      box.offsetHeight;
       requestAnimationFrame(() => {
-        box.style.transition = "max-height 0.3s cubic-bezier(0.4,0,0.2,1)";
-        box.style.maxHeight = "8.7rem";
+        box.style.maxHeight = getClampPx() + 'px';
       });
-      setTimeout(() => {
-        setExpanded(false);
-      }, 300);
+      const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+          box.removeEventListener('transitionend', onEnd);
+          setExpanded(false);
+        }
+      };
+      box.addEventListener('transitionend', onEnd);
     } else {
-      // 펼치기: 8.7rem에서 scrollHeight로 부드럽게 확장
-      box.style.transition = "max-height 0.3s cubic-bezier(0.4,0,0.2,1)";
-      box.style.maxHeight = box.scrollHeight + "px";
+      // 펼치기: clamp -> scrollHeight로 확장, 끝나면 none으로 해제
+      const start = getClampPx();
+      box.style.maxHeight = start + 'px';
+      requestAnimationFrame(() => {
+        box.style.maxHeight = box.scrollHeight + 'px';
+      });
+      const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+          box.style.maxHeight = 'none';
+          box.removeEventListener('transitionend', onEnd);
+        }
+      };
+      box.addEventListener('transitionend', onEnd);
       setExpanded(true);
     }
   };
@@ -41,9 +69,15 @@ function TranscriptBox({
   // box-explain 컨텐츠 높이 측정 및 토글버튼 표시 여부 판단
   const [showToggle, setShowToggle] = useState(false);
   React.useEffect(() => {
-    if (toggleable && boxExplainRef.current) {
-      // 8.7rem = 139.2px
-      setShowToggle(boxExplainRef.current.scrollHeight > 87);
+    const box = boxExplainRef.current;
+    if (!box) return;
+    // 초기 상태: clamp 높이 고정 + 숨김 스크롤 + 트랜지션 준비
+    box.style.maxHeight = getClampPx() + 'px';
+    box.style.overflow = 'hidden';
+    box.style.transition = "max-height 0.3s cubic-bezier(0.4,0,0.2,1)";
+
+    if (toggleable) {
+      setShowToggle(box.scrollHeight > getClampPx());
     }
   }, [children, toggleable]);
 
@@ -68,7 +102,6 @@ function TranscriptBox({
           <div
             className={`box-explain${expanded ? " expanded" : " clamped"}`}
             ref={boxExplainRef}
-            style={{ maxHeight: expanded ? boxExplainRef.current?.scrollHeight : "8.7rem", transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)" }}
           >
             {children}
           </div>

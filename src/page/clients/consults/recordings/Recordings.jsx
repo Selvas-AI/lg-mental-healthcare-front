@@ -24,8 +24,9 @@ function Recordings() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [highlightInfo, setHighlightInfo] = useState(null);
   const [showSectionSummary, setShowSectionSummary] = useState(false);
-  const [showAiCreatePanel, setShowAiCreatePanel] = useState(false);
-  const [initialAiStep, setInitialAiStep] = useState(1);
+  // AI 생성 패널: 요약/고민주제 각각 독립 제어 (AiTranscriptPanel 사용)
+  const [showAiSummaryPanel, setShowAiSummaryPanel] = useState(false);
+  const [showAiIssuePanel, setShowAiIssuePanel] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   
   // 오디오 URL 상태
@@ -65,6 +66,27 @@ function Recordings() {
       setActiveTab('recordings');
     }
   }, [location.search, setActiveTab]);
+
+  // 탭별 패널 강제 규칙
+  // - recordings 탭: SectionSummaryPanel만 열림, AiTranscriptPanel(요약/고민주제)은 항상 닫힘
+  // - aianalysis 탭: AiTranscriptPanel만 열림, SectionSummaryPanel은 항상 닫힘
+  useEffect(() => {
+    if (activeTab === 'recordings') {
+      if (showAiSummaryPanel) setShowAiSummaryPanel(false);
+      if (showAiIssuePanel) setShowAiIssuePanel(false);
+      // SectionSummaryPanel은 유지 가능
+    } else if (activeTab === 'aianalysis') {
+      if (showSectionSummary) setShowSectionSummary(false);
+      // AiTranscriptPanel(요약/고민주제)은 유지 가능
+    }
+  }, [activeTab, showAiSummaryPanel, showAiIssuePanel, showSectionSummary]);
+
+  // supportPanel 전역 상태를 실제 패널 열림 상태에 맞게 자동 동기화
+  useEffect(() => {
+    const shouldOpenSupport = (activeTab === 'recordings' && showSectionSummary)
+      || (activeTab === 'aianalysis' && (showAiSummaryPanel || showAiIssuePanel));
+    setSupportPanel(!!shouldOpenSupport);
+  }, [activeTab, showSectionSummary, showAiSummaryPanel, showAiIssuePanel, setSupportPanel]);
   
   // sessionSeq로 회기 정보 및 상담관리 데이터 가져오기
   const fetchSessionData = async () => {
@@ -86,7 +108,7 @@ function Recordings() {
             // 상담관리 데이터로 AI 요약 데이터 업데이트
             if (sessionMngResponse.code === 200 && sessionMngResponse.data) {
               const mngData = sessionMngResponse.data;
-              console.log('상담관리 데이터:', mngData);
+              // console.log('상담관리 데이터:', mngData);
               
               // JSON 문자열 파싱
               let keywordData = [];
@@ -438,7 +460,7 @@ function Recordings() {
     setTimeout(() => setShowToast(false), 2000);
   };
 
-  // 공용 토스트 메시지 표시 헬퍼 (AiTranscriptPanel 등에 전달)
+  // 공용 토스트 메시지 표시 헬퍼
   const showToastMessage = (message) => {
     if (!message) return;
     setToastMessage(message);
@@ -457,9 +479,13 @@ function Recordings() {
       switch (stepField) {
         case 'summary':
           next.rawMngData.counselingSummaryAi = stepData ?? '';
+          // AiAnalysis textarea에도 즉시 반영
+          next.summary = stepData ?? '';
           break;
         case 'issue':
           next.rawMngData.concernTopicAi = stepData ?? '';
+          // AiAnalysis textarea에도 즉시 반영
+          next.issue = stepData ?? '';
           break;
         case 'keyword':
           // 키워드/빈도/스트레스는 AiAnalysis에서도 시각화되므로 상위 표시 상태에 반영
@@ -513,7 +539,7 @@ function Recordings() {
         showToastMessage('AI 분석 내용이 저장되었습니다.');
         // 저장 성공 시 상담관리 데이터 재조회
         const refetched = await fetchSessionData();
-        console.log('상담관리 데이터 재조회 결과:', refetched);
+        // console.log('상담관리 데이터 재조회 결과:', refetched);
       } else {
         showToastMessage('저장에 실패했습니다.');
       }
@@ -572,13 +598,16 @@ function Recordings() {
             </div>
             <div className="info-bar">
               <p className="info">{recordingDate || '날짜 정보 없음'}</p>
+              {activeTab === 'recordings' && (
               <a className="panel-btn" onClick={() => {
                 setShowSectionSummary(true);
-                setShowAiCreatePanel(false);
+                setShowAiSummaryPanel(false);
+                setShowAiIssuePanel(false);
                 setSupportPanel(true);
               }} style={{cursor:'pointer'}}>
                 구간 요약
               </a>
+            )}
             </div>
           </div>
           <div className="tab-cont">
@@ -605,12 +634,15 @@ function Recordings() {
                 onChangeSummary={handleChangeSummary}
                 onChangeIssue={handleChangeIssue}
                 onAiCreateClick={(step) => {
-                  if (typeof step === 'number') {
-                    setInitialAiStep(step);
-                  } else {
-                    setInitialAiStep(1);
+                  // 요약(1), 고민주제(2) 상호 배타적으로 오픈
+                  if (step === 1) {
+                    setShowAiIssuePanel(false);
+                    setShowAiSummaryPanel(true);
                   }
-                  setShowAiCreatePanel(true);
+                  if (step === 2) {
+                    setShowAiSummaryPanel(false);
+                    setShowAiIssuePanel(true);
+                  }
                   setShowSectionSummary(false);
                   setSupportPanel(true);
                 }} />
@@ -618,7 +650,7 @@ function Recordings() {
           </div>
         </div>
         <SectionSummaryPanel 
-          open={showSectionSummary} 
+          open={activeTab === 'recordings' && showSectionSummary} 
           onClose={() => {
             setShowSectionSummary(false);
             setSupportPanel(false);
@@ -627,19 +659,35 @@ function Recordings() {
         />
         <ToastPop message={toastMessage} showToast={showToast} />
       </div>
+        {/* 상담요약 패널 */}
         <AiTranscriptPanel 
-        status="complete"
-        AiSummaryData={aiSummaryData}
-        sessionSeq={sessionSeq}
-        open={showAiCreatePanel} 
-        onClose={() => {
-          setShowAiCreatePanel(false); 
-          setSupportPanel(false);
-        }}
-        onConfirm={handleAiConfirm}
-        showToastMessage={showToastMessage}
-        initialStep={initialAiStep}
-      />
+          status="complete"
+          panelType="summary"
+          AiSummaryData={aiSummaryData}
+          sessionSeq={sessionSeq}
+          open={activeTab === 'aianalysis' && showAiSummaryPanel}
+          onClose={() => {
+            setShowAiSummaryPanel(false);
+            // 두 패널 모두 닫혔을 때 supportPanel 닫기
+            if (!showAiIssuePanel) setSupportPanel(false);
+          }}
+          onConfirm={handleAiConfirm}
+          showToastMessage={showToastMessage}
+        />
+        {/* 고민주제 패널 */}
+        <AiTranscriptPanel 
+          status="complete"
+          panelType="issue"
+          AiSummaryData={aiSummaryData}
+          sessionSeq={sessionSeq}
+          open={activeTab === 'aianalysis' && showAiIssuePanel}
+          onClose={() => {
+            setShowAiIssuePanel(false);
+            if (!showAiSummaryPanel) setSupportPanel(false);
+          }}
+          onConfirm={handleAiConfirm}
+          showToastMessage={showToastMessage}
+        />
     </>
   );
 }

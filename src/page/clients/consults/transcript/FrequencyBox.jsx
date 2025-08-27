@@ -87,7 +87,7 @@ function FrequencyBox({ data, onAIGenerate, isPanel }) {
           </button>
         </div>
       ) : (
-        <div className="con-wrap" style={{ width: 538, height: 270 }}>
+        <div className="con-wrap" style={{ height: 290 }}>
           <div className="bar-wrap">
             <div className="legend" style={{ marginBottom: '5rem' }}>
               <span className="counselor">상담사</span>

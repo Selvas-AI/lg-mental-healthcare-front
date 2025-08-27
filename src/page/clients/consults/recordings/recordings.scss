@@ -543,6 +543,12 @@
                         background: url(@/assets/images/icon/ixi.svg) no-repeat center/2rem;
                     }
                 }
+                /* 공통 생성중 아이콘 회전 (section-summary, ai-create 공용) */
+                .creating {
+                    img {
+                        animation: loading 1s linear infinite;
+                    }
+                }
             }
         }
         .panel-cont {
@@ -605,32 +611,32 @@
                     p {
                         color: $gray400;
                     }
+                    /* 생성중 */
+                    .creating {
+                        margin-right: 1.8rem;
+                        padding-left: 1rem;
+                        height: 4.1rem;
+                        @include flexbox(row, flex-start, center);
+                        gap: .8rem;
+                        border-radius: .6rem;
+                        background: #FCF5FF;
+                        img {
+                            width: 2rem;
+                            height: 2rem;
+                            object-fit: contain;
+                            animation: loading 1s linear infinite;
+                        }
+                        p {
+                            font-size: 1.4rem;
+                            font-weight: 500;
+                            color: #C53EFF;
+                        }
+                    }
                 }
             }
             .panel-cont {
                 height: calc(100vh - 20.7rem);
                 padding: 1rem .6rem 3rem 2.4rem;
-                /* 생성중 */
-                .creating {
-                    margin-right: 1.8rem;
-                    padding-left: 1rem;
-                    height: 4.1rem;
-                    @include flexbox(row, flex-start, center);
-                    gap: .8rem;
-                    border-radius: .6rem;
-                    background: #FCF5FF;
-                    img {
-                        width: 2rem;
-                        height: 2rem;
-                        object-fit: contain;
-                        animation: loading 1s linear infinite;
-                    }
-                    p {
-                        font-size: 1.4rem;
-                        font-weight: 500;
-                        color: #C53EFF;
-                    }
-                }
                 /* 분석중, 생성오류 */
                 .analyzing, .create-error {
                     margin-right: 1.8rem;

@@ -39,7 +39,7 @@ function getColorByCategory(category, keywordText) {
 }
 
 // 최대 키워드 수 제한 (필요 시 조정)
-const MAX_NODES = 20;
+const MAX_NODES = 15;
 
 function normalizeWords(raw) {
   // 입력 호환: 배열 또는 { llm_answer: [...] }
@@ -71,7 +71,7 @@ function KeywordBubblePack({ data, onAIGenerate }) {
 
   const { width, height } = useMemo(() => ({
     width: 421,
-    height: 250,
+    height: 270,
   }), []);
 
   const nodes = useMemo(() => {
@@ -83,7 +83,7 @@ function KeywordBubblePack({ data, onAIGenerate }) {
       .sum(d => Math.pow(Math.max(1, d.value), 1));
 
     // 기본 캔버스에서 패킹 후, 목표 반지름(약 50px)로 동적 스케일
-    const padding = 10; // 원들 간 간격을 늘려 겹침 방지
+    const padding = 5; // 원들 간 간격을 늘려 겹침 방지
     const packLayout = pack().size([width, height]).padding(padding);
 
     const packed = packLayout(root);
@@ -155,7 +155,7 @@ function KeywordBubblePack({ data, onAIGenerate }) {
           </button>
         </div>
       ) : (
-        <div className="con-wrap" style={{ width: 538, height: 270, padding: 10 }}>
+        <div className="con-wrap" style={{ height: 290, padding: 10 }}>
           <svg width={width} height={height} className="word-cloud">
             {nodes.map((n, idx) => (
               <g key={idx} transform={`translate(${n.x},${n.y})`}>
