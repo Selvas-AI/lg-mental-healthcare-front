@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import Chart from "chart.js/auto";
+import goodFace from "@/assets/images/common/good_face.svg";
 
 function ChartBarStacked({
   values = [],
@@ -9,7 +10,12 @@ function ChartBarStacked({
   height = 167
 }) {
   const canvasRef = useRef(null);
+  const hasAnyBar = Array.isArray(values) && values.some(v => (Number(v) || 0) > 0);
   useEffect(() => {
+    if (!hasAnyBar) {
+      // 데이터가 모두 0이면 차트를 생성하지 않음
+      return;
+    }
     const ctx = canvasRef.current.getContext("2d");
     const grayColors = ["#EFF2F3", "#DCE4E7", "#CBD5DA"];
     const redColors = ["#FFDFDF", "#FFBEBE", "#FF9E9E", "#FF7D7D", "#FF5D5D"];
@@ -86,16 +92,28 @@ function ChartBarStacked({
       }
     });
     return () => chart.destroy();
-  }, [values, labels, width, height]);
+  }, [values, labels, width, height, hasAnyBar]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={`chart-bar-stacked ${className}`}
-      width={width}
-      height={height}
-      style={{ display: "block" }}
-    />
+    hasAnyBar ? (
+      <canvas
+        ref={canvasRef}
+        className={`chart-bar-stacked ${className}`}
+        width={width}
+        height={height}
+        style={{ display: "block" }}
+      />
+    ) : (
+      <div
+        className={`chart-bar-stacked ${className}`}
+        style={{ width, height }}
+      >
+        <div className="w-full h-full flex flex-col gap-3 items-center justify-center text-[#7A8A93] !mt-[-20px]">
+          <img src={goodFace} alt="" />
+          <p>모든 증상의 심각도가 0점이에요.</p>
+        </div>
+      </div>
+    )
   );
 }
 

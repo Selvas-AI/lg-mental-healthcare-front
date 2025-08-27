@@ -1,8 +1,8 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState } from "@/recoil";
+import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind } from '@/api/apiCaller';
+import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import './consults.scss';
 
@@ -18,6 +18,7 @@ import SurveySendModal from './psychologicalTest/components/SurveySendModal';
 import ToastPop from '@/components/ToastPop';
 import EditorModal from '../components/EditorModal';
 import RecordSelectModal from '../sessions/RecordSelectModal';
+import EditorConfirm from '../components/EditorConfirm';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel'},
@@ -52,6 +53,29 @@ function Consults() {
     return tabMap[tabParam] !== undefined ? tabMap[tabParam] : 0;
   };
 
+  // 녹취파일 삭제 확정 처리 (모달 확인 버튼에서 호출)
+  const handleConfirmDeleteAudio = async () => {
+    try {
+      if (!sessionSeq) {
+        showToastMessage('sessionSeq를 확인할 수 없습니다.');
+        setConfirmOpen(false);
+        return;
+      }
+      const res = await audioDelete(Number(sessionSeq));
+      if (res?.code === 200) {
+        setAudioData(null); // Transcript에서 audioFileExists를 false로 유도
+        showToastMessage('녹취파일이 삭제되었습니다.');
+      } else {
+        showToastMessage(res?.message || '삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } catch (e) {
+      console.error('녹취파일 삭제 오류:', e);
+      showToastMessage('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
+
   // 회기 일시 수정 트리거 (SessionSelect에서 호출)
   const handleOpenEdit = () => {
     setEditOpen(true);
@@ -61,13 +85,22 @@ function Consults() {
   const handleEditSave = async (recordData) => {
     try {
       if (!clientId) return;
+      if (!sessionSeq) {
+        showToastMessage('회기 식별자(sessionSeq)를 확인할 수 없습니다.');
+        return;
+      }
+      // 새 API 스펙에 맞춘 요청 바디 구성
+      // POST /api/session/update
+      // body: { sessionSeq, sessionDate, sessionStatus?, sessionType?, memo? }
       const payload = {
-        clientSeq: parseInt(clientId, 10),
-        sessionDate: recordData.sessionDate,
-        sessionStatus: recordData.sessionStatus,
-        // memo: recordData.memo,
-        isLast: false, //true면 종결처리
+        sessionSeq: parseInt(sessionSeq, 10),
+        sessionDate: recordData?.sessionDate,
+        ...(recordData?.sessionStatus ? { sessionStatus: recordData.sessionStatus } : {}),
+        ...(recordData?.sessionType ? { sessionType: recordData.sessionType } : {}),
+        ...(recordData?.memo ? { memo: recordData.memo } : {}),
       };
+      // undefined 필드는 axios가 직렬화 시 포함하지 않지만, 방어적으로 정리 필요 시 아래와 같이 필터링 가능
+      // const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v !== undefined));
       const res = await sessionCurrentUpdate(payload);
       if (res?.code === 200) {
         // 수정 성공 후 최신 회기 목록으로 Recoil 상태 갱신
@@ -101,6 +134,8 @@ function Consults() {
   const [sessionData, setSessionData] = useState(null);
   const [audioData, setAudioData] = useState(null); // 오디오 데이터 상태
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
+  const [confirmOpen, setConfirmOpen] = useState(false); // 공통 확인 모달 (녹취파일 삭제 등)
+  const [globalEditorConfirm, setGlobalEditorConfirm] = useRecoilState(editorConfirmState);
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
@@ -304,6 +339,8 @@ function Consults() {
                 sessionData={activeTab === 0 ? sessionData : undefined}
                 audioData={activeTab === 0 ? audioData : undefined}
                 onOpenEdit={handleOpenEdit}
+                onRequestAudioDelete={() => setConfirmOpen(true)}
+                showToastMessage={showToastMessage}
               />
             </div>
           </div>
@@ -321,7 +358,39 @@ function Consults() {
         initialData={editClient}
       />
       {showUploadModal && (
-        <UploadModal setShowUploadModal={setShowUploadModal} sessionSeq={sessionSeq}/>
+        <UploadModal
+          setShowUploadModal={setShowUploadModal}
+          sessionSeq={sessionSeq}
+          showToastMessage={showToastMessage}
+          onUploadSuccess={async (audioInfo, file) => {
+            try {
+              // 업로드 성공 토스트 (부모에서 표시)
+              showToastMessage(`"${file?.name || '파일'}" 파일이 성공적으로 업로드되었습니다.`);
+
+              // 업로드 직후 최신 세션/오디오 정보 재조회하여 상태 갱신
+              if (sessionSeq && clientId) {
+                const [sessionResponse, audioResponse] = await Promise.all([
+                  sessionFind(clientId, sessionSeq).catch(() => null),
+                  audioFind(sessionSeq).catch(() => null),
+                ]);
+                if (sessionResponse?.code === 200) {
+                  setSessionData(sessionResponse.data);
+                  setCurrentSession(sessionResponse.data);
+                }
+                if (audioResponse?.code === 200) {
+                  setAudioData(audioResponse.data);
+                } else if (audioInfo) {
+                  // fallback: 업로드 응답 데이터로 즉시 세팅
+                  setAudioData(audioInfo);
+                }
+              } else if (audioInfo) {
+                setAudioData(audioInfo);
+              }
+            } catch (e) {
+              console.error('업로드 후 상태 갱신 오류:', e);
+            }
+          }}
+        />
       )}
       {/* AI 종합 의견 생성 패널 UI */}
       <AiPanelCommon
@@ -368,6 +437,26 @@ function Consults() {
         onClose={() => setEditOpen(false)}
         onSave={handleEditSave}
         initialSessionDate={sessionData?.sessionDate}
+      />
+      {/* 공통 확인 모달: .inner 바깥 영역 */}
+      <EditorConfirm
+        open={confirmOpen}
+        title="삭제 확인"
+        message="녹취파일을 삭제하시겠습니까?"
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={handleConfirmDeleteAudio}
+        onCancel={() => setConfirmOpen(false)}
+        onClose={() => setConfirmOpen(false)}
+      />
+      {/* 전역 EditorConfirm (다른 페이지/컴포넌트에서 텍스트만 바꿔 열기) */}
+      <EditorConfirm
+        open={globalEditorConfirm.open}
+        title={globalEditorConfirm.title || '안내'}
+        message={globalEditorConfirm.message || ''}
+        confirmText={globalEditorConfirm.confirmText || '확인'}
+        onConfirm={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
+        onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>

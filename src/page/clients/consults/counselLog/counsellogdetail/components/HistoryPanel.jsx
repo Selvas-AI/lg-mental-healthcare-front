@@ -247,7 +247,7 @@ function HistoryPanel({ open, onClose, clientId, currentSessionSeq }) {
                                     }
 
                                     return items.map((it, idx) => (
-                                      <li key={`${it.name}-${idx}`} className={`symptom level0${it.severity}`}>
+                                      <li key={`${it.name}-${idx}`} className={`symptom level0${6 - it.severity}`}>
                                         <div>
                                           <span>증상 {idx + 1}</span>
                                           <span>{it.name}</span>

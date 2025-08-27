@@ -3,7 +3,7 @@ import AiPanelCommon from '@/components/AiPanelCommon';
 import ToastPop from '@/components/ToastPop';
 import Header from '@/layouts/Header';
 import { currentSessionState, foldState, sessionNoteState, supportPanelState } from '@/recoil';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { currentRiskOptions, pastRiskOptions, riskFactorOptions, riskScaleOptions, symptomList } from './components/counselLogOptions';
@@ -56,6 +56,52 @@ function CounselLogDetail() {
     handleAiSkip,
     setOpenedPanel: setAiOpenedPanel
   } = useAiPanel(sessionSeq, showToastMessage);
+  
+  // AI 패널 최초 오픈 시 2초간 creating 노출 후 complete로 전환
+  const [aiPanelStatus, setAiPanelStatus] = useState('complete');
+  const aiPanelTimerRef = useRef(null);
+  const aiPanelShownOnceRef = useRef(false);
+  const AI_PANEL_SEEN_STORAGE_KEY = 'aiPanelSeen:counselLog';
+
+  // 최초 마운트 시, 저장된 본 적 여부를 가져와 설정
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem(AI_PANEL_SEEN_STORAGE_KEY) === '1';
+      aiPanelShownOnceRef.current = !!seen;
+    } catch (_) {
+      // storage 사용 불가 시 무시
+    }
+  }, []);
+  useEffect(() => {
+    if (aiOpenedPanel === 'ai') {
+      // 페이지 생애 동안 최초 1회만 2초 로딩 노출
+      if (!aiPanelShownOnceRef.current) {
+        aiPanelShownOnceRef.current = true;
+        // 본 적 없음으로 확인되면 즉시 저장 (중간에 닫혀도 이후엔 로딩 생략)
+        try { localStorage.setItem(AI_PANEL_SEEN_STORAGE_KEY, '1'); } catch (_) {}
+        setAiPanelStatus('creating');
+        if (aiPanelTimerRef.current) clearTimeout(aiPanelTimerRef.current);
+        aiPanelTimerRef.current = setTimeout(() => {
+          setAiPanelStatus('complete');
+          aiPanelTimerRef.current = null;
+        }, 2000);
+      } else {
+        setAiPanelStatus('complete');
+      }
+    } else {
+      // 닫힐 때 타이머 정리
+      if (aiPanelTimerRef.current) {
+        clearTimeout(aiPanelTimerRef.current);
+        aiPanelTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (aiPanelTimerRef.current) {
+        clearTimeout(aiPanelTimerRef.current);
+        aiPanelTimerRef.current = null;
+      }
+    };
+  }, [aiOpenedPanel]);
   // 상담일지 폼 상태들
   const [currentRisk, setCurrentRisk] = useState('');
   const [pastRisk, setPastRisk] = useState('');
@@ -685,7 +731,7 @@ function CounselLogDetail() {
         isCounselLog={true}
         open={aiOpenedPanel === 'ai'}
         onClose={handleCloseAiPanel}
-        status="complete"
+        status={aiPanelStatus}
         title={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].title : 'AI 종합 의견 생성'}
         description={'상담 녹취록을 바탕으로 AI가 생성한 내용입니다.'}
         infoMessage={aiPanelKey && getAiPanelConfigs()[aiPanelKey] ? getAiPanelConfigs()[aiPanelKey].infoMessage : 'AI 종합 의견이 생성되었습니다.'}

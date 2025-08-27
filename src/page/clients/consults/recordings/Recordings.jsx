@@ -8,33 +8,8 @@ import { useSetRecoilState, useRecoilState } from 'recoil';
 import { supportPanelState, recordingsTabState } from '@/recoil';
 import AiAnalysis from "./AiAnalysis";
 import AiTranscriptPanel from "./AiTranscriptPanel";
-import { audioDownload, transcriptFind, audioFind, sessionFind, sessionMngFind } from '@/api/apiCaller';
+import { audioDownload, transcriptFind, audioFind, sessionFind, sessionMngFind, sessionMngUpdate } from '@/api/apiCaller';
 import { useLocation } from 'react-router-dom';
-
-// 기본 더미 데이터
-// const defaultAiSummaryData = {
-//     // summary: "최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잎고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잎고, 스스로에 대한 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵다고 호소함. 대인관계에서도 쉽게 예민해지고 감정 조절이 힘들어져 사회생활에 지장을 받고 있음. 우울감이 잎고, 스스로에 대한 매우 부정적인 생각이 반복된다고 함. 최근 몇 개월간 불면과 무기력함이 지속되며, 일상생활에 집중하기 어렵고 회사업무 시 고충으로 다가온다고함. 가장 불편한 부분이 이런점이라고 꼽으며 개선 가능 여부를 물어봄. 일상생활에 집중하기 어렵다고 호소함",
-//     // issue: ["원인을 알 수 없는 불안감 호소", "간헐적 불면증", "낮은 자존감으로 인한 대인관계 어려움", "자신에 대한 부정적인 생각", "고충", "개선 가능 여부"],
-//     keyword: [
-//       { text: '힘들어', freq: 18, x: 240, y: 70 },
-//       { text: '트라우마', freq: 16, x: 370, y: 70 },
-//       { text: '죽고싶은', freq: 12, x: 155, y: 100 },
-//       { text: '괴롭힘', freq: 12, x: 100, y: 50 },
-//       { text: '우울감', freq: 11, x: 50, y: 100 },
-//       { text: '잘했다', freq: 10, x: 35, y: 35 },
-//       { text: '엄마', freq: 9, x: 165, y: 35 },
-//       { text: '후회', freq: 8, x: 308, y: 110 },
-//       { text: '사랑', freq: 8, x: 310, y: 25 }
-//     ],
-//     frequency: {
-//       counselor: { minutes: 12},
-//       client: { minutes: 45}
-//     },
-//     stress: {
-//       data: [2.5, 6.2, 4.8, 3.5, 9, 4.2, 5.5],
-//       labels: ["00:00", "15:00", "17:12", "22:00", "25:12", "30:00", "55:12"]
-//     }
-// };
 
 function Recordings() {
   const location = useLocation();
@@ -49,7 +24,9 @@ function Recordings() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [highlightInfo, setHighlightInfo] = useState(null);
   const [showSectionSummary, setShowSectionSummary] = useState(false);
-  const [showAiCreatePanel, setShowAiCreatePanel] = useState(false);
+  // AI 생성 패널: 요약/고민주제 각각 독립 제어 (AiTranscriptPanel 사용)
+  const [showAiSummaryPanel, setShowAiSummaryPanel] = useState(false);
+  const [showAiIssuePanel, setShowAiIssuePanel] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
   
   // 오디오 URL 상태
@@ -61,13 +38,58 @@ function Recordings() {
   // 회기 번호 상태 (sessionData에서 가져오기)
   const [sessionNumber, setSessionNumber] = useState('');
   // AI 요약 데이터 상태
-  const [aiSummaryData, setAiSummaryData] = useState('');
+  const [aiSummaryData, setAiSummaryData] = useState({
+    summary: '',
+    issue: '',
+    keyword: [],
+    frequency: { counselor: { minutes: 0 }, client: { minutes: 0 } },
+    stress: { data: [], labels: [] },
+    rawMngData: null
+  });
   // 구간 요약 데이터 상태
   const [sectionSummaryData, setSectionSummaryData] = useState([]);
+
+  // 페이지 이탈 시 기본 탭으로 초기화하여, 다음 방문 시 기본적으로 '녹취내용' 탭 노출
+  useEffect(() => {
+    return () => {
+      setActiveTab('recordings');
+    };
+  }, [setActiveTab]);
+
+  // URL 파라미터(tab)로 초기/직접 진입 탭 제어
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'aianalysis') {
+      setActiveTab('aianalysis');
+    } else if (tab === 'recordings') {
+      setActiveTab('recordings');
+    }
+  }, [location.search, setActiveTab]);
+
+  // 탭별 패널 강제 규칙
+  // - recordings 탭: SectionSummaryPanel만 열림, AiTranscriptPanel(요약/고민주제)은 항상 닫힘
+  // - aianalysis 탭: AiTranscriptPanel만 열림, SectionSummaryPanel은 항상 닫힘
+  useEffect(() => {
+    if (activeTab === 'recordings') {
+      if (showAiSummaryPanel) setShowAiSummaryPanel(false);
+      if (showAiIssuePanel) setShowAiIssuePanel(false);
+      // SectionSummaryPanel은 유지 가능
+    } else if (activeTab === 'aianalysis') {
+      if (showSectionSummary) setShowSectionSummary(false);
+      // AiTranscriptPanel(요약/고민주제)은 유지 가능
+    }
+  }, [activeTab, showAiSummaryPanel, showAiIssuePanel, showSectionSummary]);
+
+  // supportPanel 전역 상태를 실제 패널 열림 상태에 맞게 자동 동기화
+  useEffect(() => {
+    const shouldOpenSupport = (activeTab === 'recordings' && showSectionSummary)
+      || (activeTab === 'aianalysis' && (showAiSummaryPanel || showAiIssuePanel));
+    setSupportPanel(!!shouldOpenSupport);
+  }, [activeTab, showSectionSummary, showAiSummaryPanel, showAiIssuePanel, setSupportPanel]);
   
   // sessionSeq로 회기 정보 및 상담관리 데이터 가져오기
-  useEffect(() => {
-    const fetchSessionData = async () => {
+  const fetchSessionData = async () => {
       if (sessionSeq) {
         const clientId = query.get('clientId');
         if (clientId) {
@@ -86,21 +108,58 @@ function Recordings() {
             // 상담관리 데이터로 AI 요약 데이터 업데이트
             if (sessionMngResponse.code === 200 && sessionMngResponse.data) {
               const mngData = sessionMngResponse.data;
+              // console.log('상담관리 데이터:', mngData);
+              
+              // JSON 문자열 파싱
+              let keywordData = [];
+              let frequencyData = { counselor: { minutes: 0 }, client: { minutes: 0 } };
+              let stressData = { data: [], labels: [] };
+              
+              try {
+                if (mngData.keywordAnalysisJson) {
+                  keywordData = JSON.parse(mngData.keywordAnalysisJson);
+                }
+                if (mngData.utteranceFrequencyJson) {
+                  frequencyData = JSON.parse(mngData.utteranceFrequencyJson);
+                }
+                if (mngData.stressIndicatorsJson) {
+                  stressData = JSON.parse(mngData.stressIndicatorsJson);
+                }
+              } catch (parseError) {
+                console.error('JSON 파싱 오류:', parseError);
+              }
+              
+              // 원본 데이터(raw) 저장 + AiAnalysis 표시용 텍스트(counselingSummaryText/concernTopicText) 반영
               setAiSummaryData(prev => ({
                 ...prev,
-                summary: mngData.sectionSummaryText || prev.summary,
-                issue: mngData.issueList || prev.issue,
-                keyword: mngData.keywordList || prev.keyword,
-                frequency: mngData.frequencyData || prev.frequency,
-                stress: mngData.stressData || prev.stress
+                summary: mngData.counselingSummaryText ?? prev.summary ?? '',
+                issue: mngData.concernTopicText ?? prev.issue ?? '',
+                rawMngData: {
+                  ...mngData,
+                  parsedKeyword: keywordData,
+                  parsedFrequency: frequencyData,
+                  parsedStress: stressData
+                }
               }));
+              // 재조회한 데이터 구조 반환
+              return {
+                session: sessionResponse?.data ?? null,
+                mng: mngData,
+                parsed: {
+                  keyword: keywordData,
+                  frequency: frequencyData,
+                  stress: stressData
+                }
+              };
             }
           } catch (error) {
             console.error('데이터 조회 실패:', error);
           }
         }
       }
-    };
+  };
+
+  useEffect(() => {
     fetchSessionData();
   }, [sessionSeq]);
 
@@ -201,6 +260,7 @@ function Recordings() {
   const [editMode, setEditMode] = useState(false);
   // 토스트 메시지 상태
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const handleSearch = (keyword, highlightInfo, cIndex) => {
     setSearchKeyword(keyword);
@@ -242,7 +302,7 @@ function Recordings() {
       const match = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.*)$/);
       if (match) {
         const [, time, name, content] = match;
-        const speaker = name.includes('발화자1') ? 'counselor' : 'client';
+        const speaker = name.includes('상담사') ? 'counselor' : 'client';
         return {
           speaker,
           name: name.trim(),
@@ -279,7 +339,7 @@ function Recordings() {
       
       const duration = Math.max(0, nextTime - currentTime);
       
-      if (current.speaker === 'counselor' || current.name.includes('발화자1')) {
+      if (current.speaker === 'counselor' || current.name.includes('상담사')) {
         counselorSeconds += duration;
       } else {
         clientSeconds += duration;
@@ -351,15 +411,12 @@ function Recordings() {
         const parsedTranscript = parseTranscriptText(data.transcriptText);
         setTranscript(parsedTranscript);
         
-        // 발화 시간 계산 및 AI 요약 데이터 업데이트
+        // 발화 시간 계산 및 AI 요약 데이터 업데이트 (기본 frequency만 업데이트)
         const frequencyData = calculateSpeakingTime(parsedTranscript);
-        setAiSummaryData(prev => {
-          const updated = {
-            ...prev,
-            frequency: frequencyData
-          };
-          return updated;
-        });
+        setAiSummaryData(prev => ({
+          ...prev,
+          frequency: frequencyData
+        }));
       }
       // transcriptJson이 있으면 기존 방식으로 파싱 (초기 로드용)
       else if (data?.transcriptJson) {
@@ -369,14 +426,14 @@ function Recordings() {
           
           const convertedTranscript = audioSegments.map((segment, index) => ({
             speaker: segment.speaker_label || `spk_${index}`,
-            name: segment.speaker_label === 'counselor' ? '발화자1' : '발화자2',
+            name: segment.speaker_label === 'counselor' ? '상담사' : '내담자',
             time: formatSecondsToTime(parseFloat(segment.start_time || 0)),
             content: segment.transcript || ''
           }));
           
           setTranscript(convertedTranscript);
           
-          // transcriptJson에서도 발화 시간 계산
+          // transcriptJson에서도 발화 시간 계산 (기본 frequency만 업데이트)
           const frequencyData = calculateSpeakingTime(convertedTranscript);
           setAiSummaryData(prev => ({
             ...prev,
@@ -398,8 +455,99 @@ function Recordings() {
   const handleSaveSuccess = async () => {
     await reloadTranscript(); // 최신 데이터 다시 로드
     setEditMode(false);
+    setToastMessage('변경사항이 녹취록에 저장 되었습니다.');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
+  };
+
+  // 공용 토스트 메시지 표시 헬퍼
+  const showToastMessage = (message) => {
+    if (!message) return;
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
+  // AiTranscriptPanel에서 확정하기 시 호출되는 콜백
+  // AI 패널의 값은 AI 필드(~Ai)에만 반영하여 Text 필드와 실시간 동기화를 막는다
+  const handleAiConfirm = (stepField, stepData) => {
+    setAiSummaryData(prev => {
+      const next = { ...prev };
+      // 보장: rawMngData 객체 존재
+      next.rawMngData = { ...(prev.rawMngData || {}) };
+
+      switch (stepField) {
+        case 'summary':
+          next.rawMngData.counselingSummaryAi = stepData ?? '';
+          // AiAnalysis textarea에도 즉시 반영
+          next.summary = stepData ?? '';
+          break;
+        case 'issue':
+          next.rawMngData.concernTopicAi = stepData ?? '';
+          // AiAnalysis textarea에도 즉시 반영
+          next.issue = stepData ?? '';
+          break;
+        case 'keyword':
+          // 키워드/빈도/스트레스는 AiAnalysis에서도 시각화되므로 상위 표시 상태에 반영
+          next.keyword = Array.isArray(stepData) ? stepData : [];
+          break;
+        case 'frequency':
+          next.frequency = stepData || { counselor: { minutes: 0 }, client: { minutes: 0 } };
+          break;
+        case 'stress':
+          next.stress = stepData || { data: [], labels: [] };
+          break;
+        default:
+          break;
+      }
+
+      return next;
+    });
+  };
+
+  // AiAnalysis 편집 입력 반영 핸들러
+  const handleChangeSummary = (value) => {
+    setAiSummaryData(prev => ({ ...prev, summary: value ?? '' }));
+  };
+  const handleChangeIssue = (value) => {
+    setAiSummaryData(prev => ({ ...prev, issue: value ?? '' }));
+  };
+
+  // AI 분석 탭 저장 버튼 핸들러
+  const [aiSaveLoading, setAiSaveLoading] = useState(false);
+  const handleAiAnalysisSave = async () => {
+    if (aiSaveLoading) return;
+    try {
+      setAiSaveLoading(true);
+      // AiAnalysis 입력값은 Text 필드로 저장
+      const counselingSummaryText = aiSummaryData.summary || '';
+      const concernTopicText = aiSummaryData.issue || '';
+      if (!sessionSeq) throw new Error('sessionSeq 없음');
+      // 필수값 체크
+      if (!counselingSummaryText && !concernTopicText) {
+        showToastMessage('저장할 내용이 없습니다.');
+        setAiSaveLoading(false);
+        return;
+      }
+      const params = {
+        sessionSeq: Number(sessionSeq),
+        counselingSummaryText,
+        concernTopicText
+      };
+      const res = await sessionMngUpdate(params);
+      if (res?.code === 200) {
+        showToastMessage('AI 분석 내용이 저장되었습니다.');
+        // 저장 성공 시 상담관리 데이터 재조회
+        const refetched = await fetchSessionData();
+        // console.log('상담관리 데이터 재조회 결과:', refetched);
+      } else {
+        showToastMessage('저장에 실패했습니다.');
+      }
+    } catch (e) {
+      showToastMessage('저장 중 오류가 발생했습니다.');
+    } finally {
+      setAiSaveLoading(false);
+    }
   };
 
   return (
@@ -415,9 +563,16 @@ function Recordings() {
               onSearch={handleSearch}
               searchKeyword={searchKeyword}
             />
-            {/* 수정/저장 버튼 토글 */}
-            <button className={`record-edit-btn type07 black ${!editMode ? 'on' : ''}`} type="button" onClick={() => setEditMode(true)}>수정</button>
-            <button className={`record-save-btn type07 black ${editMode ? 'on' : ''}`} type="button" onClick={handleSave}>저장</button>
+            {/* 탭별 버튼 분기 */}
+            {activeTab === "recordings" && (
+              <>
+                <button className={`record-edit-btn type07 black ${!editMode ? 'on' : ''}`} type="button" onClick={() => setEditMode(true)}>수정</button>
+                <button className={`record-save-btn type07 black ${editMode ? 'on' : ''}`} type="button" onClick={handleSave}>저장</button>
+              </>
+            )}
+            {activeTab === "aianalysis" && (
+              <button className="record-save-btn type07 black on" type="button" onClick={handleAiAnalysisSave}>저장</button>
+            )}
           </div>
         </div>
         <div className="tab-menu">
@@ -443,13 +598,16 @@ function Recordings() {
             </div>
             <div className="info-bar">
               <p className="info">{recordingDate || '날짜 정보 없음'}</p>
+              {activeTab === 'recordings' && (
               <a className="panel-btn" onClick={() => {
                 setShowSectionSummary(true);
-                setShowAiCreatePanel(false);
+                setShowAiSummaryPanel(false);
+                setShowAiIssuePanel(false);
                 setSupportPanel(true);
               }} style={{cursor:'pointer'}}>
                 구간 요약
               </a>
+            )}
             </div>
           </div>
           <div className="tab-cont">
@@ -473,8 +631,18 @@ function Recordings() {
             {activeTab === "aianalysis" && (
               <AiAnalysis 
                 AiSummaryData={aiSummaryData}
-                onAiCreateClick={() => {
-                  setShowAiCreatePanel(true);
+                onChangeSummary={handleChangeSummary}
+                onChangeIssue={handleChangeIssue}
+                onAiCreateClick={(step) => {
+                  // 요약(1), 고민주제(2) 상호 배타적으로 오픈
+                  if (step === 1) {
+                    setShowAiIssuePanel(false);
+                    setShowAiSummaryPanel(true);
+                  }
+                  if (step === 2) {
+                    setShowAiSummaryPanel(false);
+                    setShowAiIssuePanel(true);
+                  }
                   setShowSectionSummary(false);
                   setSupportPanel(true);
                 }} />
@@ -482,24 +650,44 @@ function Recordings() {
           </div>
         </div>
         <SectionSummaryPanel 
-          open={showSectionSummary} 
+          open={activeTab === 'recordings' && showSectionSummary} 
           onClose={() => {
             setShowSectionSummary(false);
             setSupportPanel(false);
           }}
           sectionData={sectionSummaryData}
         />
-        <ToastPop message="변경사항이 녹취록에 저장 되었습니다." showToast={showToast} />
+        <ToastPop message={toastMessage} showToast={showToast} />
       </div>
-      <AiTranscriptPanel 
-        status="complete"
-        AiSummaryData={aiSummaryData}
-        open={showAiCreatePanel} 
-        onClose={() => {
-          setShowAiCreatePanel(false); 
-          setSupportPanel(false);
-        }} 
-      />
+        {/* 상담요약 패널 */}
+        <AiTranscriptPanel 
+          status="complete"
+          panelType="summary"
+          AiSummaryData={aiSummaryData}
+          sessionSeq={sessionSeq}
+          open={activeTab === 'aianalysis' && showAiSummaryPanel}
+          onClose={() => {
+            setShowAiSummaryPanel(false);
+            // 두 패널 모두 닫혔을 때 supportPanel 닫기
+            if (!showAiIssuePanel) setSupportPanel(false);
+          }}
+          onConfirm={handleAiConfirm}
+          showToastMessage={showToastMessage}
+        />
+        {/* 고민주제 패널 */}
+        <AiTranscriptPanel 
+          status="complete"
+          panelType="issue"
+          AiSummaryData={aiSummaryData}
+          sessionSeq={sessionSeq}
+          open={activeTab === 'aianalysis' && showAiIssuePanel}
+          onClose={() => {
+            setShowAiIssuePanel(false);
+            if (!showAiSummaryPanel) setSupportPanel(false);
+          }}
+          onConfirm={handleAiConfirm}
+          showToastMessage={showToastMessage}
+        />
     </>
   );
 }

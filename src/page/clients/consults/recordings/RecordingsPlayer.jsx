@@ -202,6 +202,13 @@ const RecordingsPlayer = forwardRef(({ speakWrapRef, transcript, searchKeyword, 
     // editingIdx, editMode가 바뀔 때만 실행 (transcript는 의존성에서 제거)
   }, [editingIdx, editMode]);
 
+  // 편집 모드 진입 시 재생을 즉시 일시정지
+  useEffect(() => {
+    if (editMode) {
+      setPlaying(false);
+    }
+  }, [editMode]);
+
   const [isComposing, setIsComposing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 

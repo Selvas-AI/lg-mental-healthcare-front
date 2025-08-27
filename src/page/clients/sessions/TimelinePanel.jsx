@@ -15,15 +15,24 @@ function TimelinePanel({ open, onClose, clientSeq }) {
     setOpenSection(arr => arr.map((v, i) => (i === idx ? !v : v)));
   };
 
-  // 타임라인 데이터 조회
+  // 타임라인 데이터 조회: timelineList 결과에서 최신 그룹만 표시
   const fetchTimelineData = async () => {
     try {
       const response = await timelineList(clientSeq);
-      
-      if (response.data && response.data.code === 0) {
-        const data = response.data.data || [];
-        setTimelineData(data);
-        setIsEmpty(data.length === 0);
+      if (response.code === 200 && Array.isArray(response.data)) {
+        const list = response.data;
+        if (list.length === 0) {
+          setTimelineData([]);
+          setIsEmpty(true);
+          return;
+        }
+
+        // 최신 그룹: sessiongroupSeq 최댓값
+        const latestGroupSeq = Math.max(...list.map(r => r.sessiongroupSeq || 0));
+        const filtered = list.filter(r => r.sessiongroupSeq === latestGroupSeq);
+
+        setTimelineData(filtered);
+        setIsEmpty(filtered.length === 0);
       } else {
         setTimelineData([]);
         setIsEmpty(true);
@@ -45,7 +54,7 @@ function TimelinePanel({ open, onClose, clientSeq }) {
       }
       return "0px";
     }));
-  }, [openSection]);
+  }, [openSection, timelineData]);
 
   useEffect(() => {
     if (open) {
@@ -133,7 +142,7 @@ function TimelinePanel({ open, onClose, clientSeq }) {
                   <ul className="session-list">
                     {timelineData.map((row, idx) => (
                       <li key={idx}>
-                        <span>{row.sessionOrder || row.sessionNo}</span>
+                        <span>{row.sessionOrder || row.sessionNo}회기</span>
                         <div>{row.concernTopicText || '-'}</div>
                       </li>
                     ))}
@@ -179,10 +188,26 @@ function TimelinePanel({ open, onClose, clientSeq }) {
                         height={159}
                       />
                     </div>
-                    <div className="chart-summary rising">
-                      <span>긴급도</span>
-                      <p>높아지고 있어요</p>
-                    </div>
+                    {(() => {
+                      // 긴급도 요약: 비교 가능한 값이 2개 미만이면 '변화가 없어요.'
+                      const vals = reversedData
+                        .map(r => r.crisisStageLevel)
+                        .filter(v => v !== null && v !== undefined);
+                      let cls = 'steady';
+                      let msg = '변화가 없어요.';
+                      if (vals.length >= 2) {
+                        const prev = vals[vals.length - 2];
+                        const last = vals[vals.length - 1];
+                        if (last > prev) { cls = 'rising'; msg = '높아지고 있어요.'; }
+                        else if (last < prev) { cls = 'falling'; msg = '낮아지고 있어요.'; }
+                      }
+                      return (
+                        <div className={`chart-summary ${cls}`}>
+                          <span>긴급도</span>
+                          <p>{msg}</p>
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
               </div>
@@ -219,99 +244,122 @@ function TimelinePanel({ open, onClose, clientSeq }) {
                         <div className="severity-hd">
                           <ul>
                             {reversedData.map((row, idx) => (
-                              <li key={idx}>{row.sessionOrder || row.sessionNo}</li>
+                              <li key={idx}>{row.sessionOrder || row.sessionNo}회기</li>
                             ))}
                           </ul>
                         </div>
                         <div className="stage-wrap">
-                          {/* 우울 */}
-                          <div className="severity-stage rising">
-                            <span>우울</span>
-                            <ul>
-                              {(() => {
-                                let lastIdx = -1;
-                                reversedData.forEach((row, idx) => {
-                                  const value = row.depression;
-                                  if (value != null) lastIdx = idx;
-                                });
-                                return reversedData.map((row, idx) => {
-                                  const value = row.depression;
-                                  return (
-                                    <li key={idx}>
-                                      <span
-                                        className={idx === lastIdx ? "last-span" : ""}
-                                        style={value == null ? { opacity: 0 } : {}}
-                                      >{value ?? 0}</span>
-                                    </li>
-                                  );
-                                });
-                              })()}
-                            </ul>
-                          </div>
-                          {/* 강박 */}
-                          <div className="severity-stage falling">
-                            <span>강박</span>
-                            <ul>
-                              {(() => {
-                                let lastIdx = -1;
-                                reversedData.forEach((row, idx) => {
-                                  const value = row.compulsion;
-                                  if (value != null) lastIdx = idx;
-                                });
-                                return reversedData.map((row, idx) => {
-                                  const value = row.compulsion;
-                                  return (
-                                    <li key={idx}>
-                                      <span
-                                        className={idx === lastIdx ? "last-span" : ""}
-                                        style={value == null ? { opacity: 0 } : {}}
-                                      >{value ?? 0}</span>
-                                    </li>
-                                  );
-                                });
-                              })()}
-                            </ul>
-                          </div>
-                          {/* PTSD */}
-                          <div className="severity-stage steady">
-                            <span>PTSD</span>
-                            <ul>
-                              {(() => {
-                                let lastIdx = -1;
-                                reversedData.forEach((row, idx) => {
-                                  const value = row.ptsd;
-                                  if (value != null) lastIdx = idx;
-                                });
-                                return reversedData.map((row, idx) => {
-                                  const value = row.ptsd;
-                                  return (
-                                    <li key={idx}>
-                                      <span
-                                        className={idx === lastIdx ? "last-span" : ""}
-                                        style={value == null ? { opacity: 0 } : {}}
-                                      >{value ?? 0}</span>
-                                    </li>
-                                  );
-                                });
-                              })()}
-                            </ul>
-                          </div>
+                          {(() => {
+                            // 동적 심각도 카테고리 구성
+                            const base = [
+                              { key: 'depression', label: '우울' },
+                              { key: 'anxiety', label: '불안' },
+                              { key: 'panic', label: '공황' },
+                              { key: 'compulsion', label: '강박' },
+                              { key: 'adhd', label: 'ADHD' },
+                              { key: 'ptsd', label: 'PTSD' },
+                            ];
+                            const dynamic = [];
+                            for (let i = 1; i <= 4; i++) {
+                              const active = timelineData.some(r => r[`symptom0${i}Active`] === true);
+                              const name = timelineData.find(r => r[`symptom0${i}Name`])?.[`symptom0${i}Name`];
+                              if (active || name) {
+                                dynamic.push({ key: `symptom0${i}Severity`, label: name || `증상0${i}` });
+                              }
+                            }
+                            const categories = [...base, ...dynamic];
+
+                            const renderStage = (key, label) => {
+                              const values = reversedData.map(r => {
+                                if (key.startsWith('symptom')) return r[key];
+                                return r[key];
+                              });
+                              let lastIdx = -1;
+                              values.forEach((v, i) => { if (v != null) lastIdx = i; });
+                              // 추세 판단: 비교 가능한 값이 2개 미만이면 steady
+                              const valid = values.filter(v => v != null);
+                              let cls = 'steady';
+                              if (valid.length >= 2) {
+                                const prev = valid[valid.length - 2];
+                                const last = valid[valid.length - 1];
+                                if (last > prev) cls = 'rising';
+                                else if (last < prev) cls = 'falling';
+                              }
+                              return (
+                                <div className={`severity-stage ${cls}`} key={key}>
+                                  <span
+                                    className="severity-label"
+                                    title={label}
+                                    style={{
+                                      display: 'inline-block',
+                                      minWidth: '38px',
+                                      maxWidth: '180px',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      verticalAlign: 'top'
+                                    }}
+                                  >{label}</span>
+                                  <ul>
+                                    {values.map((value, idx) => (
+                                      <li key={idx}>
+                                        <span
+                                          className={idx === lastIdx ? 'last-span' : ''}
+                                          style={value == null ? { opacity: 0 } : {}}
+                                        >{value ?? 0}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            };
+
+                            return categories.map(c => renderStage(c.key, c.label));
+                          })()}
                         </div>
                       </div>
-                      {/* 요약은 임시 고정, 실제 데이터 연동시 동적으로 */}
+                      {/* 요약: 데이터가 1개 이하이면 모두 '변화가 없어요.' */}
                       <div className="summary-wrap">
-                        <div className="severity-summary rising">
-                          <span>우울</span>
-                          <p>높아지고 있어요.</p>
-                        </div>
-                        <div className="severity-summary falling">
-                          <span>강박</span>
-                          <p>낮아지고 있어요.</p>
-                        </div>
-                        <div className="severity-summary steady">
-                          <span>PTSD</span>
-                          <p>변화가 없어요.</p>
-                        </div>
+                        {(() => {
+                          // 심각도 섹션과 동일한 카테고리 구성 (기본 + 동적 증상)
+                          const base = [
+                            { key: 'depression', label: '우울' },
+                            { key: 'anxiety', label: '불안' },
+                            { key: 'panic', label: '공황' },
+                            { key: 'compulsion', label: '강박' },
+                            { key: 'adhd', label: 'ADHD' },
+                            { key: 'ptsd', label: 'PTSD' },
+                          ];
+                          const dynamic = [];
+                          for (let i = 1; i <= 4; i++) {
+                            const active = timelineData.some(r => r[`symptom0${i}Active`] === true);
+                            const name = timelineData.find(r => r[`symptom0${i}Name`])?.[`symptom0${i}Name`];
+                            if (active || name) {
+                              dynamic.push({ key: `symptom0${i}Severity`, label: name || `증상0${i}` });
+                            }
+                          }
+                          const categories = [...base, ...dynamic];
+
+                          const buildTrend = (arr) => {
+                            const vals = arr.filter(v => v != null);
+                            if (vals.length < 2) return { cls: 'steady', msg: '변화가 없어요.' };
+                            const prev = vals[vals.length - 2];
+                            const last = vals[vals.length - 1];
+                            if (last > prev) return { cls: 'rising', msg: '높아지고 있어요.' };
+                            if (last < prev) return { cls: 'falling', msg: '낮아지고 있어요.' };
+                            return { cls: 'steady', msg: '변화가 없어요.' };
+                          };
+
+                          return categories.map(c => {
+                            const trend = buildTrend(reversedData.map(r => r[c.key]));
+                            return (
+                              <div className={`severity-summary ${trend.cls}`} key={c.key}>
+                                <span>{c.label}</span>
+                                <p>{trend.msg}</p>
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     </>
                 )}
@@ -329,7 +377,7 @@ function TimelinePanel({ open, onClose, clientSeq }) {
                 />
               </div>
               <div
-                className="con-wrap steady"
+                className="con-wrap"
                 ref={sectionRefs[4]}
                 style={{
                   maxHeight: maxHeights[4],
@@ -367,10 +415,36 @@ function TimelinePanel({ open, onClose, clientSeq }) {
                         height={180}
                       />
                     </div>
-                    <div className="chart-summary steady">
-                      <span>위기단계</span>
-                      <p>변화가 없어요.</p>
-                    </div>
+                    {(() => {
+                      // 스트레스 징후 요약: 비교 가능한 값이 2개 미만이면 '변화가 없어요.'
+                      const vals = reversedData
+                        .map(row => {
+                          if (row.stressIndicatorsJson) {
+                            try {
+                              const stressData = JSON.parse(row.stressIndicatorsJson);
+                              return stressData.level ?? stressData.average ?? null;
+                            } catch (e) {
+                              return null;
+                            }
+                          }
+                          return null;
+                        })
+                        .filter(v => v !== null && v !== undefined);
+                      let cls = 'steady';
+                      let msg = '변화가 없어요.';
+                      if (vals.length >= 2) {
+                        const prev = vals[vals.length - 2];
+                        const last = vals[vals.length - 1];
+                        if (last > prev) { cls = 'rising'; msg = '높아지고 있어요.'; }
+                        else if (last < prev) { cls = 'falling'; msg = '낮아지고 있어요.'; }
+                      }
+                      return (
+                        <div className={`chart-summary ${cls}`}>
+                          <span>위기 단계</span>
+                          <p>{msg}</p>
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
               </div>
