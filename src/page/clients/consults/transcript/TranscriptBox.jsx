@@ -59,7 +59,7 @@ function TranscriptBox({
             [AI 생성하기]를 선택하면<br />
             AI가 생성한 분석 자료를 확인 할 수 있어요!
           </p>
-          <button className="type01 h40" type="button" onClick={onAIGenerate}>
+          <button className="type01 h40" type="button" onClick={() => { onAIGenerate && onAIGenerate(); }}>
             <span>AI 생성하기</span>
           </button>
         </div>

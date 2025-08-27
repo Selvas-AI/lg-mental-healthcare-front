@@ -42,8 +42,8 @@ function FrequencyBox({ data, onAIGenerate, isPanel }) {
     return (
       <div className="bar-wrap small">
         <div className="legend">
-          <span className="counselor">발화자1</span>
-          <span className="client">발화자2</span>
+          <span className="counselor">상담사</span>
+          <span className="client">내담자</span>
         </div>
         <div className="bar-labels">
           <div>
@@ -74,6 +74,7 @@ function FrequencyBox({ data, onAIGenerate, isPanel }) {
       className={`frequency box${!hasData ? ' before-create' : ''}`}
       title="4. 발화빈도"
       toggleable={false}
+      onAIGenerate={onAIGenerate}
     >
       {!hasData ? (
         <div className="create-wrap">
@@ -86,11 +87,11 @@ function FrequencyBox({ data, onAIGenerate, isPanel }) {
           </button>
         </div>
       ) : (
-        <div className="con-wrap">
+        <div className="con-wrap" style={{ width: 538, height: 270 }}>
           <div className="bar-wrap">
-            <div className="legend">
-              <span className="counselor">발화자1</span>
-              <span className="client">발화자2</span>
+            <div className="legend" style={{ marginBottom: '5rem' }}>
+              <span className="counselor">상담사</span>
+              <span className="client">내담자</span>
             </div>
             <div className="bar-labels">
               <div>

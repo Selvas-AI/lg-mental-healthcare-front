@@ -251,6 +251,7 @@ function StressBox({ data, labels, onAIGenerate }) {
       className={`stress box${!hasData ? ' before-create' : ''}`}
       title="5. 스트레스 징후"
       toggleable={false}
+      onAIGenerate={onAIGenerate}
     >
       {!hasData ? (
         <div className="create-wrap">

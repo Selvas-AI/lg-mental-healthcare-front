@@ -47,6 +47,24 @@ function Recordings() {
   });
   // 구간 요약 데이터 상태
   const [sectionSummaryData, setSectionSummaryData] = useState([]);
+
+  // 페이지 이탈 시 기본 탭으로 초기화하여, 다음 방문 시 기본적으로 '녹취내용' 탭 노출
+  useEffect(() => {
+    return () => {
+      setActiveTab('recordings');
+    };
+  }, [setActiveTab]);
+
+  // URL 파라미터(tab)로 초기/직접 진입 탭 제어
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'aianalysis') {
+      setActiveTab('aianalysis');
+    } else if (tab === 'recordings') {
+      setActiveTab('recordings');
+    }
+  }, [location.search, setActiveTab]);
   
   // sessionSeq로 회기 정보 및 상담관리 데이터 가져오기
   const fetchSessionData = async () => {
@@ -262,7 +280,7 @@ function Recordings() {
       const match = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.*)$/);
       if (match) {
         const [, time, name, content] = match;
-        const speaker = name.includes('발화자1') ? 'counselor' : 'client';
+        const speaker = name.includes('상담사') ? 'counselor' : 'client';
         return {
           speaker,
           name: name.trim(),
@@ -299,7 +317,7 @@ function Recordings() {
       
       const duration = Math.max(0, nextTime - currentTime);
       
-      if (current.speaker === 'counselor' || current.name.includes('발화자1')) {
+      if (current.speaker === 'counselor' || current.name.includes('상담사')) {
         counselorSeconds += duration;
       } else {
         clientSeconds += duration;
@@ -386,7 +404,7 @@ function Recordings() {
           
           const convertedTranscript = audioSegments.map((segment, index) => ({
             speaker: segment.speaker_label || `spk_${index}`,
-            name: segment.speaker_label === 'counselor' ? '발화자1' : '발화자2',
+            name: segment.speaker_label === 'counselor' ? '상담사' : '내담자',
             time: formatSecondsToTime(parseFloat(segment.start_time || 0)),
             content: segment.transcript || ''
           }));

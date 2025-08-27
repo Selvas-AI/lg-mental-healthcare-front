@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import AiPanelCommon from "@/components/AiPanelCommon";
-import KeywordBox from "../transcript/KeywordBox";
+// import KeywordBox from "../transcript/KeywordBox";
+import KeywordBubblePack from "../transcript/KeywordBubblePack";
 import FrequencyBox from "../transcript/FrequencyBox";
 import StressBoxSmall from "../transcript/StressBoxSmall";
 import { dislikeUpdate } from '@/api/apiCaller';
@@ -388,7 +389,7 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
             <div className="complete-tit"><strong>3. 키워드 분석</strong></div>
             {hasData ? (
               <div className="complete-cont visual-wrap">
-                <KeywordBox data={AiSummaryData.rawMngData?.parsedKeyword || AiSummaryData.keyword} />
+                <KeywordBubblePack data={AiSummaryData.rawMngData?.parsedKeyword || AiSummaryData.keyword} />
               </div>
             ) : (
               <div className="complete-cont">

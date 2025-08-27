@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
-import KeywordBox from "./KeywordBox";
+// import KeywordBox from "./KeywordBox";
+import KeywordBubblePack from "./KeywordBubblePack";
 import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSetRecoilState } from 'recoil';
+import { recordingsTabState } from '@/recoil';
 import TranscriptBox from "./TranscriptBox";
 // 삭제 동작은 부모(Consults)에서 처리
 
@@ -12,20 +15,13 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
   const navigate = useNavigate();
   const location = useLocation();
   const [audioFileExists, setAudioFileExists] = useState(false);
+  const setRecordingsActiveTab = useSetRecoilState(recordingsTabState);
   
   // sessionMngData에서 실제 데이터 추출
   const hasData = sessionMngData && Object.keys(sessionMngData).length > 0;
-  const isAIGenerated = hasData && (
-    sessionMngData.counselingSummaryAi || 
-    sessionMngData.concernTopicAi || 
-    sessionMngData.keywordAnalysisJson || 
-    sessionMngData.utteranceFrequencyJson || 
-    sessionMngData.stressIndicatorsJson
-  );
   
   // sessionData에서 TODO 상태 확인
   const isTranscriptCreated = sessionData?.todoTranscriptCreation === true;
-  const isAiAnalysisDone = sessionData?.todoAiAnalysisDone === true;
   const isAiAnalysisChecked = sessionData?.todoAiAnalysisCheck === true;
   
   // audioData props를 통해 오디오 파일 존재 여부 확인
@@ -53,6 +49,48 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
       return null;
     }
   };
+
+  // sessionMngFind의 일부 필드 존재 여부를 boolean 상태로 관리
+  const [dataPresence, setDataPresence] = useState({
+    hasCounselingSummaryAi: false,
+    hasConcernTopicAi: false,
+    hasKeywordAnalysis: false,
+    hasStressIndicators: false,
+  });
+
+  useEffect(() => {
+    const keywordParsed = parseJsonSafely(sessionMngData?.keywordAnalysisJson);
+    // const stressParsed = parseJsonSafely(sessionMngData?.stressIndicatorsJson); // TODO: 추후 활성화 예정
+
+    const hasKeyword = (() => {
+      if (!keywordParsed) return false;
+      if (Array.isArray(keywordParsed)) return keywordParsed.length > 0;
+      if (Array.isArray(keywordParsed?.llm_answer)) return keywordParsed.llm_answer.length > 0;
+      return true; // 객체가 비어있지 않으면 true로 간주
+    })();
+
+    // const hasStress = (() => {
+    //   if (!stressParsed) return false;
+    //   if (Array.isArray(stressParsed?.data)) return stressParsed.data.length > 0;
+    //   return true;
+    // })(); // TODO: 추후 활성화 예정
+
+    setDataPresence({
+      hasCounselingSummaryAi: !!sessionMngData?.counselingSummaryAi,
+      hasConcernTopicAi:       !!sessionMngData?.concernTopicAi,
+      hasKeywordAnalysis:      hasKeyword,
+      // hasStressIndicators:     hasStress, // TODO: 추후 활성화 예정
+      hasStressIndicators:     false,
+    });
+  }, [sessionMngData]);
+
+  // 완료 판단: 현재는 3개 모두 필요 (stressIndicatorsJson 제외)
+  const hasAllAiData = (
+    dataPresence.hasCounselingSummaryAi &&
+    dataPresence.hasConcernTopicAi &&
+    dataPresence.hasKeywordAnalysis
+    // && dataPresence.hasStressIndicators // TODO: 추후 활성화 예정
+  );
 
   const getTranscriptData = () => {
     if (!hasData) return null;
@@ -86,10 +124,11 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
   };
 
   const handleAIGenerate = () => {
-    if (setShowAiSummary && setSupportPanel) {
-      setShowAiSummary(true);
-      setSupportPanel(true);
-    }
+    // Recordings 페이지의 탭을 AI 분석으로 전환 후 해당 페이지로 이동
+    setRecordingsActiveTab('aianalysis');
+    const qs = new URLSearchParams(location.search);
+    qs.set('tab', 'aianalysis');
+    navigate(`/clients/recordings?${qs.toString()}`);
   };
 
   const handleUpload = () => {
@@ -103,6 +142,8 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
       showToastMessage && showToastMessage('삭제 확인 모달을 표시할 수 없습니다.');
     }
   };
+
+  
 
   return (
     <div className="transcript">
@@ -137,7 +178,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
           </p>
         </div>
       )}
-      {audioFileExists && !isAiAnalysisDone && (
+      {audioFileExists && !hasAllAiData && (
         <div className="transcript-board">
           <div className="create-board">
             <strong>AI가 녹취록을 생성/분석하고 있습니다.</strong>
@@ -154,7 +195,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
           </div>
         </div>
       )}
-      {audioFileExists && isAiAnalysisDone && !isAiAnalysisChecked && (
+      {audioFileExists && hasAllAiData && (
         <div className="transcript-board">
           <div className="create-board">
             <strong>AI가 녹취록 생성을 완료 하였습니다.</strong>
@@ -179,7 +220,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
               className={`summary${!hasData ? ' before-create' : ''}`}
               title="1. 주호소 문제"
               editable={true}
-              onEdit={() => {}}
+              onEdit={handleAIGenerate}
               toggleable={true}
               onAIGenerate={handleAIGenerate}
             >
@@ -192,7 +233,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
               className={`issue${!hasData ? ' before-create' : ''}`}
               title="2. 상담 내용"
               editable={true}
-              onEdit={() => {}}
+              onEdit={handleAIGenerate}
               toggleable={true}
               onAIGenerate={handleAIGenerate}
             >
@@ -205,13 +246,13 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
               )}
             </TranscriptBox>
             {/* 키워드 분석 */}
-            <KeywordBox
+            <KeywordBubblePack
               data={transcriptData?.keyword}
-              onAIGenerate={handleAIGenerate}
             />
             {/* 발화빈도 */}
             <FrequencyBox
-              data={transcriptData?.frequency}
+              data={transcriptData?.frequency?.data}
+              onAIGenerate={handleAIGenerate}
             />
             {/* 스트레스 징후 */}
             <StressBox
