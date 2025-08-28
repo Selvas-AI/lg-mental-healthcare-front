@@ -2,7 +2,7 @@ import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete } from '@/api/apiCaller';
+import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete, assessmentList } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import './consults.scss';
 
@@ -136,6 +136,8 @@ function Consults() {
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
   const [confirmOpen, setConfirmOpen] = useState(false); // 공통 확인 모달 (녹취파일 삭제 등)
   const [globalEditorConfirm, setGlobalEditorConfirm] = useRecoilState(editorConfirmState);
+  const [nameToSeqMap, setNameToSeqMap] = useState({}); // 검사지명 -> seq 매핑
+  const [surveyRefreshKey, setSurveyRefreshKey] = useState(0); // 심리검사 목록 재조회 트리거 키
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
@@ -253,6 +255,26 @@ function Consults() {
     fetchSessionData();
   }, [sessionSeq, clientId]);
 
+  // 검사지 리스트 매핑 1회 로드
+  useEffect(() => {
+    const loadAssessmentMap = async () => {
+      try {
+        const res = await assessmentList();
+        const arr = Array.isArray(res?.data?.data) ? res.data.data : res?.data || [];
+        const map = {};
+        arr.forEach(item => {
+          if (item?.assessmentName && item?.assessmentSeq != null) {
+            map[item.assessmentName] = item.assessmentSeq;
+          }
+        });
+        setNameToSeqMap(map);
+      } catch (e) {
+        console.error('검사지 목록 조회 실패:', e);
+      }
+    };
+    loadAssessmentMap();
+  }, []);
+
   const ActiveComponent = TAB_LIST[activeTab].component;
 
   const onSave = async (clientData) => {
@@ -342,6 +364,7 @@ function Consults() {
                 onOpenEdit={handleOpenEdit}
                 onRequestAudioDelete={() => setConfirmOpen(true)}
                 showToastMessage={showToastMessage}
+                refreshKey={surveyRefreshKey}
               />
             </div>
           </div>
@@ -421,7 +444,19 @@ function Consults() {
         )}
       />
       {showSurveySendModal && (
-        <SurveySendModal modalOpen={showSurveySendModal} onClose={() => setShowSurveySendModal(false)} />
+        <SurveySendModal
+          modalOpen={showSurveySendModal}
+          onClose={() => setShowSurveySendModal(false)}
+          onCompleted={() => {
+            // 모달 완료 시 심리검사 목록 재조회 트리거
+            setSurveyRefreshKey(prev => prev + 1);
+          }}
+          sessiongroupSeq={sessionData?.sessiongroupSeq}
+          nameToSeqMap={nameToSeqMap}
+          clientId={clientId}
+          sessionSeq={sessionSeq}
+          showToastMessage={showToastMessage}
+        />
       )}
       <EditorModal
         open={memoModalOpen}
@@ -450,14 +485,24 @@ function Consults() {
         onCancel={() => setConfirmOpen(false)}
         onClose={() => setConfirmOpen(false)}
       />
-      {/* 전역 EditorConfirm (다른 페이지/컴포넌트에서 텍스트만 바꿔 열기) */}
+      {/* 전역 EditorConfirm (다른 페이지/컴포넌트에서 텍스트/콜백 바꿔 열기) */}
       <EditorConfirm
         open={globalEditorConfirm.open}
         title={globalEditorConfirm.title || '안내'}
         message={globalEditorConfirm.message || ''}
         confirmText={globalEditorConfirm.confirmText || '확인'}
-        onConfirm={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
-        onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
+        cancelText={globalEditorConfirm.cancelText}
+        onConfirm={() => {
+          try {
+            if (typeof globalEditorConfirm.onConfirm === 'function') {
+              globalEditorConfirm.onConfirm();
+            }
+          } finally {
+            setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }));
+          }
+        }}
+        onCancel={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }))}
+        onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }))}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>

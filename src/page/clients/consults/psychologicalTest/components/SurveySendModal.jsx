@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import CustomSelect from '@/components/CustomSelect';
+import { assessmentSetCreate, assessmentSetUpdateUrl } from '@/api/apiCaller';
+import EditorConfirm from '@/page/clients/components/EditorConfirm';
 
-function SurveySendModal({ onClose, modalOpen }) {
+function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {}, clientId, sessionSeq, onCompleted, showToastMessage }) {
   // step: 1, 2, 3
   const [step, setStep] = useState(1);
   
@@ -19,26 +21,32 @@ function SurveySendModal({ onClose, modalOpen }) {
   
   // step02: 필수 체크박스(항상 true, 해제 불가)
   const necessaryList = [
-    { id: 'necessaryChk01', label: 'PHQ-9(우울장애)' },
-    { id: 'necessaryChk02', label: 'GAD-7(범불안장애)' },
-    { id: 'necessaryChk03', label: 'K-PSS 10(스트레스)' },
-    { id: 'necessaryChk04', label: 'AUDIT(알코올 사용장애)' },
+    { id: 'necessaryChk01', label: 'PHQ-9(우울장애)', assessmentName: 'PHQ-9' },
+    { id: 'necessaryChk02', label: 'GAD-7(범불안장애)', assessmentName: 'GAD-7' },
+    { id: 'necessaryChk03', label: 'K-PSS 10(스트레스)', assessmentName: 'K-PSS-10' },
+    { id: 'necessaryChk04', label: 'AUDIT(알코올 사용장애)', assessmentName: 'AUDIT' },
   ];
   
   // step02: 추가 체크박스
   const extraList = [
-    { id: 'extraChk01', label: 'PCL-5 PTSD(외상 후 스트레스 장애)' },
-    { id: 'extraChk02', label: 'PDSS(공황장애)' },
-    { id: 'extraChk03', label: 'ASRS- ADHD (주의력결핍 과잉행동장애)' },
-    { id: 'extraChk04', label: 'Y-BOCS (강박장애)' },
-    { id: 'extraChk05', label: 'DSI-SS (자살사고)' },
-    { id: 'extraChk06', label: 'ISI (불면증)' },
+    { id: 'extraChk01', label: 'PCL-5 PTSD(외상 후 스트레스 장애)', assessmentName: 'PCL-5 PTSD' },
+    { id: 'extraChk02', label: 'PDSS(공황장애)', assessmentName: 'PDSS-SR' },
+    { id: 'extraChk03', label: 'ASRS- ADHD (주의력결핍 과잉행동장애)', assessmentName: 'ASRS-ADHD' },
+    { id: 'extraChk04', label: 'Y-BOCS (강박장애)', assessmentName: 'Y-BOCS' },
+    { id: 'extraChk05', label: 'DSI-SS (자살사고)', assessmentName: 'DSI-SS' },
+    { id: 'extraChk06', label: 'ISI (불면증)', assessmentName: 'ISI' },
   ];
   const [extraChecked, setExtraChecked] = useState({});
   
   // step03: 생성된 URL 및 정보
-  const [generatedUrl] = useState('https://abcd.com/counsel/%sdf%sdfsg%dfgas%sdf%sdfsg%dfgas%sdf%sdfsg%dfgas%sdf%sdfsg%dfgas');
+  const [generatedUrl, setGeneratedUrl] = useState('http://52.78.24.168/client-survey');
   const [expirationTime] = useState('24');
+
+  // 공통 확인 모달 (EditorConfirm)
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState('알림');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  
   
   // step01: 문진 종류 선택
   const handleSurveyTypeChange = (e) => {
@@ -71,15 +79,96 @@ function SurveySendModal({ onClose, modalOpen }) {
     setStep(1);
   };
   
-  // step02: 다음 버튼
-  const handleStep2Next = () => {
-    setStep(3);
+  // step02: 다음 버튼 - 검사지 선택 즉시 생성 호출
+  const handleStep2Next = async () => {
+    try {
+      // 선택된 검사지들의 assessmentName 수집
+      const selectedNames = (() => {
+        const names = necessaryList.map(n => n.assessmentName);
+        extraList.forEach(item => {
+          if (extraChecked[item.id]) names.push(item.assessmentName);
+        });
+        return names;
+      })();
+
+      // name -> seq 매핑
+      const assessmentSeqList = selectedNames
+        .map(name => nameToSeqMap[name])
+        .filter(seq => seq != null);
+
+      if (!selectedSurveyType) {
+        setConfirmTitle('알림');
+        setConfirmMessage('문진 종류를 선택해 주세요.');
+        setConfirmOpen(true);
+        return;
+      }
+      if (!sessiongroupSeq) {
+        setConfirmTitle('알림');
+        setConfirmMessage('회기그룹 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        setConfirmOpen(true);
+        return;
+      }
+      if (!assessmentSeqList.length) {
+        setConfirmTitle('알림');
+        setConfirmMessage('선택된 검사지가 없습니다.');
+        setConfirmOpen(true);
+        return;
+      }
+
+      const baseUrl = 'http://52.78.24.168/client-survey';
+      const params = {
+        sessiongroupSeq: sessiongroupSeq,
+        questionType: selectedSurveyType, // PRE | PROG | POST
+        sessionSeq: selectedSurveyType === 'PROG' ? Number(sessionSeq) : undefined,
+        urlValidityMinute: parseInt(expirationTime, 10) * 60,
+        assignedUrl: baseUrl,
+        assessmentSeqList,
+      };
+
+      const createRes = await assessmentSetCreate(params);
+
+      // 응답에서 setSeq 및 token 방어적 파싱
+      const dataLayer = createRes?.data || createRes?.result || createRes;
+      const setSeq = dataLayer?.setSeq
+        ?? dataLayer?.assessmentSetSeq
+        ?? dataLayer?.id
+        ?? dataLayer?.assessmentSet?.setSeq; // 최신 스펙: { assessmentSet: { setSeq }, token }
+      const token = dataLayer?.token;
+
+      if (token) {
+        const finalUrl = `${baseUrl}?token=${encodeURIComponent(token)}`;
+        // setSeq가 있으면 서버에 최종 URL 업데이트, 없어도 표시용 URL은 세팅
+        if (setSeq) {
+          try {
+            await assessmentSetUpdateUrl({ setSeq, assignedUrl: finalUrl });
+          } catch (e) {
+            console.warn('[SurveySendModal] assessmentSetUpdateUrl 실패(표시에는 영향 없음):', e);
+          }
+        }
+        setGeneratedUrl(finalUrl);
+      } else {
+        // 토큰이 없으면 기본 URL 유지
+        setGeneratedUrl(baseUrl);
+      }
+
+      setStep(3);
+      if (typeof showToastMessage === 'function') {
+        showToastMessage('검사지가 생성되었습니다.');
+      }
+    } catch (e) {
+      console.error('[SurveySendModal] 생성 실패(step2 next):', e);
+      setConfirmTitle('오류');
+      setConfirmMessage('생성 중 오류가 발생했습니다.');
+      setConfirmOpen(true);
+    }
   };
   
   // URL 복사
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(generatedUrl).then(() => {
-      alert('URL이 복사되었습니다.');
+      if (typeof showToastMessage === 'function') {
+        showToastMessage('심리 검사지 전송 링크가 복사 되었습니다.');
+      }
     });
   };
   
@@ -94,9 +183,13 @@ function SurveySendModal({ onClose, modalOpen }) {
     }, 300);
   };
   
-  // 완료 버튼
-  const handleComplete = () => {
-    console.log('심리 검사지 생성 완료');
+  // 완료 버튼 - 생성은 step02에서 이미 처리됨
+  const handleComplete = async () => {
+    if (typeof onCompleted === 'function') {
+      try {
+        await onCompleted();
+      } catch (_) {}
+    }
     handleClose();
   };
   
@@ -114,9 +207,9 @@ function SurveySendModal({ onClose, modalOpen }) {
   // 문진 종류 텍스트 반환
   const getSurveyTypeText = () => {
     switch (selectedSurveyType) {
-      case 'session05': return '사전 문진';
-      case 'session04': return `경과 문진, ${selectedSession}`;
-      case 'session03': return '사후 문진';
+      case 'PRE': return '사전 문진';
+      case 'PROG': return `경과 문진, ${selectedSession}`;
+      case 'POST': return '사후 문진';
       default: return '';
     }
   };
@@ -142,14 +235,13 @@ function SurveySendModal({ onClose, modalOpen }) {
                   <li>
                     <div className="input-wrap radio">
                       <input 
-                        id="session05" 
+                        id="PRE" 
                         type="radio" 
                         name="session" 
-                        disabled
-                        checked={selectedSurveyType === 'session05'}
+                        checked={selectedSurveyType === 'PRE'}
                         onChange={handleSurveyTypeChange}
                       />
-                      <label htmlFor="session05">
+                      <label htmlFor="PRE">
                         <span>사전 문진</span>
                         <span className="complete">문진 완료</span>
                       </label>
@@ -158,13 +250,13 @@ function SurveySendModal({ onClose, modalOpen }) {
                   <li className="flex-wrap">
                     <div className="input-wrap radio">
                       <input 
-                        id="session04" 
+                        id="PROG" 
                         type="radio" 
                         name="session"
-                        checked={selectedSurveyType === 'session04'}
+                        checked={selectedSurveyType === 'PROG'}
                         onChange={handleSurveyTypeChange}
                       />
-                      <label htmlFor="session04">
+                      <label htmlFor="PROG">
                         <span>경과 문진</span>
                       </label>
                     </div>
@@ -172,8 +264,8 @@ function SurveySendModal({ onClose, modalOpen }) {
                       options={sessionOptions}
                       value={selectedSession}
                       onChange={setSelectedSession}
-                      disabled={selectedSurveyType !== 'session04'}
-                      className={selectedSurveyType !== 'session04' ? 'disabled' : ''}
+                      disabled={selectedSurveyType !== 'PROG'}
+                      className={selectedSurveyType !== 'PROG' ? 'disabled' : ''}
                       getOptionValue={(option) => option.value}
                       getOptionLabel={(option) => option.label}
                       renderOption={(option) => (
@@ -191,13 +283,13 @@ function SurveySendModal({ onClose, modalOpen }) {
                   <li>
                     <div className="input-wrap radio">
                       <input 
-                        id="session03" 
+                        id="POST" 
                         type="radio" 
                         name="session"
-                        checked={selectedSurveyType === 'session03'}
+                        checked={selectedSurveyType === 'POST'}
                         onChange={handleSurveyTypeChange}
                       />
-                      <label htmlFor="session03">
+                      <label htmlFor="POST">
                         <span>사후 문진</span>
                       </label>
                     </div>
@@ -315,7 +407,7 @@ function SurveySendModal({ onClose, modalOpen }) {
                           const isNecessary = necessaryList.some(item => item.id === test.id);
                           return (
                             <li key={test.id} className={isNecessary ? 'necessary' : ''}>
-                              {isNecessary && '*'}{test.label.replace(/\([^)]*\)/g, '').trim()} ({test.label.match(/\(([^)]+)\)/)?.[1] || ''})
+                              {test.label.replace(/\([^)]*\)/g, '').trim()} ({test.label.match(/\(([^)]+)\)/)?.[1] || ''})
                             </li>
                           );
                         })}
@@ -328,6 +420,15 @@ function SurveySendModal({ onClose, modalOpen }) {
             </div>
           </div>
         )}
+        {/* 공통 확인 모달 */}
+        <EditorConfirm
+          open={confirmOpen}
+          title={confirmTitle}
+          message={confirmMessage}
+          confirmText="확인"
+          onConfirm={() => setConfirmOpen(false)}
+          onClose={() => setConfirmOpen(false)}
+        />
       </div>
     </div>
   );
