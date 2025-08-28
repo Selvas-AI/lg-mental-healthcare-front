@@ -3,7 +3,7 @@ import emptyFace from "@/assets/images/common/empty_face.svg";
 import EmergencyChart from "./EmergencyChart";
 import { timelineList } from "@/api/apiCaller";
 
-function TimelinePanel({ open, onClose, clientSeq }) {
+function TimelinePanel({ open, onClose, clientSeq, prefetchedTimeline = [] }) {
   // 각 토글 영역(상담요약/고민주제/긴급도/심각도/스트레스 징후) 열림 상태
   const [openSection, setOpenSection] = useState([true, true, true, true, true]);
   const sectionRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
@@ -59,9 +59,14 @@ function TimelinePanel({ open, onClose, clientSeq }) {
   useEffect(() => {
     if (open) {
       setOpenSection([true, true, true, true, true]);
-      fetchTimelineData();
+      if (Array.isArray(prefetchedTimeline) && prefetchedTimeline.length > 0) {
+        setTimelineData(prefetchedTimeline);
+        setIsEmpty(prefetchedTimeline.length === 0);
+      } else {
+        fetchTimelineData();
+      }
     }
-  }, [open, clientSeq]);
+  }, [open, clientSeq, prefetchedTimeline]);
 
   return (
     <div className={"support-panel timeline" + (open ? " on" : "")}>

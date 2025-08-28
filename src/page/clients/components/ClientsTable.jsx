@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { clientsState, maskingState } from "@/recoil";
 import { clientSearch } from "@/api/apiCaller";
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
 function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoClient, onCloseMemo }) {
+  const navigate = useNavigate();
   const [showTooltip, setShowTooltip] = useState(false);
   const [clients, setClients] = useRecoilState(clientsState);
   const masked = useRecoilValue(maskingState);
@@ -110,6 +111,19 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     return phone.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3');
   };
 
+  // 등록일 기준 신규 여부(30일 미만) 판단
+  const isNewByRegistrationDate = (registrationDate) => {
+    if (!registrationDate) return false;
+    // "YYYY-MM-DD HH:mm:ss" -> ISO 유사 포맷으로 변환
+    const isoLike = registrationDate.replace(' ', 'T');
+    const reg = new Date(isoLike);
+    if (isNaN(reg.getTime())) return false;
+    const now = new Date();
+    const diffMs = now.getTime() - reg.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays < 30;
+  };
+
   // TODO 목록 생성 함수 (currentSession의 false인 값만 표시)
   const generateTodos = (client) => {
     if (!client || !client.currentSession) return [];
@@ -133,6 +147,26 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     setSortOrder(newOrder);
     const sortedClients = sortClientsByName(filteredClients, newOrder);
     setFilteredClients(sortedClients);
+  };
+
+  // To-Do 클릭 라우팅
+  const handleTodoClick = (client, todoText) => {
+    const clientId = client?.clientSeq;
+    const sessionSeq = client?.currentSession?.sessionSeq;
+    if (!clientId) return;
+    // 기본 경로: 상담 관리
+    let url = `/clients/consults?clientId=${clientId}`;
+    if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
+
+    if (todoText === '심리검사 요청') {
+      url = `/clients/consults?clientId=${clientId}`;
+      if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
+      url += `&tab=survey`;
+    } else if (todoText === '사례개념화 최초 작성') {
+      url = `/clients/consults/detail?clientId=${clientId}`;
+      if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
+    }
+    navigate(url);
   };
 
   // 컴포넌트 마운트 시 초기 내담자 목록 로드 (진행중)
@@ -296,7 +330,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                   <tr
                     key={client.clientSeq || idx}
                     className={
-                      [client.isNew ? "new" : "", selectedClientId === client.clientSeq ? "selected" : ""].join(" ").trim()
+                      [isNewByRegistrationDate(client.registrationDate) ? "new" : "", selectedClientId === client.clientSeq ? "selected" : ""].join(" ").trim()
                     }
                     onClick={() => onSelectClient && onSelectClient(client.clientSeq)}
                     style={{ cursor: onSelectClient ? "pointer" : undefined }}
@@ -310,13 +344,21 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                     </td>
                     <td>{masked ? maskPhoneNumber(client.contactNumber) : formatPhoneNumber(client.contactNumber)}</td>
                     <td>
+                      {isNewByRegistrationDate(client.registrationDate)
+                        ? <span className="text-[#32D074]">신규</span>
+                        : <span>-</span>
+                      }
+                      {/* 기존 로직 (회기 존재 여부) 보관
                       {client.currentSession === null ? (
-                        <span className="text-[#32D074]">신규</span>
+                        isNewByRegistrationDate(client.registrationDate)
+                          ? <span className="text-[#32D074]">신규</span>
+                          : <span>-</span>
                       ) : (
-                        <Link to={`/clients/consults?clientId=${client.clientSeq}`}>
+                        <Link to={`/clients/consults?clientId=${client.clientSeq}${client.currentSession && client.currentSession.sessionSeq ? `&sessionSeq=${client.currentSession.sessionSeq}` : ''}`}>
                           {client.currentSession.sessionNo}회기 
                         </Link>
                       )}
+                      */}
                     </td>
                     <td>
                       <div className="flex-wrap">
@@ -324,7 +366,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                           const todos = generateTodos(client);
                           return todos.length > 0 ? (
                             todos.map((todo, i) => (
-                              <a key={i}>{todo}</a>
+                              <a className="cursor-pointer" key={i} onClick={(e) => { e.stopPropagation(); handleTodoClick(client, todo); }}>{todo}</a>
                             ))
                           ) : (
                             "-"

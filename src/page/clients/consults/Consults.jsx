@@ -314,6 +314,7 @@ function Consults() {
                   className={activeTab === idx ? 'on' : ''}
                   tabIndex={0}
                   onClick={() => {
+                    if (idx === 2) return; //! daily는 클릭 이벤트 막음
                     const tabNames = ['counsel', 'survey', 'daily', 'document'];
                     const newQuery = new URLSearchParams(location.search);
                     newQuery.set('tab', tabNames[idx]);

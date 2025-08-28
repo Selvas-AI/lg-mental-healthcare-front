@@ -3,11 +3,29 @@ import { useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
 import { currentSessionState } from "@/recoil";
 
-function SessionTable({ clientId, sessionData}) {
+function SessionTable({ clientId, sessionData, summaryBySessionSeq = {} }) {
   const navigate = useNavigate();
   const setCurrentSession = useSetRecoilState(currentSessionState);
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltip2, setShowTooltip2] = useState(false);
+
+  // To-Do 클릭 라우팅
+  const handleTodoClick = (todoText, sessionSeq) => {
+    if (!clientId) return;
+    // 기본: 상담관리 탭
+    let url = `/clients/consults?clientId=${clientId}`;
+    if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
+
+    if (todoText === '심리검사 요청') {
+      url = `/clients/consults?clientId=${clientId}`;
+      if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
+      url += `&tab=survey`;
+    } else if (todoText === '사례개념화 최초 작성') {
+      url = `/clients/consults/detail?clientId=${clientId}`;
+      if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
+    }
+    navigate(url);
+  };
 
   return (
     <div className="tb-wrap">
@@ -83,12 +101,12 @@ function SessionTable({ clientId, sessionData}) {
               
               // TODO 목록 생성 (false인 값만 표시)
               const todos = [];
-              if (session.todoTranscriptCreation === false) todos.push('녹음파일 등록');
-              if (session.todoAiAnalysisDone === false) todos.push('녹취록 분석');
-              if (session.todoAiAnalysisCheck === false) todos.push('AI 분석 확인');
-              if (session.todoCounselNote === false) todos.push('상담일지 작성');
-              if (session.todoPsychTestRequest === false) todos.push('심리검사 요청');
-              if (session.todoCaseCenceptInital === false) todos.push('사례개념화 최초 작성');
+              if (session.todoTranscriptCreation === false || session.todoTranscriptCreation === null) todos.push('녹음파일 등록');
+              if (session.todoAiAnalysisDone === false || session.todoAiAnalysisDone === null) todos.push('녹취록 분석');
+              if (session.todoAiAnalysisCheck === false || session.todoAiAnalysisCheck === null) todos.push('AI 분석 확인');
+              if (session.todoCounselNote === false || session.todoCounselNote === null) todos.push('상담일지 작성');
+              if (session.todoPsychTestRequest === false || session.todoPsychTestRequest === null) todos.push('심리검사 요청');
+              if (session.todoCaseCenceptInital === false || session.todoCaseCenceptInital === null) todos.push('사례개념화 최초 작성');
               
               return (
                 <tr key={session.sessionSeq || idx}>
@@ -118,12 +136,18 @@ function SessionTable({ clientId, sessionData}) {
                   </td>
                   <td>{formatDate(session.sessionDate)}</td>
                   <td>
-                    <div className="summary-wrap">{session.memo || '-'}</div>
+                    <div className="summary-wrap">{summaryBySessionSeq[String(session.sessionSeq)] || '-'}</div>
                   </td>
                   <td>
                     <div className="flex-wrap">
                       {todos.length > 0 ? todos.map((todo, i) => (
-                        <a className="cursor-pointer" key={i}>{todo}</a>
+                        <a
+                          className="cursor-pointer"
+                          key={i}
+                          onClick={(e) => { e.stopPropagation(); handleTodoClick(todo, session.sessionSeq); }}
+                        >
+                          {todo}
+                        </a>
                       )) : null}
                     </div>
                   </td>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 // import KeywordBox from './../transcript/KeywordBox';
 import KeywordBubblePack from './../transcript/KeywordBubblePack';
 import FrequencyBox from './../transcript/FrequencyBox';
@@ -8,7 +8,25 @@ import CustomTextarea from '@/components/CustomTextarea';
 function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeIssue }) {
   const [editSummary, setEditSummary] = useState(false);
   const [editIssue, setEditIssue] = useState(false);
+  // 에디터 표시 상태: 한 번 표시되면 내용이 비어도 유지
+  const [summaryEditorOpen, setSummaryEditorOpen] = useState(!!AiSummaryData?.summary);
+  const [issueEditorOpen, setIssueEditorOpen] = useState(!!AiSummaryData?.issue);
   const keywordData = AiSummaryData?.rawMngData?.parsedKeyword ?? AiSummaryData?.keyword;
+
+  // 외부 데이터로 요약/고민주제가 도착하면 에디터를 표시 상태로 유지
+  useEffect(() => {
+    // 초기값이 비어있지 않은 경우에만 자동으로 에디터 표시 (빈 문자열은 제외)
+    if (AiSummaryData && typeof AiSummaryData.summary === 'string' && AiSummaryData.summary.trim() !== '') {
+      setSummaryEditorOpen(true);
+    }
+  }, [AiSummaryData?.summary]);
+
+  useEffect(() => {
+    // 초기값이 비어있지 않은 경우에만 자동으로 에디터 표시 (빈 문자열은 제외)
+    if (AiSummaryData && typeof AiSummaryData.issue === 'string' && AiSummaryData.issue.trim() !== '') {
+      setIssueEditorOpen(true);
+    }
+  }, [AiSummaryData?.issue]);
 
   return (
     <div className="tab-panel ai-analysis on" role="tabpanel">
@@ -19,15 +37,15 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeI
             <div className="box-tit">
               <strong>1. 상담요약</strong>
               <div className="btn-wrap">
-                {!AiSummaryData.summary && !editSummary ? (
-                  <a className="edit-btn cursor-pointer" onClick={() => setEditSummary(true)}>직접 입력</a>
+                {!summaryEditorOpen ? (
+                  <a className="edit-btn cursor-pointer" onClick={() => { setEditSummary(true); setSummaryEditorOpen(true); }}>직접 입력</a>
                 ) : null}
                 <button className="type01 h36" type="button" onClick={() => onAiCreateClick(1)}>
                   <span>AI 생성하기</span>
                 </button>
               </div>
             </div>
-            {(!AiSummaryData.summary && !editSummary) ? (
+            {!summaryEditorOpen ? (
               <div className="empty-board">[AI 생성하기]를 선택하면 AI가 생성한 분석 자료를 확인 할 수 있어요.</div>
             ) : (
               <CustomTextarea
@@ -43,15 +61,15 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeI
             <div className="box-tit">
               <strong>2. 고민주제</strong>
               <div className="btn-wrap">
-                {!AiSummaryData.issue && !editIssue ? (
-                  <a className="edit-btn cursor-pointer" onClick={() => setEditIssue(true)}>직접 입력</a>
+                {!issueEditorOpen ? (
+                  <a className="edit-btn cursor-pointer" onClick={() => { setEditIssue(true); setIssueEditorOpen(true); }}>직접 입력</a>
                 ) : null}
                 <button className="type01 h36" type="button" onClick={() => onAiCreateClick(2)}>
                   <span>AI 생성하기</span>
                 </button>
               </div>
             </div>
-            {(!AiSummaryData.issue && !editIssue) ? (
+            {!issueEditorOpen ? (
               <div className="empty-board">[AI 생성하기]를 선택하면 AI가 생성한 분석 자료를 확인 할 수 있어요.</div>
             ) : (
               <CustomTextarea
