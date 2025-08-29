@@ -13,7 +13,7 @@ function PsychologicalTest({ onOpenSurveySendModal, setShowAiSummary, setSupport
   // 렌더링 제어 상태
   const [noSet, setNoSet] = useState(false); // 검사세트가 하나도 없는 상태
   const [waitingInput, setWaitingInput] = useState(false); // 검사세트는 있으나 제출(submittedTime)이 없는 상태
-  const [generatedUrl, setGeneratedUrl] = useState('http://52.78.24.168/client-survey');
+  const [generatedUrl, setGeneratedUrl] = useState('http://localhost:5173/client-survey');
   const [expireTimeText, setExpireTimeText] = useState('');
   const [currentSetSeq, setCurrentSetSeq] = useState(null); // 현재 표시 중인 세트 식별자
   const [confirmOpen, setConfirmOpen] = useState(false);

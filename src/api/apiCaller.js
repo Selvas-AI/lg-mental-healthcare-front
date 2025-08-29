@@ -1,4 +1,5 @@
 import axiosIns from './index'
+import axios from 'axios'
 
 //? ===== 회기 관리 API =====
 // 전체 회기 목록 조회
@@ -50,9 +51,13 @@ export const counselorUpdate = async (params) => {
 }
 
 //? ===== 내담자 검사 (내담자용) 관리 API =====
-//! 내담자검사 세트 조회
-export const clientExamSet = async (params) => {
-    return await axiosIns.get('/api/examination/assessmentSet', { params })
+// 내담자검사 세트 조회
+export const clientExamSet = async ({ token }) => {
+    // 순수 axios 인스턴스로 호출 (token값 다르게 전달) 
+    const response = await axios.get('/api/examination/assessmentSet', {
+        headers: {'Authorization': `Bearer ${token}`}
+    })
+    return response.data
 }
 
 //! 내담자검사 세트 결과 임시등록

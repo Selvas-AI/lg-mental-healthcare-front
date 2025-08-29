@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import './client_survey.scss'
 import PrivacyPolicy from './PrivacyPolicy'
 import SurveyForm from './SurveyForm'
 import SurveyModal from './SurveyModal'
 import { surveyData } from './surveyData'
+import { clientExamSet } from '../../api/apiCaller'
 
 function ClientSurvey() {
+  const location = useLocation()
   const [showSurvey, setShowSurvey] = useState(false)
   const [scroll, setScroll] = useState(false)
   const [answers, setAnswers] = useState({})
@@ -13,6 +16,7 @@ function ClientSurvey() {
   const [modalType, setModalType] = useState('start') // 'start', 'complete', 'incomplete', 'save', 'exit'
   const [hasIntermediateData, setHasIntermediateData] = useState(false)
   const [userName, setUserName] = useState('홍길동') // 사용자 이름
+  const [examSetData, setExamSetData] = useState(null) // 검사 세트 데이터
 
   // 중간 저장 데이터 확인 함수
   const checkIntermediateData = () => {
@@ -21,15 +25,59 @@ function ClientSurvey() {
     return savedData ? JSON.parse(savedData) : null
   }
 
-  // 컴포넌트 마운트 시 중간 저장 데이터 확인
-  useEffect(() => {
+  // 초기 모달 표시 함수
+  const showInitialModal = () => {
     const intermediateData = checkIntermediateData()
     if (intermediateData && Object.keys(intermediateData).length > 0) {
       setHasIntermediateData(true)
       setAnswers(intermediateData)
     }
+    setModalType('start')
     setShowModal(true)
+  }
+
+  // URL에서 token 파라미터 추출 함수
+  const getTokenFromUrl = () => {
+    const urlParams = new URLSearchParams(location.search)
+    return urlParams.get('token')
+  }
+
+  // clientExamSet API 호출 함수
+  const fetchExamSet = async () => {
+    try {
+      const token = getTokenFromUrl()
+      if (!token) {
+        console.error('URL에 token 파라미터가 없습니다.')
+        return
+      }
+
+      console.log('clientExamSet 호출 - token:', token)
+      const response = await clientExamSet({ token })
+      console.log('clientExamSet 응답:', response.data)
+      setExamSetData(response.data)
+      
+      // 응답 데이터에서 사용자 이름 설정 (있는 경우)
+      if (response.data?.clientName) {
+        setUserName(response.data.clientName)
+      }
+    } catch (error) {
+      console.error('clientExamSet 호출 실패:', error)
+    }
+  }
+
+  // 컴포넌트 마운트 시 검사 세트 조회 및 모달 표시
+  useEffect(() => {
+    fetchExamSet()
+    showInitialModal()
   }, [])
+
+  // URL 변경 감지하여 모달 다시 표시
+  useEffect(() => {
+    // 현재 경로가 ClientSurvey 경로이고, 모달이 닫혀있고, 설문이 시작되지 않은 상태라면 모달 표시
+    if (location.pathname.includes('client-survey') && !showModal && !showSurvey) {
+      showInitialModal()
+    }
+  }, [location.pathname])
 
   const handleStartSurvey = () => {
     setShowSurvey(true)

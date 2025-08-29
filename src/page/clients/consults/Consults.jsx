@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
+import React, { useRef, useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -191,16 +191,48 @@ function Consults() {
     }
   }, [location.search]);
 
-  useLayoutEffect(() => {
+  // 탭 인디케이터 위치/너비 갱신 함수 (레이아웃/폰트 적용 지연 대비)
+  const updateTabIndicator = useCallback(() => {
     const currentTab = tabListRef.current[activeTab];
     const indicator = tabIndicatorRef.current;
     if (currentTab && indicator) {
       const tabWidth = currentTab.offsetWidth;
-      const tabLeft = currentTab.offsetLeft; 
+      const tabLeft = currentTab.offsetLeft;
       indicator.style.width = tabWidth + 'px';
       indicator.style.left = tabLeft + 'px';
     }
   }, [activeTab]);
+
+  // activeTab 변경 시 즉시/다음 프레임/약간 지연하여 재계산
+  useLayoutEffect(() => {
+    updateTabIndicator();
+    const raf = requestAnimationFrame(updateTabIndicator);
+    const tm = setTimeout(updateTabIndicator, 50);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(tm);
+    };
+  }, [updateTabIndicator]);
+
+  // 창 크기 변경 시 재계산
+  useEffect(() => {
+    window.addEventListener('resize', updateTabIndicator);
+    return () => window.removeEventListener('resize', updateTabIndicator);
+  }, [updateTabIndicator]);
+
+  // 폰트 로드 완료 후 재계산 (폰트 적용으로 탭 폭 변동하는 경우 대응)
+  useEffect(() => {
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => updateTabIndicator()).catch(() => {});
+    }
+  }, [updateTabIndicator]);
+
+  // URL 쿼리(tab) 변경 시 activeTab 동기화 (뒤로가기/새로고침 시 안정화)
+  useEffect(() => {
+    const newTabParam = new URLSearchParams(location.search).get('tab');
+    const idx = getTabIndexFromParam(newTabParam);
+    setActiveTab(idx);
+  }, [location.search]);
 
   // sessionSeq가 있을 때 상담관리 데이터와 회기 데이터, 오디오 데이터 병렬 조회
   useEffect(() => {

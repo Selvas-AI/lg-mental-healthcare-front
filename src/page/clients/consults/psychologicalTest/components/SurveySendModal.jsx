@@ -39,21 +39,17 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
   const [extraChecked, setExtraChecked] = useState({});
   
   // step03: 생성된 URL 및 정보
-  const [generatedUrl, setGeneratedUrl] = useState('http://52.78.24.168/client-survey');
+  const [generatedUrl, setGeneratedUrl] = useState('');
   const [expirationTime] = useState('24');
-
   // 공통 확인 모달 (EditorConfirm)
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTitle, setConfirmTitle] = useState('알림');
   const [confirmMessage, setConfirmMessage] = useState('');
   
-  
   // step01: 문진 종류 선택
   const handleSurveyTypeChange = (e) => {
     setSelectedSurveyType(e.target.id);
   };
-  
-
   
   // step02: 필수 체크박스 해제 방지
   const handleNecessaryClick = (e) => {
@@ -115,7 +111,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
         return;
       }
 
-      const baseUrl = 'http://52.78.24.168/client-survey';
+      const baseUrl = 'http://localhost:5173/client-survey';
       const params = {
         sessiongroupSeq: sessiongroupSeq,
         questionType: selectedSurveyType, // PRE | PROG | POST
@@ -126,13 +122,11 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
       };
 
       const createRes = await assessmentSetCreate(params);
-
-      // 응답에서 setSeq 및 token 방어적 파싱
       const dataLayer = createRes?.data || createRes?.result || createRes;
       const setSeq = dataLayer?.setSeq
         ?? dataLayer?.assessmentSetSeq
         ?? dataLayer?.id
-        ?? dataLayer?.assessmentSet?.setSeq; // 최신 스펙: { assessmentSet: { setSeq }, token }
+        ?? dataLayer?.assessmentSet?.setSeq;
       const token = dataLayer?.token;
 
       if (token) {
@@ -142,7 +136,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
           try {
             await assessmentSetUpdateUrl({ setSeq, assignedUrl: finalUrl });
           } catch (e) {
-            console.warn('[SurveySendModal] assessmentSetUpdateUrl 실패(표시에는 영향 없음):', e);
+            console.warn('[SurveySendModal] assessmentSetUpdateUrl 실패:', e);
           }
         }
         setGeneratedUrl(finalUrl);
