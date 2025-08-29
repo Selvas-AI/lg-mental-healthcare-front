@@ -31,7 +31,8 @@ function PrivacyPolicy({ onStartSurvey }) {
   return (
     <div className="inner">
       <div className="hd-wrap">
-        <button className="back-btn" type="button" aria-label="뒤로가기" onClick={handleBackClick}></button>
+        {/* //! [joy :] 뒤로가기 버튼 필요시 아래 주석 해제 */}
+        {/* <button className="back-btn" type="button" aria-label="뒤로가기" onClick={handleBackClick}></button> */}
       </div>
       <div className="tit-wrap">
         <strong>검사 참여 및 개인정보 수집·이용에 대한 동의</strong>

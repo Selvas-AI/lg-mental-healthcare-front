@@ -60,14 +60,20 @@ export const clientExamSet = async ({ token }) => {
     return response.data
 }
 
-//! 내담자검사 세트 결과 임시등록
-export const clientExamTempSave = async (params) => {
-    return await axiosIns.post('/api/examination/tempSave', { params })
+// 내담자검사 세트 결과 임시등록
+export const clientExamTempSave = async ({ token, params }) => {
+    const response = await axios.post('/api/examination/tempSave', params, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    return response.data
 }
 
-//! 내담자검사 세트 결과 등록
-export const clientExamSave = async (params) => {
-    return await axiosIns.post('/api/examination/save', { params })
+// 내담자검사 세트 결과 등록
+export const clientExamSave = async ({ token, params }) => {
+    const response = await axios.post('/api/examination/save', params, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    return response.data
 }
 
 //? ===== Dislike 관리 API =====
