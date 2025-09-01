@@ -4,7 +4,7 @@ import ClientProfile from "../components/ClientProfile";
 import ClientList from "./ClientList";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { maskingState, clientsState, foldState, supportPanelState, sessionDataState, currentSessionState } from "@/recoil";
-import { clientSearch, clientFind, sessionList, clientUpdateMemo, sessionCreate, sessionCurrentUpdate, sessionGroupComplete } from '../../../api/apiCaller';
+import { clientSearch, clientFind, sessionList, clientUpdateMemo, sessionCreate, sessionCurrentUpdate, sessionGroupComplete, timelineList } from '../../../api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import ToastPop from "@/components/ToastPop";
 import "./sessions.scss";
@@ -45,6 +45,9 @@ function Sessions() {
   const [sessionLoading, setSessionLoading] = useState(false); // 회기 데이터 로딩 상태
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
   const [endConfirmOpen, setEndConfirmOpen] = useState(false); // 종결 확인 모달 상태
+  // 타임라인 최신 그룹 캐시 및 회기별 요약 맵(sessionSeq 기준)
+  const [timelineRows, setTimelineRows] = useState([]);
+  const [summaryBySessionSeq, setSummaryBySessionSeq] = useState({});
 
   // 페이지 로드 시 내담자 목록 fetch
   useEffect(() => {
@@ -128,6 +131,38 @@ function Sessions() {
     };
 
     fetchSessionData();
+  }, [clientId]);
+
+  // 타임라인 최신 그룹을 한 번만 조회해서 캐시 (clientId 변경 시)
+  useEffect(() => {
+    const fetchTimelineOnce = async () => {
+      if (!clientId) { setTimelineRows([]); setSummaryBySessionSeq({}); return; }
+      try {
+        const res = await timelineList(parseInt(clientId, 10));
+        if (res.code === 200 && Array.isArray(res.data)) {
+          const list = res.data;
+          if (list.length === 0) { setTimelineRows([]); setSummaryBySessionSeq({}); return; }
+          // 최신 그룹(패널용)
+          const latestGroupSeq = Math.max(...list.map(r => r.sessiongroupSeq || 0));
+          const latestGroupRows = list.filter(r => r.sessiongroupSeq === latestGroupSeq);
+          setTimelineRows(latestGroupRows);
+          // 전체 데이터 기준으로 sessionSeq → 요약 맵 생성 (테이블용)
+          const mapAll = {};
+          list.forEach(row => {
+            const key = row.sessionSeq != null ? String(row.sessionSeq) : '';
+            if (key) mapAll[key] = row.counselingSummaryText || '';
+          });
+          setSummaryBySessionSeq(mapAll);
+        } else {
+          setTimelineRows([]);
+          setSummaryBySessionSeq({});
+        }
+      } catch (e) {
+        setTimelineRows([]);
+        setSummaryBySessionSeq({});
+      }
+    };
+    fetchTimelineOnce();
   }, [clientId]);
 
   // sessionStatus 변경 핸들러 (진행중/종결 라디오 버튼 클릭 시)
@@ -361,6 +396,7 @@ function Sessions() {
               clientId={clientId}
               sessionData={sessionData}
               loading={sessionLoading}
+              summaryBySessionSeq={summaryBySessionSeq}
             />
           )}
         </div>
@@ -380,6 +416,7 @@ function Sessions() {
           setSupportPanel(false);
         }}
         clientSeq={clientId}
+        prefetchedTimeline={timelineRows}
       />
       <RecordSelectModal
         open={recordSelectOpen}

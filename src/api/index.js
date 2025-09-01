@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const axiosIns = axios.create({
-  baseURL: '',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   withCredentials: false,
   responseType: 'json',
 })
@@ -28,8 +28,10 @@ axiosIns.interceptors.request.use(
     const accessToken = localStorage.getItem('accessToken')
     // const refreshToken = localStorage.getItem('refreshToken')
     
-    if (accessToken) {
-      // 표준 Authorization Bearer
+    // 호출 측에서 Authorization을 명시했다면 그대로 사용하고,
+    // 없는 경우에만 공통 토큰을 주입합니다.
+    const existingAuth = config.headers?.Authorization || config.headers?.authorization
+    if (!existingAuth && accessToken) {
       config.headers['Authorization'] = `Bearer ${accessToken}`
     }
     

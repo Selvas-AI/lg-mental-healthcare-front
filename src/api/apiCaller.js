@@ -50,19 +50,25 @@ export const counselorUpdate = async (params) => {
 }
 
 //? ===== 내담자 검사 (내담자용) 관리 API =====
-//! 내담자검사 세트 조회
-export const clientExamSet = async (params) => {
-    return await axiosIns.get('/api/examination/assessmentSet', { params })
+// 내담자검사 세트 조회
+export const clientExamSet = async ({ token }) => {
+    return await axiosIns.get('/api/examination/assessmentSet', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
 }
 
-//! 내담자검사 세트 결과 임시등록
-export const clientExamTempSave = async (params) => {
-    return await axiosIns.post('/api/examination/tempSave', { params })
+// 내담자검사 세트 결과 임시등록
+export const clientExamTempSave = async ({ token, params }) => {
+    return await axiosIns.post('/api/examination/tempSave', params, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
 }
 
-//! 내담자검사 세트 결과 등록
-export const clientExamSave = async (params) => {
-    return await axiosIns.post('/api/examination/save', { params })
+// 내담자검사 세트 결과 등록
+export const clientExamSave = async ({ token, params }) => {
+    return await axiosIns.post('/api/examination/save', params, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
 }
 
 //? ===== Dislike 관리 API =====
@@ -81,7 +87,7 @@ export const dislikeUpdate = async (params) => {
     return await axiosIns.post('/api/dislike/update', params)
 }
 
-//! Dislike 정보 삭제
+//! Dislike 정보 삭제 xx
 export const dislikeDelete = async (sessionSeq) => {
     return await axiosIns.post('/api/dislike/delete', { params: { sessionSeq } })
 }
@@ -195,5 +201,58 @@ export const sessionMngUpdate = async (sessionMngData) => {
 }
 
 //? ===== 내담자 검사 관리 API =====
+// 내담자 검사세트 결과 조회
+export const assessmentSetResult = async (setSeq) => {
+    return await axiosIns.get('/api/assessmentSet/result', { params: { setSeq } })
+}
+
+// 특정 내담자 검사세트 전체 조회
+export const assessmentSetList = async (clientSeq) => {
+    return await axiosIns.get('/api/assessmentSet/list', { params: { clientSeq } })
+}
+
+//! 내담자 검사세트 리스트 조회(목록정보 포함)
+export const assessmentSetListWithItem = async (setSeqList) => {
+    return await axiosIns.get('/api/assessmentSet/listWithItem', { params: { setSeqList } })
+}
+
+//! 내담자 검사세트 조회(목록정보 포함)
+export const assessmentSetFind = async (setSeq) => {
+    return await axiosIns.get('/api/assessmentSet/find', { params: { setSeq } })
+}
+
+//! 현재 진행중인 회기 그룹의 내담 검사세트 조회
+export const assessmentSetCurrentList = async (clientSeq) => {
+    return await axiosIns.get('/api/assessmentSet/currentList', { params: { clientSeq } })
+}
+
+//! 내담자검사 세트 링크 주소 수정
+export const assessmentSetUpdateUrl = async (params) => {
+    return await axiosIns.post('/api/assessmentSet/updateUrl', params)
+}
+
+//! 내담자검사 세트 종합의견 수정
+export const assessmentSetUpdateOverallInsight = async (params) => {
+    return await axiosIns.post('/api/assessmentSet/updateOverallInsight', params)
+}
+
+//! AI 종합의견 dislike 의견 수정
+export const assessmentSetUpdateOverallInsightDislike = async (params) => {
+    return await axiosIns.post('/api/assessmentSet/updateOverallInsightDislike', params)
+}
+
+// 내담자검사 세트 삭제
+export const assessmentSetDelete = async (setSeq) => {
+    return await axiosIns.post('/api/assessmentSet/delete', { setSeq })
+}
+
+// 내담자 검사 세트 등록
+export const assessmentSetCreate = async (params) => {
+    return await axiosIns.post('/api/assessmentSet/create', params)
+}
 
 //? ===== 문진표 관리 API =====
+// 문진표 목록 조회 (내담자 검사 세트 등록 파라미터 생성에 활용)
+export const assessmentList = async () => {
+    return await axiosIns.get('/api/assessment/list')
+}

@@ -71,7 +71,7 @@ function KeywordBubblePack({ data, onAIGenerate }) {
 
   const { width, height } = useMemo(() => ({
     width: 421,
-    height: 270,
+    height: 290,
   }), []);
 
   const nodes = useMemo(() => {

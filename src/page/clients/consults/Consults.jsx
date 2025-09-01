@@ -1,8 +1,8 @@
-import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
+import React, { useRef, useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete } from '@/api/apiCaller';
+import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete, assessmentList } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
 import './consults.scss';
 
@@ -89,9 +89,7 @@ function Consults() {
         showToastMessage('회기 식별자(sessionSeq)를 확인할 수 없습니다.');
         return;
       }
-      // 새 API 스펙에 맞춘 요청 바디 구성
-      // POST /api/session/update
-      // body: { sessionSeq, sessionDate, sessionStatus?, sessionType?, memo? }
+
       const payload = {
         sessionSeq: parseInt(sessionSeq, 10),
         sessionDate: recordData?.sessionDate,
@@ -99,8 +97,7 @@ function Consults() {
         ...(recordData?.sessionType ? { sessionType: recordData.sessionType } : {}),
         ...(recordData?.memo ? { memo: recordData.memo } : {}),
       };
-      // undefined 필드는 axios가 직렬화 시 포함하지 않지만, 방어적으로 정리 필요 시 아래와 같이 필터링 가능
-      // const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v !== undefined));
+
       const res = await sessionCurrentUpdate(payload);
       if (res?.code === 200) {
         // 수정 성공 후 최신 회기 목록으로 Recoil 상태 갱신
@@ -136,6 +133,8 @@ function Consults() {
   const [memoModalOpen, setMemoModalOpen] = useState(false); // 메모 수정 모달 상태
   const [confirmOpen, setConfirmOpen] = useState(false); // 공통 확인 모달 (녹취파일 삭제 등)
   const [globalEditorConfirm, setGlobalEditorConfirm] = useRecoilState(editorConfirmState);
+  const [nameToSeqMap, setNameToSeqMap] = useState({}); // 검사지명 -> seq 매핑
+  const [surveyRefreshKey, setSurveyRefreshKey] = useState(0); // 심리검사 목록 재조회 트리거 키
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
@@ -189,27 +188,58 @@ function Consults() {
     }
   }, [location.search]);
 
-  useLayoutEffect(() => {
+  // 탭 인디케이터 위치/너비 갱신 함수 (레이아웃/폰트 적용 지연 대비)
+  const updateTabIndicator = useCallback(() => {
     const currentTab = tabListRef.current[activeTab];
     const indicator = tabIndicatorRef.current;
     if (currentTab && indicator) {
       const tabWidth = currentTab.offsetWidth;
-      const tabLeft = currentTab.offsetLeft; 
+      const tabLeft = currentTab.offsetLeft;
       indicator.style.width = tabWidth + 'px';
       indicator.style.left = tabLeft + 'px';
     }
   }, [activeTab]);
+
+  // activeTab 변경 시 즉시/다음 프레임/약간 지연하여 재계산
+  useLayoutEffect(() => {
+    updateTabIndicator();
+    const raf = requestAnimationFrame(updateTabIndicator);
+    const tm = setTimeout(updateTabIndicator, 50);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(tm);
+    };
+  }, [updateTabIndicator]);
+
+  // 창 크기 변경 시 재계산
+  useEffect(() => {
+    window.addEventListener('resize', updateTabIndicator);
+    return () => window.removeEventListener('resize', updateTabIndicator);
+  }, [updateTabIndicator]);
+
+  // 폰트 로드 완료 후 재계산 (폰트 적용으로 탭 폭 변동하는 경우 대응)
+  useEffect(() => {
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => updateTabIndicator()).catch(() => {});
+    }
+  }, [updateTabIndicator]);
+
+  // URL 쿼리(tab) 변경 시 activeTab 동기화 (뒤로가기/새로고침 시 안정화)
+  useEffect(() => {
+    const newTabParam = new URLSearchParams(location.search).get('tab');
+    const idx = getTabIndexFromParam(newTabParam);
+    setActiveTab(idx);
+  }, [location.search]);
 
   // sessionSeq가 있을 때 상담관리 데이터와 회기 데이터, 오디오 데이터 병렬 조회
   useEffect(() => {
     const fetchSessionData = async () => {
       if (sessionSeq && clientId) {
         try {
-          // 세 API를 병렬로 호출
-          const [sessionMngResponse, sessionResponse, audioResponse] = await Promise.all([
+          // 상담관리, 회기 데이터 병렬 호출 (오디오는 조건부로 후속 호출)
+          const [sessionMngResponse, sessionResponse] = await Promise.all([
             sessionMngFind(sessionSeq),           // Transcript용 상담관리 데이터
             sessionFind(clientId, sessionSeq),   // TODO 관리용 회기 데이터
-            audioFind(sessionSeq).catch(() => null) // 오디오 데이터 (에러 시 null)
           ]);
           
           // 상담관리 데이터 설정
@@ -221,18 +251,25 @@ function Consults() {
           }
           
           // 회기 데이터 설정
+          let shouldFetchAudio = false;
           if (sessionResponse.code === 200) {
             setSessionData(sessionResponse.data);
             setCurrentSession(sessionResponse.data);
+            shouldFetchAudio = sessionResponse?.data?.todoTranscriptCreation === true;
           } else {
             console.error('회기 조회 실패:', sessionResponse.message);
             setSessionData(null);
             setCurrentSession(null);
           }
-          
-          // 오디오 데이터 설정
-          if (audioResponse?.code === 200) {
-            setAudioData(audioResponse.data);
+
+          // 오디오 데이터 설정: todoTranscriptCreation이 true일 때만 조회
+          if (shouldFetchAudio) {
+            const audioResponse = await audioFind(sessionSeq).catch(() => null);
+            if (audioResponse?.code === 200) {
+              setAudioData(audioResponse.data);
+            } else {
+              setAudioData(null);
+            }
           } else {
             setAudioData(null);
           }
@@ -252,6 +289,26 @@ function Consults() {
 
     fetchSessionData();
   }, [sessionSeq, clientId]);
+
+  // 검사지 리스트 매핑 1회 로드
+  useEffect(() => {
+    const loadAssessmentMap = async () => {
+      try {
+        const res = await assessmentList();
+        const arr = Array.isArray(res?.data?.data) ? res.data.data : res?.data || [];
+        const map = {};
+        arr.forEach(item => {
+          if (item?.assessmentName && item?.assessmentSeq != null) {
+            map[item.assessmentName] = item.assessmentSeq;
+          }
+        });
+        setNameToSeqMap(map);
+      } catch (e) {
+        console.error('검사지 목록 조회 실패:', e);
+      }
+    };
+    loadAssessmentMap();
+  }, []);
 
   const ActiveComponent = TAB_LIST[activeTab].component;
 
@@ -314,6 +371,7 @@ function Consults() {
                   className={activeTab === idx ? 'on' : ''}
                   tabIndex={0}
                   onClick={() => {
+                    if (idx === 2) return; //! daily는 클릭 이벤트 막음
                     const tabNames = ['counsel', 'survey', 'daily', 'document'];
                     const newQuery = new URLSearchParams(location.search);
                     newQuery.set('tab', tabNames[idx]);
@@ -341,14 +399,16 @@ function Consults() {
                 onOpenEdit={handleOpenEdit}
                 onRequestAudioDelete={() => setConfirmOpen(true)}
                 showToastMessage={showToastMessage}
+                refreshKey={surveyRefreshKey}
               />
             </div>
           </div>
         </div>
-        <div className="floating-btn" onClick={() => {
+        {/* //! 플로팅 버튼 주석처리  */}
+        {/* <div className="floating-btn" onClick={() => {
           setShowAiSummary(true);
           setSupportPanel(true);
-        }} style={{cursor:'pointer'}}></div>
+        }} style={{cursor:'pointer'}}></div> */}
       </div>
       <ClientRegisterModal
         open={registerOpen}
@@ -420,7 +480,19 @@ function Consults() {
         )}
       />
       {showSurveySendModal && (
-        <SurveySendModal modalOpen={showSurveySendModal} onClose={() => setShowSurveySendModal(false)} />
+        <SurveySendModal
+          modalOpen={showSurveySendModal}
+          onClose={() => setShowSurveySendModal(false)}
+          onCompleted={() => {
+            // 모달 완료 시 심리검사 목록 재조회 트리거
+            setSurveyRefreshKey(prev => prev + 1);
+          }}
+          sessiongroupSeq={sessionData?.sessiongroupSeq}
+          nameToSeqMap={nameToSeqMap}
+          clientId={clientId}
+          sessionSeq={sessionSeq}
+          showToastMessage={showToastMessage}
+        />
       )}
       <EditorModal
         open={memoModalOpen}
@@ -449,14 +521,24 @@ function Consults() {
         onCancel={() => setConfirmOpen(false)}
         onClose={() => setConfirmOpen(false)}
       />
-      {/* 전역 EditorConfirm (다른 페이지/컴포넌트에서 텍스트만 바꿔 열기) */}
+      {/* 전역 EditorConfirm (다른 페이지/컴포넌트에서 텍스트/콜백 바꿔 열기) */}
       <EditorConfirm
         open={globalEditorConfirm.open}
         title={globalEditorConfirm.title || '안내'}
         message={globalEditorConfirm.message || ''}
         confirmText={globalEditorConfirm.confirmText || '확인'}
-        onConfirm={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
-        onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
+        cancelText={globalEditorConfirm.cancelText}
+        onConfirm={() => {
+          try {
+            if (typeof globalEditorConfirm.onConfirm === 'function') {
+              globalEditorConfirm.onConfirm();
+            }
+          } finally {
+            setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }));
+          }
+        }}
+        onCancel={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }))}
+        onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }))}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>

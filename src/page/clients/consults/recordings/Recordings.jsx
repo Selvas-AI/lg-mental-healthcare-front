@@ -5,7 +5,8 @@ import SearchTranscript from "./SearchTranscript";
 import ToastPop from '@/components/ToastPop';
 import SectionSummaryPanel from './SectionSummaryPanel';
 import { useSetRecoilState, useRecoilState } from 'recoil';
-import { supportPanelState, recordingsTabState } from '@/recoil';
+import { supportPanelState, recordingsTabState, editorConfirmState } from '@/recoil';
+import EditorConfirm from '../../components/EditorConfirm';
 import AiAnalysis from "./AiAnalysis";
 import AiTranscriptPanel from "./AiTranscriptPanel";
 import { audioDownload, transcriptFind, audioFind, sessionFind, sessionMngFind, sessionMngUpdate } from '@/api/apiCaller';
@@ -28,6 +29,8 @@ function Recordings() {
   const [showAiSummaryPanel, setShowAiSummaryPanel] = useState(false);
   const [showAiIssuePanel, setShowAiIssuePanel] = useState(false);
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  const setEditorConfirm = useSetRecoilState(editorConfirmState);
+  const [globalEditorConfirm, setGlobalEditorConfirm] = useRecoilState(editorConfirmState);
   
   // 오디오 URL 상태
   const [audioUrl, setAudioUrl] = useState(null);
@@ -522,6 +525,22 @@ function Recordings() {
       // AiAnalysis 입력값은 Text 필드로 저장
       const counselingSummaryText = aiSummaryData.summary || '';
       const concernTopicText = aiSummaryData.issue || '';
+      // 글자수 제한 검증 (CustomTextarea 기본값과 동일하게 500자 기준)
+      const LIMIT_SUMMARY = 500;
+      const LIMIT_ISSUE = 500;
+      const overSummary = counselingSummaryText.length > LIMIT_SUMMARY;
+      const overIssue = concernTopicText.length > LIMIT_ISSUE;
+      if (overSummary || overIssue) {
+        const fieldLabel = overSummary ? '상담요약' : '고민주제';
+        setEditorConfirm({
+          open: true,
+          title: '안내',
+          message: `${fieldLabel}의 내용이 입력 가능 글자수를 초과했습니다. 글자수를 줄인 후 저장해주세요.`,
+          confirmText: '확인',
+        });
+        setAiSaveLoading(false);
+        return;
+      }
       if (!sessionSeq) throw new Error('sessionSeq 없음');
       // 필수값 체크
       if (!counselingSummaryText && !concernTopicText) {
@@ -659,6 +678,15 @@ function Recordings() {
         />
         <ToastPop message={toastMessage} showToast={showToast} />
       </div>
+        {/* 전역 EditorConfirm: .inner 바깥 영역에 렌더링 */}
+        <EditorConfirm
+          open={globalEditorConfirm.open}
+          title={globalEditorConfirm.title || '안내'}
+          message={globalEditorConfirm.message || ''}
+          confirmText={globalEditorConfirm.confirmText || '확인'}
+          onConfirm={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
+          onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false }))}
+        />
         {/* 상담요약 패널 */}
         <AiTranscriptPanel 
           status="complete"
