@@ -1,0 +1,244 @@
+@import "@/styles/common/common.scss";
+@import "@/styles/common/layout.scss";
+
+/* 회원가입 */
+.wrapper {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(0deg, #F4F8F8 0%, #F4F8F8 100%), $gray0;
+    &::before {
+        content: '';
+        position: fixed;
+        top: -25vw;
+        left: -10vw;
+        width: 122.6rem;
+        height: 140rem;
+        transform: rotate(-37.239deg);
+        border-radius: 140rem;
+        opacity: 0.5;
+        background: rgba(167, 235, 189, 0.40);
+        filter: blur(16.5rem);
+        z-index: 0;
+    }
+    &::after {
+        content: '';
+        position: fixed;
+        bottom: -29vw;
+        right: 9vw;
+        width: 56.6rem;
+        height: 121.8rem;
+        transform: rotate(76.916deg);
+        border-radius: 121.8rem;
+        background: rgba(192, 219, 249, 0.40);
+        filter: blur(20.2rem);
+        z-index: 0;
+    }
+    &.signup {
+        main {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            @include flexbox(row, center, center);
+            > .inner {
+                position: relative;
+                width: 45.2rem;
+                margin: 0 auto;
+                padding-top: 10rem;
+                padding-bottom: 11.1rem;
+                z-index: 1;
+                .logo {
+                    margin-bottom: 3rem;
+                    a {
+                        @include flexbox(column, center, center);
+                        gap: .8rem;
+                        .img-logo {
+                            width: 7.4rem;
+                            height: 7.4rem;
+                        }
+                        .txt-logo {
+                            width: 8.9rem;
+                            height: 2.8rem;
+                        }
+                    }
+                }
+                > .btn-wrap {
+                    margin-bottom: 2rem;
+                    .back-btn {
+                        width: 4.4rem;
+                        height: 4.4rem;
+                        border-radius: 50%;
+                        border: 1px solid $gray50;
+                        background: url(@/assets/images/icon/back.svg) no-repeat center/2.4rem $gray0;
+                        box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    }
+                }
+                .title {
+                    @include flexbox(column, center, center);
+                    gap: .8rem;
+                    margin-bottom: 3.2rem;
+                    strong {
+                        font-size: 3rem;
+                        font-weight: 700;
+                    }
+                    p {
+                        font-weight: 500;
+                        color: $gray800;
+                    }
+                }
+                .form-section {
+                    width: 100%;
+                    padding: 3.8rem 3.6rem 3.6rem;
+                    @include flexbox(column, center, center);
+                    border-radius: 1.6rem;
+                    background: $gray0;
+                    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    .tit-wrap {
+                        width: 100%;
+                        margin-bottom: 5rem;
+                        @include flexbox(column, flex-start, flex-start);
+                        gap: .4rem;
+                        strong {
+                            font-size: 2.4rem;
+                            font-weight: 700;
+                        }
+                        p {
+                            font-weight: 500;
+                            color: $gray800;
+                        }
+                    }
+                    .form-content {
+                        width: 100%;
+                        margin-bottom: 0;
+                        .input-wrap {
+                            width: 100%;
+                            @include flexbox(column, flex-start, flex-start);
+                            gap: .6rem;
+                            label {
+                                font-weight: 700;
+                                color: $gray800;
+                            }
+                            input {
+                                width: 100%;
+                                height: 5.2rem;
+                                padding: 0 1.4rem;
+                            }
+                            p {
+                                font-size: 1.4rem;
+                                font-weight: 500;
+                                color: $gray400;
+                                display: block;
+                            }
+                            &.id-wrap {
+                                margin-bottom: 2.4rem;
+                                &.error {
+                                    input {
+                                        border-color: $red500;
+                                    }
+                                    p {
+                                        color: #FF0606;
+                                        display: block;
+                                    }
+                                }
+                            }
+                            &.pw-wrap {
+                                margin-bottom: 2.4rem;
+                                &.error {
+                                    input {
+                                        border-color: $red500;
+                                    }
+                                    p {
+                                        color: #FF0606;
+                                        display: block;
+                                    }
+                                }
+                            }
+                            &.chk-wrap {
+                                &.error {
+                                    input {
+                                        border-color: $red500;
+                                    }
+                                    p {
+                                        color: #FF0606;
+                                        display: block;
+                                    }
+                                }
+                            }
+                        }
+                        button {
+                            margin-top: 5rem;
+                        }
+                    }
+                    .sign-up {
+                        @include flexbox(row, flex-start, center);
+                        gap: .6rem;
+                        p {
+                            font-size: 1.4rem;
+                            font-weight: 500;
+                            color: $gray400;
+                        }
+                        .sign-up-btn {
+                            font-size: 1.4rem;
+                            font-weight: 700;
+                            color: $gray400;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 모달(팝업) 공통 레이아웃 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    @include flexbox(row, center, center);
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 999;
+    &.on {
+        display: flex;
+    }
+    .inner {
+        position: relative;
+        width: 80rem;
+        padding: 3.6rem;
+        border-radius: 1.6rem;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        .modal-hd {
+            @include flexbox(row, space-between, center);
+            margin-bottom: 2rem;
+            strong {
+                font-size: 3rem;
+                font-weight: 700;
+            }
+            .close-btn {
+                width: 3.2rem;
+                height: 3.2rem;
+                border: none;
+                background: url(@/assets/images/icon/close.svg) no-repeat center/contain;
+            }
+        }
+    }
+}
+
+/* 비밀번호 입력 조건 안내 모달(팝업) */
+.modal {
+    &.pw-info {
+        .info-wrap {
+            ul {
+                padding-top: 2rem;
+                padding-bottom: 3rem;
+                li {
+                    font-size: 2.2rem;
+                    font-weight: 500;
+                }
+            }
+        }
+    }
+}

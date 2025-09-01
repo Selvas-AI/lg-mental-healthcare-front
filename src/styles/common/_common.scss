@@ -1,0 +1,1481 @@
+/* 노트북 */
+@mixin notebook{
+    @media (max-width: 1280px){ 
+        @content;
+    }
+}
+
+/* 폰트 */
+$pretendard: 'Pretendard';
+
+/* 컬러 */
+$black: #000;
+$white: #fff;
+$bg: #F7F9F9;
+
+$gray950 : #1C1D1E;
+$gray900 : #3B3C3E;
+$gray800 : #434547;
+$gray700 : #4C5052;
+$gray600 : #5A626A;
+$gray500 : #69757B;
+$gray400 : #7A8A93;
+$gray300 : #A7B5BC;
+$gray200 : #CBD5DA;
+$gray100 : #DCE4E7;
+$gray50 : #EFF2F3;
+$gray0 : #FFFFFF;
+
+$secondary950: #072C18;
+$secondary900: #184F31;
+$secondary800: #1A6139;
+$secondary700: #1B7A44;
+$secondary600: #1E9B52;
+$secondary500: #32D074;
+$secondary400: #52D689;
+$secondary300: #8CE9B3;
+$secondary200: #BEF4D4;
+$secondary100: #DEFAE9;
+$secondary50: #F1FCF5;
+
+$blue950: #1A2551;
+$blue900: #233985;
+$blue800: #253EA8;
+$blue700: #264BCF;
+$blue600: #2F5FE1;
+$blue500: #447DED;
+$blue400: #68A0F2;
+$blue300: #7FB2F6;
+$blue200: #C2D9FB;
+$blue100: #DDE9FC;
+$blue50: #F0F5FE;
+
+$yellow950: #412107;
+$yellow900: #704113;
+$yellow800: #844F0F;
+$yellow700: #9F6509;
+$yellow600: #C88C06;
+$yellow500: #E8B60A;
+$yellow400: #F8CF17;
+$yellow300: #FBE144;
+$yellow200: #FDF18B;
+$yellow100: #FDF9C4;
+$yellow50: #FEFCE8;
+
+$orange950: #441306;
+$orange900: #7E2C10;
+$orange800: #9D340F;
+$orange700: #C64008;
+$orange600: #EF5807;
+$orange500: #FE7311;
+$orange400: #FF8D2E;
+$orange300: #FFBB71;
+$orange200: #FFD7A8;
+$orange100: #FFEDD4;
+$orange50: #FFF7ED;
+
+$red950: #4B0404;
+$red900: #BF0000;
+$red800: #CE0000;
+$red700: #DF000F;
+$red600: #EC0017;
+$red500: #FF0606;
+$red400: #FF3434;
+$red300: #FF6565;
+$red200: #FF9F9F;
+$red100: #FFCFCF;
+$red50: #FFE5E5;
+
+@mixin flexbox($direction, $justfy, $align){
+	display:flex;
+    flex-direction: $direction;
+    justify-content: $justfy;
+    align-items: $align;
+}
+
+@mixin ellipsis($num: 1) {
+    @if ($num == 1) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    } @else {
+        display: -webkit-box;
+        overflow: hidden;
+        // word-break: keep-all;
+        text-overflow: ellipsis;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: $num;
+    }
+}
+
+*, *::before, *::after {box-sizing: border-box;}
+
+html {
+    font-size: 10px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: $pretendard;
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    color: $gray950;
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 6px;
+        background: $gray200;
+    }
+}
+
+/* 요소 숨기기 */
+.hide {
+    position: absolute; 
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: polygon(0 0, 0 0, 0 0);
+}
+
+.d-pc{display: block;}
+.d-mb{display: none;}
+
+@include notebook{
+    .d-pc{display: none;}
+    .d-mb{display: block;}
+}
+
+/* 버튼 */
+button {
+    font-family: $pretendard;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-radius: .8rem;
+    &.h36 {
+        height: 3.6rem;
+    }
+    &.h40 {
+        height: 4rem;
+    }
+    &.h44 {
+        height: 4.4rem;
+    }
+    &.h48 {
+        height: 4.8rem;
+    }
+    &.type01 {
+        padding: 0 .8rem;
+        border: 1px solid $gray100;
+        background: url(@/assets/images/icon/ixi.svg) no-repeat center left 8px/20px $gray0;
+        transition: border .25s;
+        span {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-left: 2.4rem;
+            background: linear-gradient(180deg, #8B24FF 0%, #FE58FF 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        &:hover {
+            border: 1px solid #B739FF;
+        }
+    }
+    &.type02 {
+        width: 3.6rem;
+        height: 3.6rem;
+        border: 1px solid $gray200;
+        background: url(@/assets/images/icon/file_upload.svg) no-repeat center $gray0;
+    }
+    &.type03 {
+        padding: 0 4rem 0 1.4rem;
+        color: $gray800;
+        border: 1px solid $gray200;
+        background: url(@/assets/images/icon/file_upload.svg) no-repeat center right 1.2rem/24px $gray0;
+        transition: border .25s;
+        &:hover {
+            border: 1px solid $gray400;
+        }
+    }
+    &.type04 {
+        width: 15.3rem;
+        height: 5.2rem;
+        color: $gray800;
+        border: 1px solid $gray200;
+        background: $gray0;
+        transition: border .25s;
+        &:hover {
+            border: 1px solid $gray400;
+        }
+    }
+    &.type05 {
+        height: 4rem;
+        padding: 0 1.4rem;
+        color: $gray0;
+        background: $gray950;
+        transition: background .25s;
+        &:hover {
+            background: $gray700;
+        }
+        &.white {
+            color: $gray800;
+            border: 1px solid $gray200;
+            background: $gray0;
+            transition: border .25s;
+            &:hover {
+                border: 1px solid #7A8A93;
+                background: $gray0;
+            }
+        }
+    }
+    &.type06 {
+        width: 16.7rem;
+        height: 4.4rem;
+        color: $gray950;
+        background: $gray50;
+        transition: background .25s;
+        &:hover {
+            background: rgba(239, 242, 243, 0.50);
+        }
+        &.black {
+            color: $gray0;
+            background: $gray950;
+            transition: background .25s;
+            &:hover {
+                background: $gray700;
+            }
+        }
+        &:disabled {
+            color: $gray200;
+            background: rgba(239, 242, 243, 0.70);
+            cursor: default;
+        }
+    }
+    &.type07 {
+        width: 10.4rem;
+        height: 4.8rem;
+        color: $gray950;
+        background: $gray50;
+        transition: background .25s;
+        &:hover {
+            background: rgba(239, 242, 243, 0.50);
+        }
+        &:disabled {
+            color: $gray200;
+            background: rgba(239, 242, 243, 0.70);
+            cursor: default;
+        }
+        &.black {
+            color: $gray0;
+            background: $gray950;
+            &:hover {
+                background: $gray700;
+            }
+            &:disabled {
+                background: $gray200;
+                cursor: default;
+            }
+        }
+    }
+    &.type08 {
+        width: 36.2rem;
+        height: 5.2rem;
+        color: $gray950;
+        border-radius: 1rem;
+        background: $gray50;
+        transition: background .25s;
+        &:hover {
+            background: rgba(239, 242, 243, 0.50);
+        }
+        &.black {
+            color: $gray0;
+            background: $gray950;
+            &:hover {
+                background: $gray700;
+            }
+        }
+    }
+    &.type09 {
+        // width: 15.3rem;
+        padding: 0 2rem;
+        height: 5.2rem;
+        color: $gray0;
+        background: $secondary500;
+        transition: background .25s;
+        &:hover {
+            background: $secondary300;
+        }
+    }
+    &.type10 {
+        width: 100%;
+        height: 5.2rem;
+        color: $gray0;
+        background: $gray950;
+        transition: background .25s;
+        &:disabled {
+            background: $gray200;
+            cursor: default;
+            &:hover {
+                background: $gray200;
+            }
+        }
+        &:hover {
+            background: $gray700;
+        }
+    }
+    &.type11 {
+        padding: 0 3.8rem 0 1.4rem;
+        color: $gray0;
+        background: url(@/assets/images/icon/plus_wt.svg) no-repeat center right 1.2rem/2.4rem $gray950;
+        transition: background .25s;
+        &:hover {
+            background-color: $gray700;
+        }
+        &.white {
+            color: $gray800;
+            border: 1px solid $gray200;
+            background: url(@/assets/images/icon/plus_g800.svg) no-repeat center right 1.2rem/2.4rem $gray0;
+            transition: border .25s;
+            &:hover {
+                border: 1px solid #7A8A93;
+                background: url(@/assets/images/icon/plus_g800.svg) no-repeat center right 1.2rem/2.4rem $gray0;
+            }
+        }
+    }
+    &.type12 {
+        padding: 0 4rem 0 1.4rem;
+        color: $gray800;
+        border: 1px solid $gray200;
+        background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center right 1.2rem/24px $gray0;
+        transition: border .25s;
+        &:hover {
+            border: 1px solid $gray400;
+        }
+        &:disabled {
+            opacity: 0.5;
+            background-color: $gray50;
+            cursor: default;
+            &:hover {
+                border: 1px solid $gray200;
+            }
+        }
+    }
+}
+
+/* 텍스트, 패스워드, 라디오, 체크박스 */
+.input-wrap {
+    position: relative;
+    input[type="text"], input[type="password"], input[type="number"] {
+        font-family: $pretendard;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray950;
+        padding: 0 1.2rem;
+        height: 3.8rem;
+        border-radius: .8rem;
+        border: 1px solid $gray100;
+        background: $gray0;
+        &::placeholder {
+            color: $gray400;
+        }
+        &:focus {
+            border: 1px solid $gray400;
+        }
+    }
+    &.dim {
+        input[type="text"], input[type="password"], input[type="number"] {
+            border: 1px solid $gray100;
+            background: rgba(243, 243, 243, 0.30);
+            &:focus {
+                border: 1px solid $gray100;
+                background: $gray0;
+            }
+            &.has-value {
+                border: 1px solid $gray100;
+                background: $gray0;
+            }
+        }
+    }
+    &.search {
+        input[type="text"], input[type="password"], input[type="number"] {
+            padding: 0 3.8rem 0 1.4rem;
+        }
+        .search-btn {
+            top: 50%;
+            right: 1.4rem;
+            transform: translateY(-50%);
+            position: absolute;
+            width: 2.4rem;
+            height: 2.4rem;
+            border: none;
+            background: url(@/assets/images/icon/search.svg) no-repeat center/contain;
+        }
+        &.word-move {
+            input[type="text"], input[type="password"] {
+                padding: 0 14.1rem 0 1.4rem;
+            }
+            .move-helper {
+                position: absolute;
+                top: 50%;
+                right: 4.8rem;
+                transform: translateY(-50%);
+                @include flexbox(row, center, center);
+                gap: .8rem;
+                p {
+                    font-size: 1.4rem;
+                    font-weight: 500;
+                    color: $gray400;
+                }
+                .btn-wrap {
+                    @include flexbox(row, center, center);
+                    button {
+                        width: 2.4rem;
+                        height: 2.4rem;
+                        border: 1px solid $gray200;
+                        &.up-btn {
+                            border-radius: .4rem 0 0 .4rem;
+                            background: url(@/assets/images/icon/arrow_up.svg) no-repeat center/2rem $gray0;
+                        }
+                        &.down-btn {
+                            border-radius: 0 .4rem .4rem 0;
+                            background: url(@/assets/images/icon/arrow_down.svg) no-repeat center/2rem $gray0;
+                            border-left: 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    &.radio, &.checkbox{
+        input[type="radio"], input[type="checkbox"]{
+            overflow: hidden;
+            position: absolute;
+            clip: rect(0, 0, 0, 0);
+            clip-path: polygon(0 0, 0 0, 0 0);
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            + label{
+                position: relative;
+                padding-left: 3.2rem;
+                font-family: $pretendard;
+                font-size: 1.6rem;
+                white-space: nowrap;
+                cursor: pointer;
+                &::before, &::after{
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    box-sizing: border-box;
+                }
+                &::before{
+                    width: 2rem;
+                    height: 2rem;
+                    transform: translateY(-50%);
+                    background: $gray0;
+                    border: 2px solid $gray200;
+                }
+            }
+            &:focus-visible {
+                + label::before {
+                    outline: 2px solid $black;
+                    outline-offset: 2px;
+                }
+            }
+        }
+    }
+    &.radio{
+        input[type="radio"]{
+            + label{
+                &::before, &::after{border-radius: 50%;}
+                &::before{left: 0;}
+                &::after{
+                    width: 1rem;
+                    height: 1rem;
+                    left: .5rem;
+                    transform: translateY(-50%) scale(0);
+                    background: $secondary500;
+                }
+            }
+            &:checked{
+                + label{
+                    &::before{border-color: $secondary500;}
+                    &::after{transform: translateY(-50%) scale(1);}
+                }
+            }
+            &:disabled {
+                cursor: default;
+                + label {
+                    cursor: default;
+                    &::before{
+                        border-color: $gray200;
+                        background: $gray50;
+                    }
+                    &::after{background:$gray200;}
+                }
+            }
+        }
+    }
+    /* 심리 검사 라디오 버튼 */
+    &.radio {
+        &.type01 {
+            input[type="radio"]{
+                + label{
+                    width: 6rem;
+                    height: 6rem;
+                    padding: 0;
+                    font-size: 2rem;
+                    font-weight: 500;
+                    color: #5A5C63;
+                    border: 2px solid #D9DEE2;
+                    border-radius: 50%;
+                    background: $gray0;
+                    @include flexbox(row, center, center);
+                    &::before, &::after{
+                        content: none;
+                    }
+                }
+                &:checked{
+                    + label{
+                        color: $secondary600;
+                        border-color: $secondary500;
+                        background: rgba(50, 208, 116, 0.1);
+                    }
+                }
+            }
+        }
+    }
+    &.checkbox{        
+        input[type="checkbox"]{
+            + label{
+                &::before{border-radius: 3px;}
+                &::after{
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 3px;
+                    opacity: 0;
+                    background: url(@/assets/images/icon/check.svg) no-repeat center/1.7rem $secondary500;
+                }
+            }
+            &:checked{
+                + label{
+                    &::before{border-color: $secondary500;}
+                    &::after{opacity: 1;}
+                }
+            }
+            &:disabled {
+                + label {
+                    &::before{
+                        border-color: $gray200;
+                        background: $gray50;
+                    }
+                    &::after{
+                        border: 2px solid $gray200;
+                        background-color:$gray200;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.input-cont {
+    @include flexbox(row, flex-start, center);
+    gap: .8rem;
+    width: 100%;
+    height: 100%;
+    /* 이메일 폼 */
+    &.email {
+        .input-wrap {
+            height: 5.2rem;
+            &:first-of-type {
+                width: 33.8rem;
+            }
+            &:nth-of-type(2){
+                width: 17.5rem;
+            }
+            > span {
+                font-size: 1.8rem;
+                font-weight: 500;
+                color: $gray800;
+            }
+            input {
+                width: 100%;
+                height: 100%;
+            }
+        }
+    }
+    /* 보호자 정보 추가 */
+    &.input-add {
+        .input-wrap {
+            height: 5.2rem;
+            &:nth-of-type(2) {
+                width: 17.7rem;
+            }
+            &:nth-of-type(3) {
+                width: 29.8rem;
+            }
+            input {
+                width: 100%;
+                height: 100%;
+            }
+        }
+        .remove-btn {
+            width: 5.2rem;
+            height: 5.2rem;
+            border-radius: .8rem;
+            border: 1px solid $gray100;
+            background: url(@/assets/images/icon/minus.svg) no-repeat center/2.4rem $gray0;
+            cursor: pointer;
+        }
+        & + .add-btn {
+            width: 100%;
+            height: 5.2rem;
+            border-radius: .6rem;
+            background: rgba(239, 242, 243, 0.50);
+            span {
+                padding-left: 2.8rem;
+                position: relative;
+                font-weight: 700;
+                color: $gray400;
+                background: url(@/assets/images/icon/plus.svg) no-repeat center left/24px;
+            }
+        }
+    }
+}
+
+/* 라디오 토글 */
+.raido-toggle {
+    position: relative;
+    @include flexbox(row, center, center);
+    gap: .8rem;
+    .toggle-btn {
+        input[type="radio"] {
+            overflow: hidden;
+            position: absolute;
+            clip: rect(0, 0, 0, 0);
+            clip-path: polygon(0 0, 0 0, 0 0);
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            + label {
+                display: inline-block;
+                width: 8.6rem;
+                height: 5.2rem;
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: $gray600;
+                border-radius: 1rem;
+                @include flexbox(row, center, center);
+                background: $gray50;
+                cursor: pointer;
+                transition: all .25s;
+            }
+            &:checked {
+                + label {
+                    color: $gray0;
+                    background: $secondary500;
+                }
+            }
+        }
+    }
+    &.type01 {
+        width: 100%;
+        gap: .4rem;
+        .toggle-btn {
+            width: calc(50% - .2rem);
+            input[type="radio"] {
+                + label  {
+                    width: 100%;
+                    height: 4rem;
+                    font-size: 1.6rem;
+                    font-weight: 500;
+                }
+            }
+        }
+    }
+}
+
+/* 토글(스위치) 버튼 */
+.switch-wrap {
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: .6rem;
+        cursor: pointer;
+        input[type="checkbox"] {
+            margin: 3px 3px 3px 4px;
+            appearance: none;
+            position: relative;
+            background: $gray200;
+            border-radius: 1rem;
+            width: 3rem;
+            height: 1.8rem;
+            &::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 2px;
+                transform: translateY(-50%);
+                width: 1.4rem;
+                height: 1.4rem;
+                border-radius: 50%;
+                background-color: $gray0;
+                transition: all 0.25s linear;
+                z-index: 1;
+                cursor: pointer;
+            }
+            &:checked {
+                background-color: $gray800;
+                &::before {
+                    left: calc(100% - 1.6rem);
+                }
+            }
+        }
+        span {
+            font-weight: 700;
+            color: $gray800;
+        }
+    }
+}
+
+/* 위기 단계 태그 */
+span {
+    &.tag {
+        display: inline-block;
+        padding: .4rem .8rem;
+        border-radius: .6rem;
+        font-size: 1.6rem;
+        font-weight: 700;
+        &.safe {
+            color: $blue500;
+            background: $blue100;
+        }
+        &.caution {
+            color: $yellow500;
+            background: $yellow100;
+        }
+        &.danger {
+            color: $orange500;
+            background: $orange100;
+        }
+        &.critical {
+            color: $red500;
+            background: $red50;
+        }
+    }
+}
+
+/* 커스텀 셀렉트 */
+.select-wrap {
+    .select-box{ 
+        position: relative;
+        width: 17.7rem;
+        z-index: 10;
+        cursor: pointer;
+        .select-item{
+            position: relative;
+            width: 100%;
+            height: 5.2rem;
+            padding: 0 1.4rem;
+            font-weight: 500;
+            color: $gray400;
+            border-radius: 8px;
+            border: 1px solid $gray100;
+            background: $gray0;
+            overflow: hidden;
+            @include flexbox(row, flex-start, center);
+            gap: 2.8rem;
+            z-index: 1;
+            transition: border 0.25s, border-bottom 0s ease .25s, border-radius 0s ease .25s;
+            &::after{
+                position: absolute;
+                content: '';
+                width: 2.4rem;
+                height: 2.4rem;
+                right: 1.4rem;
+                top: 50%;
+                transform: translateY(-50%);
+                background: url(@/assets/images/icon/arrow_down.svg) no-repeat center;
+                transition: all .25s;
+            }
+            &.on{
+                border: 1px solid $gray800;
+                border-bottom: none;
+                border-radius: 8px 8px 0 0;
+                transition: border 0.25s ;
+                & + .option-list {
+                    border: 1px solid $gray800;
+                    border-top: none;
+                }
+                &::after{
+                    transform: translateY(-50%) rotate(180deg);
+                }
+            }
+        }
+        .option-list{
+            width: 100%;
+            position: absolute;
+            top: 5.2rem;
+            border-radius: 0 0 8px 8px;
+            background: $gray0;
+            width: 100%;
+            max-height: 26rem;
+            border-top: none;
+            overflow-y: auto;
+            display: none;
+            > li{
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                height: 5.2rem;
+                padding: 0 1.4rem;
+                transition: all .25s;
+                a {
+                    width: 100%;
+                    height: 100%;
+                    @include flexbox(row, flex-start, center);
+                    font-size: 1.8rem;
+                    font-weight: 500;
+                    color: $gray800;
+                    // gap: 2.8rem;
+                    // span {
+                    //     position: relative;
+                    //     &:first-of-type {
+                    //         font-size: 1.8rem;
+                    //         font-weight: 500;
+                    //         color: $gray800;
+                    //         &::before {
+                    //             content: "";
+                    //             position: absolute;
+                    //             top: 50%;
+                    //             transform: translateY(-50%);
+                    //             right: -1.4rem;
+                    //             width: 1px;
+                    //             height: 1.4rem;
+                    //             background: $gray100;
+                    //         }
+                    //     }
+                    //     &:last-of-type {
+                    //         font-weight: 500;
+                    //         color: $gray400;
+                    //     }
+                    // }
+                }
+                &:hover{
+                    background: $gray50;
+                    transition: all .25s;
+                }
+                &.on {
+                    a {
+                        font-weight: 700;
+                        color: $gray800;
+                    }
+                }
+                &.disabled {
+                    &:hover {
+                        background: $gray0;
+                    }
+                }
+            }
+        }
+    }
+    &.type01 {
+        .select-box {
+            width: 12rem;
+            .select-item {
+                height: 4rem;
+                padding: 0 1.2rem 0 1.4rem;
+                color: $gray800;
+                font-size: 1.8rem;
+                font-weight: 600;
+                &::after {
+                    right: 1.2rem;
+                }
+            }
+            .option-list {
+                top: 4rem;
+                max-height: 20.1rem;
+                > li {
+                    height: 4rem;
+                    &.on {
+                        a {
+                            font-weight: 700;
+                        }
+                    }
+                    a {
+                        font-size: 1.8rem;
+                        color: $gray800;
+                        font-weight: 500;
+                    }
+                }
+            }
+        }
+    }
+    &:not(.type01) {
+        .select-box {
+            .select-item.selected-custom {
+                color: $gray950;
+            }
+        }
+    }
+    &.disabled {
+        .select-box {
+            .select-item {
+                background: $gray50;
+                cursor: default;
+            }
+        }
+    }
+}
+
+/* 커스텀 textarea */
+.editor-wrap {
+    .editor {
+        position: relative;
+        height: 25.6rem;
+        padding: 1.2rem 1.4rem;
+        margin-bottom: .6rem;
+        color: $gray800;
+        font-weight: 500;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        word-break: break-word;
+        outline: none;
+        border-radius: .8rem;
+        border: 1px solid $gray50;
+        background: rgba(255, 255, 255, 0.70);
+        overflow-y: auto;
+        &:empty {
+            &::before {
+                content: attr(data-placeholder);
+                color: $gray400;
+                font-weight: 500;
+                line-height: 1.8;
+                pointer-events: none;
+                display: block;
+                white-space: pre-wrap;
+            }
+        }
+        .bullet-line {
+            position: relative;
+            padding-left: 1.8rem;
+            font-weight: 500;
+            color: $gray800;
+            line-height: 1.8;
+            &::before {
+                content: '・';
+                position: absolute;
+                left: 0;
+                top: 0;
+                font-size: 1.6rem;
+                font-weight: 500;
+                line-height: 1.8;
+                color: $gray800;
+            }
+        }
+    }
+    .current-info {
+        @include flexbox (row, space-between, center);
+        .warning {
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: #FF0606;
+            opacity: 0;
+        }
+        .count {
+            text-align: right;
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: $gray400;
+        }
+    }
+    &.over {
+        .editor {
+            border: 1px solid #FF0606;
+        }
+        .current-info {
+            .warning {
+                opacity: 1;
+            }
+            .count {
+                .chk-byte {
+                    color: #FF0606;
+                }
+            }
+        }
+    }
+}
+
+/* 수정 버튼 */
+.edit-btn {
+    position: relative;
+    font-size: 1.6rem;
+    color: $gray400;
+    @include flexbox(row, center, center);
+    gap: .2rem;
+    &::after {
+        content: "";
+        display: inline-block;
+        width: 1.2rem;
+        height: 1.2rem;
+        background: url(@/assets/images/icon/arrow_right.svg) no-repeat center/contain;
+    }
+}
+
+/*토스트 메시지*/
+.toast-pop {
+    opacity: 0;
+    position: fixed;
+    bottom: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 44rem;
+    height: 6.7rem;
+    padding: 0 1.6rem;
+    color: $gray0;
+    font-size: 1.8rem;
+    font-weight: 500;
+    text-align: center;
+    @include flexbox(column, center, center);
+    border-radius: 1.4rem;
+    background: rgba(28, 29, 30, 0.70);
+    backdrop-filter: blur(7px);
+    transition: all 0.5s;
+    z-index: 999;
+    &.active {
+        opacity: 100%;
+        bottom: 6rem;
+    }
+}
+
+/* 페이지네이션 */
+/* pagenation */
+.pagination{
+    padding: 4rem 0 2rem;
+    &-inner{
+        @include flexbox(row, center, center);
+        > div{
+            @include flexbox(row, flex-start, center);
+            a{
+                width: 3.6rem;
+                height: 3.6rem;
+                font-size: 1.8rem;
+                font-weight: 500;
+                border-radius: 1rem;
+                background: transparent;
+                @include flexbox(row, center, center);
+                transition: all .25s;
+            }
+            span {
+                display: inline-block;
+                text-align: center;
+                width: 3.6rem;
+                font-size: 1.8rem;
+                font-weight: 500;
+            }
+            &.page-links {
+                a {
+                    &.on {
+                        background: $gray0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 우측 하단 플로팅 버튼 */
+.floating-btn {
+    position: fixed;
+    right: 6rem;
+    bottom: 6rem;
+    width: 8rem;
+    height: 8rem;
+    border-radius: 50%;
+    background: url(@/assets/images/common/ixi_btn.svg) no-repeat center/contain;
+    box-shadow: 0px 4px 12px 0px rgba(185, 122, 255, 0.60);
+    z-index: 10;
+    cursor: pointer;
+}
+
+/* 불릿 */
+.bullet-line {
+    position: relative;
+    padding-left: 1.8rem;
+    font-weight: 500;
+    color: $gray800;
+    line-height: 1.8;
+    &::before {
+        content: '・';
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-size: 1.6rem;
+        font-weight: 500;
+        line-height: 1.8;
+        color: $gray800;
+    }
+}
+
+/* 달력(데이트피커) */
+.datepicker-wrap {
+    .datepicker {
+        width: 100%;
+        height: 5.2rem;
+        padding: 0 1.4rem;
+        font-family: $pretendard;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray950;
+        border-radius: .8rem;
+        border: 1px solid $gray100;
+        background: $gray0;
+        &::placeholder {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: $gray400;
+        }
+    }
+}
+
+.ui-widget.ui-widget-content {
+    width: 35.8rem;
+    padding: 2.4rem 2.4rem 1.6rem;
+    border: 1px solid $gray800;
+    border-radius: .8rem;
+    background: $gray0;
+    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+}
+.ui-widget-header {
+    border: none;
+    background: transparent;
+    .ui-datepicker-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #50575D;
+        .ui-datepicker-month {
+            display: inline-block;
+            text-indent: -0.2em;
+        }
+    }
+}
+.ui-datepicker .ui-datepicker-prev,
+.ui-datepicker .ui-datepicker-next {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.4rem;
+    height: 2.4rem;
+    cursor: pointer;
+}
+.ui-datepicker .ui-datepicker-prev span,
+.ui-datepicker .ui-datepicker-next span {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center/contain;
+}
+.ui-datepicker .ui-datepicker-prev span {
+    transform: translate(-50%, -50%) rotate(180deg);
+}
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus, .ui-button:hover, .ui-button:focus {
+    border: 0;
+    background: transparent;
+}
+.ui-datepicker .ui-datepicker-prev-hover,
+.ui-datepicker .ui-datepicker-next-hover {
+    top: 50%;
+}
+.ui-datepicker .ui-datepicker-prev-hover {
+    left: 0;
+}
+.ui-datepicker .ui-datepicker-prev {
+    left: 0;
+}
+.ui-datepicker .ui-datepicker-next {
+    right: 0;
+}
+.ui-datepicker .ui-datepicker-next-hover {
+    right: 0;
+}
+.ui-datepicker .ui-datepicker-header {
+    padding: 0;
+    margin-bottom: 2.4rem;
+}
+.ui-datepicker .ui-datepicker-title {
+    font-family: $pretendard;
+    margin: 0;
+    line-height: 2.7rem;
+}
+.ui-datepicker table {
+    margin: 0;
+}
+.ui-datepicker th {
+    font-family: $pretendard;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: $gray600;
+    padding: 0;
+}
+.ui-datepicker th a, .ui-datepicker th span {
+    display: block;
+    margin-bottom: .8rem;
+}
+.ui-datepicker td {
+    padding: 0;
+}
+.ui-state-disabled, .ui-widget-content .ui-state-disabled, .ui-widget-header .ui-state-disabled {
+    opacity: 0;
+}
+.ui-datepicker td span, .ui-datepicker td a {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: auto;
+    padding: 0;
+    margin-bottom: .8rem;
+    font-family: $pretendard;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: $gray950;
+    text-align: center;
+}
+.ui-state-default, 
+.ui-widget-content .ui-state-default, 
+.ui-widget-header .ui-state-default, 
+.ui-button, 
+html .ui-button.ui-state-disabled:hover, 
+html .ui-button.ui-state-disabled:active {
+    border: none;
+    background: transparent;
+    font-weight: 500;
+    color: $gray950;
+}
+.ui-state-active, .ui-widget-content .ui-state-active {
+    position: relative;
+    font-weight: 700;
+    border-radius: 50%;
+    background: $secondary200;
+}
+
+/* React DatePicker 스타일 */
+.react-datepicker-wrapper {
+    width: 100%;
+}
+
+.react-datepicker__input-container {
+    width: 100%;
+    
+    .datepicker {
+        width: 100%;
+        height: 5.2rem;
+        padding: 0 1.4rem;
+        font-family: $pretendard;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: $gray950;
+        border-radius: .8rem;
+        border: 1px solid $gray100;
+        background: $gray0;
+        
+        &::placeholder {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: $gray400;
+        }
+        
+        &:focus {
+            outline: none;
+            // border-color: $secondary500;
+        }
+    }
+}
+
+.react-datepicker {
+    width: 35.8rem;
+    padding: 2.4rem 2.4rem 2.3rem;
+    border: 1px solid $gray800;
+    border-radius: .8rem;
+    background: $gray0;
+    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+    font-family: $pretendard;
+}
+
+.react-datepicker__header {
+    padding: 0;
+    margin-bottom: 1.4rem;
+    border: none;
+    background: transparent;
+}
+
+.react-datepicker__current-month {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #50575D;
+    margin: 0;
+    line-height: 2.7rem;
+}
+
+/* 커스텀 헤더 스타일 */
+.custom-datepicker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    margin-bottom: 2.4rem;
+    
+    .custom-month-year {
+        font-family: $pretendard;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #50575D;
+        line-height: 2.7rem;
+    }
+    
+    .custom-nav-btn {
+        width: 2.4rem;
+        height: 2.4rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        span {
+            width: 2.4rem;
+            height: 2.4rem;
+            background: url(@/assets/images/icon/arrow_right_bk.svg) no-repeat center/contain;
+        }
+        
+        &.prev span {
+            transform: rotate(180deg);
+        }
+        
+        &:hover {
+            background: transparent;
+        }
+    }
+}
+
+/* 기본 네비게이션 숨김 (커스텀 헤더 사용) */
+.react-datepicker__navigation {
+    display: none;
+}
+
+.react-datepicker__navigation-icon {
+    display: none;
+}
+
+/* 기본 헤더 숨김 */
+.react-datepicker__current-month {
+    display: none;
+}
+
+.react-datepicker__month {
+    margin: 0;
+}
+
+.react-datepicker__day-names {
+    // margin-bottom: 1.6rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.react-datepicker__day-name {
+    width: 4.4rem;
+    height: 2.4rem;
+    margin: 0;
+    font-family: $pretendard;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: $gray600;
+    line-height: 2.4rem;
+    text-align: center;
+}
+
+.react-datepicker__week {
+    margin-bottom: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.react-datepicker__day {
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: 0;
+    padding: 0;
+    font-family: $pretendard;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: $gray950;
+    line-height: 2.4rem;
+    border-radius: 50%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+        background: transparent;
+        border-radius: 50%;
+    }
+    
+    &--selected {
+        font-weight: 700;
+        background: $secondary200;
+        color: $gray950;
+        
+        &:hover {
+            background: $secondary200;
+        }
+    }
+    
+    &--keyboard-selected {
+        background: $secondary200;
+        color: $gray950;
+    }
+    
+    &--outside-month {
+        opacity: 0;
+    }
+    
+    &--disabled {
+        opacity: 0;
+    }
+}
+
+.react-datepicker__triangle {
+    display: none;
+}
+
+.react-datepicker__month-container {
+    float: inherit;
+    width: 100%;
+}
+
+.custom-datepicker-popper {
+    transform: translate(0px, 118px) !important;
+}
+
+.react-datepicker__day:not([aria-disabled=true]):hover, .react-datepicker__month-text:not([aria-disabled=true]):hover, .react-datepicker__quarter-text:not([aria-disabled=true]):hover, .react-datepicker__year-text:not([aria-disabled=true]):hover {
+    background-color: transparent;
+}

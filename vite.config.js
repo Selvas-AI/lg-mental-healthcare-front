@@ -4,11 +4,29 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
+import { loadEnv } from 'vite'
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const isDev = mode === 'development'
+
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+      },
     },
-  },
+    server: isDev
+      ? {
+          proxy: {
+            '/api': {
+              target: env.VITE_PROXY_TARGET,
+              changeOrigin: true,
+              secure: false,
+            },
+          },
+        }
+      : undefined,
+  }
 })

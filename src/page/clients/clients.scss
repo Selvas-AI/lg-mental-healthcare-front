@@ -1,0 +1,477 @@
+@import "@/styles/common/common.scss";
+@import "@/styles/common/layout.scss";
+
+/* 내담자 관리 */
+.wrapper {
+    &.clients {
+        main {
+            .inner {
+                .tb-info {
+                    margin-bottom: 2.8rem;
+                    @include flexbox(row, space-between, center);
+                    .total {
+                        font-size: 2.2rem;
+                        font-weight: 700;
+                    }
+                }
+                .con-wrap {
+                    height: 100%;
+                    min-height: calc(100vh - 31.4rem);
+                    padding: 3rem;
+                    border-radius: 2rem;
+                    border-radius: 20px;
+                    border: 1px solid $gray50;
+                    background: $gray0;
+                    box-shadow: 0px 1px 6px 0px rgba(195, 195, 195, 0.20);
+                    &.empty {
+                        @include flexbox(row, center, center);
+                        .empty-clients {
+                            @include flexbox(column, center, center);
+                            img {
+                                width: 8.5rem;
+                                height: 7.9rem;
+                                object-fit: contain;
+                            }
+                            p {
+                                padding: 2rem 0 3rem;
+                                font-weight: 500;
+                                color: $gray400; 
+                            }
+                        }
+                    }
+                    .tb-controls {
+                        margin-bottom: 2rem;
+                        @include flexbox(row, space-between, center);
+                        .right {
+                            @include flexbox(row, flex-end, center);
+                            gap: .8rem;
+                            .input-wrap {
+                                &.search {
+                                    width: 34.2rem;
+                                    height: 5.2rem;
+                                    input {
+                                        width: 100%;
+                                        height: 100%;
+                                    }
+                                }
+                            }
+                            .filter-wrap {
+                                position: relative;
+                                .filter-btn {
+                                    padding: 0 4rem 0 1.4rem;
+                                    height: 5.2rem;
+                                    font-weight: 700;
+                                    color: $gray800;
+                                    border: 1px solid $gray200;
+                                    border-radius: .8rem;
+                                    background: url(@/assets/images/icon/filter_bk.svg) no-repeat center right 1.2rem/2.4rem $gray0;
+                                    @include flexbox(row, flex-start, center);
+                                    .chk-num {
+                                        display: none;
+                                    }
+                                }
+                                .filter-pop {
+                                    position: absolute;
+                                    top: 6rem;
+                                    right: 0;
+                                    width: 22rem;
+                                    border: 1px solid $gray800;
+                                    border-radius: .8em;
+                                    background: $gray0;
+                                    display: none;
+                                    z-index: 10;
+                                    &.open {
+                                        display: block;
+                                    }
+                                    .inner {
+                                        .tit-wrap {
+                                            padding: 1.4rem;
+                                            background: url(@/assets/images/icon/filter_bk.svg) no-repeat center right 1.4rem/2.4rem;
+                                            span {
+                                                font-weight: 700;
+                                                color: $gray800;
+                                            }
+                                            .chk-num {
+                                                display: none;
+                                            }
+                                        }
+                                        .list-wrap {
+                                            ul {
+                                                width: 100%;
+                                                li {
+                                                    width: 100%;
+                                                    padding: 0 1.4rem;
+                                                    height: 5.2rem;
+                                                    @include flexbox(row, flex-start, center);
+                                                    transition: background .25s;
+                                                    &:hover {
+                                                        background: $gray50;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        .btn-wrap {
+                                            padding: 1.4rem;
+                                            button {
+                                                width: 100%;
+                                                height: 4rem;
+                                                color: $gray0;
+                                                background: $gray200;
+                                                transition: background .25s;
+                                            }
+                                        }
+                                    }
+                                }
+                                &.on {
+                                    .filter-btn {
+                                        color: $gray0;
+                                        background: url(../../assets/images/icon/filter.svg) no-repeat center right 1.2rem/2.4rem $gray950;
+                                        .chk-num {
+                                            display: block;
+                                        }
+                                    }
+                                    .filter-pop {
+                                        .inner {
+                                            .tit-wrap {
+                                                .chk-num {
+                                                    display: inline-block;
+                                                }
+                                            }
+                                            .btn-wrap {
+                                                button {
+                                                    background: $gray950;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .tb-wrap {
+                        position: relative;
+                            min-height: 61.2rem;
+                        table {
+                            width: 100%;
+                            thead {
+                                tr {
+                                    height: 5.2rem;
+                                    background: $gray50;
+                                    th {
+                                        padding: 0 2rem;
+                                        text-align: left;
+                                        font-size: 1.8rem;
+                                        font-weight: 600;
+                                        color: $gray800;
+                                        &:first-of-type {
+                                            border-radius: .6rem 0 0 .6rem;
+                                            cursor: pointer;
+                                            span {
+                                                position: relative;
+                                                @include flexbox(row, flex-start, center);
+                                                gap: .6rem;
+                                                &::after {
+                                                    content: '';
+                                                    display: inline-block;
+                                                    width: 2.4rem;
+                                                    height: 2.4rem;
+                                                    background: url(../../assets/images/icon/sorting.svg) no-repeat center/contain;
+                                                }
+                                            }
+                                        }
+                                        &:last-of-type {
+                                            text-align: center;
+                                            border-radius: 0 .6rem .6rem 0;
+                                        }
+                                        .step-title {
+                                            @include flexbox(row, center, center);
+                                            gap: .6rem;
+                                        }
+                                        .info {
+                                            position: relative;
+                                            .info-icon {
+                                                width: 2rem;
+                                                height: 2rem;
+                                                background: url(../../assets/images/icon/info.svg) no-repeat center/2rem;
+                                            }
+                                            .tooltip {
+                                                position: absolute;
+                                                top: 3.7rem;
+                                                left: -1.9rem;
+                                                width: 28.9rem;
+                                                padding: 1.2rem 1.6rem;
+                                                color: $white;
+                                                font-size: 1.4rem;
+                                                font-weight: 500;
+                                                text-align: left;
+                                                border-radius: 1.4rem;
+                                                letter-spacing: -0.56px;
+                                                background: $gray600;
+                                                // display: none;
+                                                z-index: 10;
+                                                opacity: 0;
+                                                visibility: hidden;
+                                                transition: opacity 0.5s ease, visibility 0.2s;
+                                                &::before {
+                                                    content: '';
+                                                    position: absolute;
+                                                    top: -1.2rem;
+                                                    left: 2rem;
+                                                    width: 0;
+                                                    height: 0;
+                                                    border-left: 10px solid transparent;
+                                                    border-right: 10px solid transparent;
+                                                    border-bottom: 14px solid $gray600;
+                                                }
+                                                ul {
+                                                    li {
+                                                        &:not(:last-of-type) {
+                                                            margin-bottom: 1rem;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            .tooltip.show {
+                                                opacity: 1;
+                                                visibility: visible;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            tbody {
+                                tr {
+                                    height: 8rem;
+                                    &:not(:last-of-type) {
+                                        border-bottom: 1px solid $gray50;
+                                    }
+                                    &.new {
+                                        td {
+                                            &:first-of-type {
+                                                a {
+                                                    padding-right: 2.6rem;
+                                                    &::before {
+                                                        content: "";
+                                                        position: absolute;
+                                                        top: 0;
+                                                        right: 2rem;
+                                                        width: .6rem;
+                                                        height: .6rem;
+                                                        border-radius: 50%;
+                                                        background: $secondary500;
+                                                    }
+                                                }
+                                            }
+                                            &:nth-of-type(3) {
+                                                font-weight: 700;
+                                                color: $secondary500;
+                                            }
+                                        }
+                                    }
+                                    td {
+                                        text-align: left;
+                                        font-weight: 500;
+                                        color: $gray800;
+                                        white-space: nowrap;
+                                        .flex-wrap {
+                                            @include flexbox(row, flex-start, center);
+                                            flex-wrap: wrap;
+                                            gap: .4rem .8rem;
+                                        }
+                                        a {
+                                            position: relative;
+                                            padding-right: 2rem;
+                                            white-space: nowrap;
+                                            &::after {
+                                                content: "";
+                                                position: absolute;
+                                                top: 50%;
+                                                transform: translateY(-50%);
+                                                right: 0;
+                                                width: 2rem;
+                                                height: 2rem;
+                                                background: url(../../assets/images/icon/arrow_right_bk.svg) no-repeat center/2rem;
+                                            }
+                                        }
+                                        &:last-of-type {
+                                            text-align: center;
+                                        }
+                                        &:not(:last-of-type) {
+                                            padding: 0 2rem;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        &.empty {
+                            .empty-data {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                @include flexbox(column, center, center);
+                                gap: 2rem;
+                                img {
+                                    width: 8.5rem;
+                                    height: 7.9rem;
+                                    object-fit: contain;
+                                }
+                                .empty-info {
+                                    font-weight: 500;
+                                    color: $gray400;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* 내담자 등록 모달(팝업) */
+.clients .modal {
+    &.client-register {
+        .inner {
+            padding: 0;
+            max-width: inherit;
+            .modal-hd {
+                padding: 3.6rem 3.6rem 0;
+                margin: 0;
+            }
+            .form-section {
+                margin-right: 1rem;
+                padding: 4rem 1.8rem 2rem 3.6rem;
+                height: 61.8rem;
+                overflow-y: auto;
+                .form-content {
+                    legend {
+                        font-size: 2rem;
+                        font-weight: 700;
+                        color: $gray800;
+                        padding-bottom: 2.4rem;
+                    }
+                    .con-wrap {
+                        height: inherit;
+                        min-height: inherit;
+                        padding: inherit;
+                        border-radius: inherit;
+                        border: inherit;
+                        background: inherit;
+                        box-shadow: inherit;
+                        ul {
+                            width: 100%;
+                            gap: 1.6rem 1.2rem;
+                            li {
+                                @include flexbox(column, flex-start, flex-start);
+                                gap: .6rem;
+                                > label, .input-tit {
+                                    position: relative;
+                                    font-weight: 700;
+                                    color: $gray800;
+                                    &.necessary {
+                                        &::after {
+                                            content: "*";
+                                            display: inline-block;
+                                            font-size: 1.6rem;
+                                            color: #FF0606;
+                                        }
+                                    }
+                                }
+                                .input-cont {
+                                    .input-wrap {
+                                        &.radio {
+                                            padding: 0 1.4rem;
+                                            border-radius: .8rem;
+                                            border: 1px solid $gray100;
+                                            background: $gray0;
+                                            @include flexbox(row, flex-start, center);
+                                        }
+                                    }
+                                    &.email {
+                                        .input-wrap {
+                                            &:first-of-type {
+                                                width: 33.8rem;
+                                            }
+                                            &:nth-of-type(2){
+                                                width: 17.5rem;
+                                            }
+                                        }
+                                    }
+                                    &.input-add {
+                                        .input-wrap {
+                                            &:nth-of-type(2) {
+                                                width: 17.7rem;
+                                            }
+                                            &:nth-of-type(3) {
+                                                width: 29.8rem;
+                                            }
+                                        }
+                                    }
+                                }
+                                .input-wrap {
+                                    width: 100%;
+                                    height: 5.2rem;
+                                    input[type="text"], input[type="password"], input[type="number"] {
+                                        width: 100%;
+                                        height: 100%;
+                                    }
+                                    &.birth-inputs {
+                                        @include flexbox(row, flex-start, flex-start);
+                                        gap: .8rem;
+                                        input {
+                                            width: calc((100% / 3) - (1.6rem / 3));
+                                            height: 100%;
+                                        }
+                                    }
+                                }
+                                .editor-wrap {
+                                    width: 100%;
+                                    .editor {
+                                        height: 22.4rem;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    &:first-of-type {
+                        margin-bottom: 4rem;
+                        .con-wrap {
+                            ul {
+                                @include flexbox(row, flex-start, flex-start);
+                                flex-wrap: wrap;
+                                li {
+                                    width: calc(50% - .6rem);
+                                }
+                            }
+                        }
+                    }
+                    &:last-of-type {
+                        .con-wrap {
+                            > ul {
+                                @include flexbox(column, flex-start, flex-start);
+                                > li {
+                                    width: 100%;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .btn-wrap {
+                padding: 1rem 3.6rem 3.6rem;
+            }
+        }
+    }
+}
+
+/* 내담자 메모 모달(팝업) */
+.modal {
+    &.client-memo {
+        .editor-wrap {
+            .editor {
+                height: 22.4rem;
+            }
+        }
+    }
+}
