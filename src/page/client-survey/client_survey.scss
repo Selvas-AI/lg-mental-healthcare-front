@@ -381,7 +381,7 @@ header.survey-form .inner .left .page-title {
 }
 
 // joy : 이전 버튼 아이콘 홈 아이콘으로 변경
-header .inner .left .back-btn,
+header.survey-form .inner .left .back-btn,
 .wrapper.survey-detail.client-survey main .inner > .title-wrap .back-btn {
     background: url(@/assets/images/icon/home_bk.svg) no-repeat center $gray0 !important;
 }

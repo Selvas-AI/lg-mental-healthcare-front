@@ -1,5 +1,4 @@
 import axiosIns from './index'
-import axios from 'axios'
 
 //? ===== 회기 관리 API =====
 // 전체 회기 목록 조회
@@ -53,27 +52,23 @@ export const counselorUpdate = async (params) => {
 //? ===== 내담자 검사 (내담자용) 관리 API =====
 // 내담자검사 세트 조회
 export const clientExamSet = async ({ token }) => {
-    // 순수 axios 인스턴스로 호출 (token값 다르게 전달) 
-    const response = await axios.get('/api/examination/assessmentSet', {
-        headers: {'Authorization': `Bearer ${token}`}
+    return await axiosIns.get('/api/examination/assessmentSet', {
+        headers: { 'Authorization': `Bearer ${token}` }
     })
-    return response.data
 }
 
 // 내담자검사 세트 결과 임시등록
 export const clientExamTempSave = async ({ token, params }) => {
-    const response = await axios.post('/api/examination/tempSave', params, {
+    return await axiosIns.post('/api/examination/tempSave', params, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
-    return response.data
 }
 
 // 내담자검사 세트 결과 등록
 export const clientExamSave = async ({ token, params }) => {
-    const response = await axios.post('/api/examination/save', params, {
+    return await axiosIns.post('/api/examination/save', params, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
-    return response.data
 }
 
 //? ===== Dislike 관리 API =====
@@ -206,7 +201,7 @@ export const sessionMngUpdate = async (sessionMngData) => {
 }
 
 //? ===== 내담자 검사 관리 API =====
-//! 내담자 검사세트 결과 조회
+// 내담자 검사세트 결과 조회
 export const assessmentSetResult = async (setSeq) => {
     return await axiosIns.get('/api/assessmentSet/result', { params: { setSeq } })
 }
@@ -257,7 +252,7 @@ export const assessmentSetCreate = async (params) => {
 }
 
 //? ===== 문진표 관리 API =====
-// 문진표 목록 조회
+// 문진표 목록 조회 (내담자 검사 세트 등록 파라미터 생성에 활용)
 export const assessmentList = async () => {
     return await axiosIns.get('/api/assessment/list')
 }

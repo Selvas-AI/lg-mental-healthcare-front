@@ -89,9 +89,7 @@ function Consults() {
         showToastMessage('회기 식별자(sessionSeq)를 확인할 수 없습니다.');
         return;
       }
-      // 새 API 스펙에 맞춘 요청 바디 구성
-      // POST /api/session/update
-      // body: { sessionSeq, sessionDate, sessionStatus?, sessionType?, memo? }
+
       const payload = {
         sessionSeq: parseInt(sessionSeq, 10),
         sessionDate: recordData?.sessionDate,
@@ -99,8 +97,7 @@ function Consults() {
         ...(recordData?.sessionType ? { sessionType: recordData.sessionType } : {}),
         ...(recordData?.memo ? { memo: recordData.memo } : {}),
       };
-      // undefined 필드는 axios가 직렬화 시 포함하지 않지만, 방어적으로 정리 필요 시 아래와 같이 필터링 가능
-      // const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v !== undefined));
+
       const res = await sessionCurrentUpdate(payload);
       if (res?.code === 200) {
         // 수정 성공 후 최신 회기 목록으로 Recoil 상태 갱신
@@ -239,11 +236,10 @@ function Consults() {
     const fetchSessionData = async () => {
       if (sessionSeq && clientId) {
         try {
-          // 세 API를 병렬로 호출
-          const [sessionMngResponse, sessionResponse, audioResponse] = await Promise.all([
+          // 상담관리, 회기 데이터 병렬 호출 (오디오는 조건부로 후속 호출)
+          const [sessionMngResponse, sessionResponse] = await Promise.all([
             sessionMngFind(sessionSeq),           // Transcript용 상담관리 데이터
             sessionFind(clientId, sessionSeq),   // TODO 관리용 회기 데이터
-            audioFind(sessionSeq).catch(() => null) // 오디오 데이터 (에러 시 null)
           ]);
           
           // 상담관리 데이터 설정
@@ -255,18 +251,25 @@ function Consults() {
           }
           
           // 회기 데이터 설정
+          let shouldFetchAudio = false;
           if (sessionResponse.code === 200) {
             setSessionData(sessionResponse.data);
             setCurrentSession(sessionResponse.data);
+            shouldFetchAudio = sessionResponse?.data?.todoTranscriptCreation === true;
           } else {
             console.error('회기 조회 실패:', sessionResponse.message);
             setSessionData(null);
             setCurrentSession(null);
           }
-          
-          // 오디오 데이터 설정
-          if (audioResponse?.code === 200) {
-            setAudioData(audioResponse.data);
+
+          // 오디오 데이터 설정: todoTranscriptCreation이 true일 때만 조회
+          if (shouldFetchAudio) {
+            const audioResponse = await audioFind(sessionSeq).catch(() => null);
+            if (audioResponse?.code === 200) {
+              setAudioData(audioResponse.data);
+            } else {
+              setAudioData(null);
+            }
           } else {
             setAudioData(null);
           }
@@ -401,10 +404,11 @@ function Consults() {
             </div>
           </div>
         </div>
-        <div className="floating-btn" onClick={() => {
+        {/* //! 플로팅 버튼 주석처리  */}
+        {/* <div className="floating-btn" onClick={() => {
           setShowAiSummary(true);
           setSupportPanel(true);
-        }} style={{cursor:'pointer'}}></div>
+        }} style={{cursor:'pointer'}}></div> */}
       </div>
       <ClientRegisterModal
         open={registerOpen}
