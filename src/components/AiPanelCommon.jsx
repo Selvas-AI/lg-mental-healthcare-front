@@ -4,7 +4,7 @@ import IconLoading from "@/assets/images/common/loading.svg";
 import CharacterImg from "@/assets/images/common/character.svg";
 import CharacterBkImg from "@/assets/images/common/character_bk.svg";
 import EditorModal from '../page/clients/components/EditorModal';
-import { dislikeCodeList, dislikeFind } from '@/api/apiCaller';
+import { dislikeCodeList, dislikeFind, assessmentSetUpdateOverallInsightDislike, assessmentSetFind } from '@/api/apiCaller';
 
 function AiPanelCommon({
   open,
@@ -21,6 +21,8 @@ function AiPanelCommon({
   onConfirm, // 확정하기 콜백
   onSkip, // 생략하기 콜백
   sessionSeq, // dislike API 호출용
+  setSeq, // AI 종합 의견 패널 전용(assessmentSet용)
+  showToastMessage, // 토스트 표시 콜백
   currentFieldKeys, // { codeKey: 'counselingSummaryCode', textKey: 'counselingSummaryText' } 등
   openSkipTrigger, // 외부에서 생략 사유 UI 열기 트리거
   hideBottomActions = false, // 하단 공용 버튼 숨김 여부
@@ -53,8 +55,29 @@ function AiPanelCommon({
   // 패널이 열릴 때 dislikeFind로 기존 생략 데이터 조회
   useEffect(() => {
     const fetchExistingSkip = async () => {
-      if (!open || !sessionSeq || !currentFieldKeys) return;
+      if (!open) return;
       try {
+        // AI 종합 의견 생성 패널: assessmentSet 기반 조회로 복원
+        if (isRecordings && setSeq) {
+          const resp = await assessmentSetFind(parseInt(setSeq, 10));
+          const data = resp?.data ?? null;
+          const codeValue = data?.aiOverallInsightDislikeCode ?? null;
+          const textValue = data?.aiOverallInsightDislikeText ?? null;
+          if ((codeValue && String(codeValue).trim() !== '') || (textValue && String(textValue).trim() !== '')) {
+            setExistingSkip({ code: codeValue, text: textValue });
+            if (codeValue) setSelectedReason(codeValue);
+            else if (textValue) setSelectedReason('__direct__');
+            else setSelectedReason('');
+            if (textValue) setDirectInput(String(textValue));
+            return;
+          }
+          setExistingSkip(null);
+          setSelectedReason('');
+          return;
+        }
+
+        // 그 외 패널: session 기반 dislikeFind + currentFieldKeys 사용
+        if (!sessionSeq || !currentFieldKeys) return;
         const resp = await dislikeFind(sessionSeq);
         const data = resp?.data ?? null;
         if (data && (currentFieldKeys.codeKey || currentFieldKeys.textKey)) {
@@ -62,15 +85,13 @@ function AiPanelCommon({
           const textValue = currentFieldKeys.textKey ? data[currentFieldKeys.textKey] : undefined;
           if ((codeValue && String(codeValue).trim() !== '') || (textValue && String(textValue).trim() !== '')) {
             setExistingSkip({ code: codeValue, text: textValue });
-            // 기존 데이터가 있어도 자동으로 펼치지 않음 (요청사항)
-            // 코드가 있으면 선택 상태만 유지하여 사용자가 열었을 때 표시되도록 함
             if (codeValue) setSelectedReason(codeValue);
+            else if (textValue) setSelectedReason('__direct__');
+            if (textValue) setDirectInput(String(textValue));
             return;
           }
         }
-        // 없으면 초기화
         setExistingSkip(null);
-        // setShowSkipReason(false);
         setSelectedReason('');
       } catch (e) {
         setExistingSkip(null);
@@ -79,7 +100,7 @@ function AiPanelCommon({
       }
     };
     fetchExistingSkip();
-  }, [open, sessionSeq, currentFieldKeys]);
+  }, [open, sessionSeq, currentFieldKeys, isRecordings, setSeq]);
 
   // 외부 트리거로 생략 사유 UI 열기
   const prevTriggerRef = useRef(null);
@@ -102,14 +123,35 @@ function AiPanelCommon({
     }
   }, [openSkipTrigger, open, isFirstMount]);
 
-  const handleSaveDirectInput = () => {
-    // 직접입력 저장 시 onSkip 콜백 호출
-    if (onSkip && directInput.trim()) {
-      onSkip(null, directInput.trim()); // code는 null, text는 직접입력 내용
+  const handleSaveDirectInput = async (value) => {
+    const text = String(value ?? directInput).trim();
+    if (!text) return;
+    try {
+      // AI 종합 의견 생성 패널 전용 전담 API 호출 (assessmentSet 기반)
+      if (isRecordings && setSeq) {
+        await assessmentSetUpdateOverallInsightDislike({
+          setSeq: parseInt(setSeq, 10),
+          aiOverallInsightDislikeCode: null,
+          aiOverallInsightDislikeText: text,
+        });
+        if (typeof showToastMessage === 'function') {
+          showToastMessage('피드백이 전송되었습니다.');
+        }
+        if (typeof onClose === 'function') {
+          onClose();
+        }
+      } else if (onSkip) {
+        // 기타 패널은 기존 onSkip 경로 유지 (sessionSeq 기반)
+        onSkip(null, text);
+      }
+    } catch (e) {
+      console.error('직접입력 생략 사유 전송 실패:', e);
+    } finally {
+      setSelectedReason('__direct__');
+      setShowDirectInputModal(false);
+      setDirectInput("");
+      setShowSkipReason(false);
     }
-    setShowDirectInputModal(false);
-    setDirectInput("");
-    setShowSkipReason(false);
   };
 
   // 생략하기 버튼 클릭 - 조회는 하지 않고 단순 펼침만 수행
@@ -125,17 +167,38 @@ function AiPanelCommon({
   };
 
   // 생략 사유 선택 (단일 선택, 즉시 API 호출)
-  const handleReasonClick = (reason) => {
+  const handleReasonClick = async (reason) => {
     setSelectedReason(reason.code);
-    // 선택 즉시 onSkip 콜백 호출
-    if (onSkip) {
-      onSkip(reason.code, null); // code는 선택된 코드, text는 null
+    try {
+      // AI 종합 의견 생성 패널 전용 전담 API 호출 (assessmentSet 기반)
+      if (isRecordings && setSeq) {
+        await assessmentSetUpdateOverallInsightDislike({
+          setSeq: parseInt(setSeq, 10),
+          aiOverallInsightDislikeCode: reason.code,
+          aiOverallInsightDislikeText: null,
+        });
+        if (typeof showToastMessage === 'function') {
+          showToastMessage('피드백이 전송되었습니다.');
+        }
+        if (typeof onClose === 'function') {
+          onClose();
+        }
+      } else if (onSkip) {
+        // 기타 패널은 기존 onSkip 경로 유지 (sessionSeq 기반)
+        onSkip(reason.code, null);
+      }
+    } catch (e) {
+      console.error('생략 사유 전송 실패:', e);
+    } finally {
+      setShowSkipReason(false);
     }
-    setShowSkipReason(false);
   };
 
   // 직접입력 버튼 클릭
   const handleDirectInput = () => {
+    if (existingSkip?.text) {
+      setDirectInput(String(existingSkip.text));
+    }
     setShowDirectInputModal(true);
   };
 
@@ -183,7 +246,7 @@ function AiPanelCommon({
               </div>
             )}
             {status === "complete" && (
-              <div className="complete">
+              <div className="complete" style={{ paddingBottom: '2.4rem' }}>
                 <div className="top-info">
                   <p dangerouslySetInnerHTML={{ __html: infoMessage }}></p>
                   {keyInfo && (
@@ -243,7 +306,7 @@ function AiPanelCommon({
                           ))}
                           <li>
                             <a
-                              className={"link-btn cursor-pointer"}
+                              className={"link-btn cursor-pointer" + (selectedReason === '__direct__' ? ' on' : '')}
                               onClick={handleDirectInput}
                             >
                               직접입력
@@ -278,7 +341,7 @@ function AiPanelCommon({
           placeholder="기대했던 내용은 무엇인가요? 어떻게 개선 할 수 있을까요?"
           maxLength={200}
           initialValue={directInput}
-          saveDisabled={directInput.length === 0 || directInput.length > 200}
+          saveDisabled={false}
         />
       )}
     </>

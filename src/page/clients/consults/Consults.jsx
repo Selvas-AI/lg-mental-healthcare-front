@@ -1,6 +1,6 @@
 import React, { useRef, useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
+import { maskingState, clientsState, currentSessionState, sessionDataState, editorConfirmState, supportPanelState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete, assessmentList } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
@@ -18,6 +18,7 @@ import ToastPop from '@/components/ToastPop';
 import EditorModal from '../components/EditorModal';
 import RecordSelectModal from '../sessions/RecordSelectModal';
 import EditorConfirm from '../components/EditorConfirm';
+import AiPanelCommon from '@/components/AiPanelCommon';
 
 const TAB_LIST = [
   { label: '상담관리', component: CounselManagement, panelClass: 'counsel'},
@@ -133,6 +134,10 @@ function Consults() {
   const [globalEditorConfirm, setGlobalEditorConfirm] = useRecoilState(editorConfirmState);
   const [nameToSeqMap, setNameToSeqMap] = useState({}); // 검사지명 -> seq 매핑
   const [surveyRefreshKey, setSurveyRefreshKey] = useState(0); // 심리검사 목록 재조회 트리거 키
+  // AI 종합 의견 패널 전역 관리
+  const [showAiSummary, setShowAiSummary] = useState(false);
+  const [aiPanelPayload, setAiPanelPayload] = useState(null); // { setSeq, aiInsightParsed, onConfirm }
+  const setSupportPanel = useSetRecoilState(supportPanelState);
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
@@ -396,6 +401,11 @@ function Consults() {
                 onRequestAudioDelete={() => setConfirmOpen(true)}
                 showToastMessage={showToastMessage}
                 refreshKey={surveyRefreshKey}
+                onOpenAiSummaryPanel={(payload) => {
+                  setAiPanelPayload(payload);
+                  setShowAiSummary(true);
+                  setSupportPanel(true);
+                }}
               />
             </div>
           </div>
@@ -509,6 +519,48 @@ function Consults() {
         }}
         onCancel={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }))}
         onClose={() => setGlobalEditorConfirm(prev => ({ ...prev, open: false, onConfirm: undefined }))}
+      />
+      {/* AI 종합 의견 패널 전역 렌더 */}
+      <AiPanelCommon
+        isRecordings={true}
+        open={showAiSummary}
+        onClose={() => { setShowAiSummary(false); setSupportPanel(false); }}
+        setSeq={aiPanelPayload?.setSeq}
+        showToastMessage={showToastMessage}
+        onConfirm={async () => {
+          try {
+            if (aiPanelPayload?.onConfirm) {
+              await aiPanelPayload.onConfirm();
+            }
+          } finally {
+            setShowAiSummary(false);
+            setSupportPanel(false);
+          }
+        }}
+        status="complete"
+        title="AI 종합 의견 생성"
+        description="AI가 심리 검사 종합 의견을 생성합니다."
+        infoMessage="AI 종합 의견이 생성 완료되었습니다."
+        keyInfo
+        keyInfoText="재생성된 내용을 확정하면 원래의 내용은 사라지고<br />다시 복구할 수 없어요."
+        renderComplete={() => (
+          <>
+            <div className="complete-cont">
+              {aiPanelPayload?.aiInsightParsed?.answerText ? (
+                <div style={{ whiteSpace: 'pre-wrap' }}>{aiPanelPayload.aiInsightParsed.answerText}</div>
+              ) : (
+                <div>AI 종합 의견이 없습니다.</div>
+              )}
+              {aiPanelPayload?.aiInsightParsed?.feedbackText && (
+                <>
+                  <br />
+                  <strong style={{ fontWeight: 'bold', color: '#000' }}>추천 방법</strong>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{aiPanelPayload.aiInsightParsed.feedbackText}</div>
+                </>
+              )}
+            </div>
+          </>
+        )}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
     </>

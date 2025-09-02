@@ -197,6 +197,20 @@ function CounselLogDetail() {
     setSupportPanel(false);
   };
 
+  // AiPanelCommon에서 dislikeFind 복원을 위한 필드 키 매핑 (세션 기반)
+  const getCurrentFieldKeys = () => {
+    switch (aiPanelKey) {
+      case 'nextPlan':
+        return { codeKey: 'nextSessionPlanCode', textKey: 'nextSessionPlanText' };
+      case 'mainProblem':
+        return { codeKey: 'chiefComplaintCode', textKey: 'chiefComplaintText' };
+      case 'sessionContent':
+        return { codeKey: 'sessionSummaryCode', textKey: 'sessionSummaryText' };
+      default:
+        return null;
+    }
+  };
+
   // AI 패널 확정하기 콜백 (setNextPlan, setMainProblem, setSessionContent 전달)
   const handleAiConfirm = () => {
     handleAiConfirmBase(setNextPlan, setMainProblem, setSessionContent);
@@ -741,8 +755,21 @@ function CounselLogDetail() {
           <div className="complete-cont"></div>
         )}
         onConfirm={handleAiConfirm}
-        onSkip={handleAiSkip}
+        onSkip={(code, text) => {
+          // AiPanelCommon은 (code, text) 2개만 전달하므로, 현재 패널 키에 맞게 6개 인자로 매핑
+          switch (aiPanelKey) {
+            case 'nextPlan':
+              return handleAiSkip(code || '', text || '', null, '', null, '');
+            case 'mainProblem':
+              return handleAiSkip(null, '', code || '', text || '', null, '');
+            case 'sessionContent':
+              return handleAiSkip(null, '', null, '', code || '', text || '');
+            default:
+              return handleAiSkip(null, '', null, '', null, '');
+          }
+        }}
         sessionSeq={sessionSeq}
+        currentFieldKeys={getCurrentFieldKeys()}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
       <EditorConfirm

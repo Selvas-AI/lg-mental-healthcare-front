@@ -21,6 +21,7 @@ function ClientSurvey() {
   const [modalOverrideMessage, setModalOverrideMessage] = useState('')
   const [pendingScrollSeq, setPendingScrollSeq] = useState(null)
   const [scrollTargetSeq, setScrollTargetSeq] = useState(null)
+  const [initialScrollSeq, setInitialScrollSeq] = useState(null)
 
   // 답변 데이터를 API 파라미터 구조로 변환
   const convertAnswersToApiFormat = (answers) => {
@@ -115,6 +116,29 @@ function ClientSurvey() {
     return urlParams.get('token')
   }
 
+  // URL에서 assessmentIndex, questionSeq 추출 함수
+  const getAssessmentIndexFromUrl = () => {
+    const urlParams = new URLSearchParams(location.search)
+    const idx = urlParams.get('assessmentIndex')
+    const n = idx !== null ? parseInt(idx, 10) : NaN
+    return Number.isFinite(n) ? n : null
+  }
+
+  const getQuestionSeqFromUrl = () => {
+    const urlParams = new URLSearchParams(location.search)
+    const qs = urlParams.get('questionSeq')
+    const n = qs !== null ? parseInt(qs, 10) : NaN
+    return Number.isFinite(n) ? n : null
+  }
+
+  // URL에서 setItemSeq(검사세트 항목 고유키) 추출
+  const getSetItemSeqFromUrl = () => {
+    const urlParams = new URLSearchParams(location.search)
+    const s = urlParams.get('setItemSeq')
+    const n = s !== null ? parseInt(s, 10) : NaN
+    return Number.isFinite(n) ? n : null
+  }
+
   // clientExamSet API 호출 함수
   const fetchExamSet = async () => {
     try {
@@ -126,6 +150,59 @@ function ClientSurvey() {
 
       const response = await clientExamSet({ token })
       setExamSetData(response.data)
+
+      // URL 파라미터 기반 초기 인덱스/스크롤 대상 설정
+      const urlAssessmentIndex = getAssessmentIndexFromUrl()
+      const urlQuestionSeq = getQuestionSeqFromUrl()
+      const urlSetItemSeq = getSetItemSeqFromUrl()
+      const total = response.data?.itemList?.length ?? 0
+
+      console.log('[URL Params]', { urlAssessmentIndex, urlQuestionSeq, urlSetItemSeq, total })
+
+      if (Number.isFinite(urlAssessmentIndex) && total > 0) {
+        // 우선 0-based로 시도
+        let idx = Math.max(0, Math.min(total - 1, urlAssessmentIndex))
+        // 0-based가 유효하지 않고(방어) 1-based로 해석 가능한 경우 보정
+        if (!response.data.itemList[idx] && response.data.itemList[urlAssessmentIndex - 1]) {
+          idx = urlAssessmentIndex - 1
+        }
+        console.log('[Init] currentAssessmentIndex by assessmentIndex =', idx)
+        setCurrentAssessmentIndex(idx)
+      } else if (Number.isFinite(urlSetItemSeq) && Array.isArray(response.data?.itemList)) {
+        const foundBySet = response.data.itemList.findIndex(it => it.setItemSeq === urlSetItemSeq)
+        if (foundBySet >= 0) {
+          console.log('[Init] currentAssessmentIndex by setItemSeq =', foundBySet)
+          setCurrentAssessmentIndex(foundBySet)
+        }
+      } else if (Number.isFinite(urlQuestionSeq) && Array.isArray(response.data?.itemList)) {
+        const found = response.data.itemList.findIndex(it => (it.assessmentInfo?.questions || []).some(q => q.questionSeq === urlQuestionSeq))
+        if (found >= 0) {
+          console.log('[Init] currentAssessmentIndex by questionSeq =', found)
+          setCurrentAssessmentIndex(found)
+        }
+      } else if (Array.isArray(response.data?.itemList)) {
+        // URL 파라미터가 전혀 없을 때: 첫 미답변 문항이 포함된 검사지로 이동
+        let defaultIndex = 0
+        let firstUnansweredSeq = null
+        for (let i = 0; i < response.data.itemList.length; i++) {
+          const questions = response.data.itemList[i].assessmentInfo?.questions || []
+          const miss = questions.find(q => q.answerQuestionitemSeq === null || q.answerQuestionitemSeq === undefined)
+          if (miss) {
+            defaultIndex = i
+            firstUnansweredSeq = miss.questionSeq
+            break
+          }
+        }
+        console.log('[Init] currentAssessmentIndex by firstUnanswered =', defaultIndex, 'questionSeq =', firstUnansweredSeq)
+        setCurrentAssessmentIndex(defaultIndex)
+        if (Number.isFinite(firstUnansweredSeq)) {
+          setInitialScrollSeq(firstUnansweredSeq)
+        }
+      }
+
+      if (Number.isFinite(urlQuestionSeq)) {
+        setInitialScrollSeq(urlQuestionSeq)
+      }
       
       // 응답 데이터에서 사용자 이름 설정 (있는 경우)
       if (response.data?.clientName) {
@@ -144,6 +221,15 @@ function ClientSurvey() {
     fetchExamSet()
     showInitialModal()
   }, [])
+
+  // 설문 시작 후에만 초기 스크롤 타겟을 트리거 (렌더 완료 보장 위해 약간 지연)
+  useEffect(() => {
+    if (showSurvey && (initialScrollSeq !== null && initialScrollSeq !== undefined)) {
+      const seq = initialScrollSeq
+      setTimeout(() => setScrollTargetSeq(seq), 150)
+      setInitialScrollSeq(null)
+    }
+  }, [showSurvey, initialScrollSeq])
 
   // URL 변경 감지하여 모달 다시 표시
   useEffect(() => {
@@ -317,8 +403,18 @@ function ClientSurvey() {
       return
     }
     if (modalType === 'complete') {
-      // 완료 후 이전 페이지로 이동
-      window.history.back()
+      // 완료 후 현재 브라우저 창 닫기 시도 (스크립트로 연 창에서만 정상 동작)
+      try {
+        // 일부 브라우저에서 허용하는 self-close 방식
+        window.open('', '_self')
+        window.close()
+      } catch (e) {
+        // ignore
+      }
+      // 닫기가 차단된 경우를 대비한 폴백: 이전 페이지로 이동
+      setTimeout(() => {
+        try { window.history.back() } catch (_) {}
+      }, 100)
     }
   }
 
@@ -351,10 +447,7 @@ function ClientSurvey() {
     const qt = examSetData?.questionType
     if (!qt) return ''
     if (qt === 'PRE') return '사전 문진'
-    if (qt === 'PROG') {
-      const seq = examSetData?.sessionSeq
-      return `경과 문진${seq ? ` ${seq}회기` : ''}`
-    }
+    if (qt === 'PROG') return '경과 문진'
     if (qt === 'POST') return '사후 문진'
     return ''
   }, [examSetData])
@@ -441,6 +534,7 @@ function ClientSurvey() {
                 currentAssessmentIndex={currentAssessmentIndex}
                 onBack={handleBackToPrivacyWithModal}
                 onScrollChange={setScroll}
+                hasIntermediateData={hasIntermediateData}
                 answers={answers}
                 onAnswersChange={setAnswers}
                 onSave={handleSave}

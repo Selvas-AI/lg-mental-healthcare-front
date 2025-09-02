@@ -6,10 +6,9 @@ import { assessmentSetList, assessmentSetDelete, assessmentSetUpdateOverallInsig
 import { useLocation } from 'react-router-dom';
 import EditorConfirm from '@/page/clients/components/EditorConfirm';
 import { useSetRecoilState, useRecoilValue } from 'recoil';
-import { editorConfirmState, currentSessionState, supportPanelState } from '@/recoil';
-import AiPanelCommon from '@/components/AiPanelCommon';
+import { editorConfirmState, currentSessionState } from '@/recoil';
 
-function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage, onSessionMapsUpdate }) {
+function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage, onSessionMapsUpdate, onOpenAiSummaryPanel }) {
   const [hasSurveyData, setHasSurveyData] = useState(false); // 심리검사 데이터 유무 (제출 완료 등 실제 데이터 존재)
   const [isAIGenerated, setIsAIGenerated] = useState(false); // AI 종합 의견 생성 여부 (aiOverallInsight 존재 여부)
   // 렌더링 제어 상태
@@ -32,8 +31,6 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   const [localRefreshKey, setLocalRefreshKey] = useState(0); // 로컬 재조회 트리거
   const setGlobalEditorConfirm = useSetRecoilState(editorConfirmState);
   const location = useLocation();
-  const [showAiSummary, setShowAiSummary] = useState(false);
-  const setSupportPanel = useSetRecoilState(supportPanelState);
 
   // 서버 저장 통합 텍스트 파싱: "\n\n추천 방법\n" 구분자로 분리
   const serverInsightParsed = useMemo(() => {
@@ -41,17 +38,8 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
     const DELIM = '\n\n추천 방법\n';
     if (!confirmedInsightText.includes(DELIM)) return null;
     const [answer, feedback] = confirmedInsightText.split(DELIM);
-    return { answerText: answer ?? '', feedbackText: feedback ?? '' };
+    return { answerText: answer || '', feedbackText: feedback || '' };
   }, [confirmedInsightText]);
-
-  // AiPanelCommon 열림 상태에 따라 레이아웃 보조 패널 상태 동기화
-  useEffect(() => {
-    setSupportPanel(showAiSummary);
-    return () => {
-      // 언마운트 시 보조 패널 닫힘 처리
-      setSupportPanel(false);
-    };
-  }, [showAiSummary, setSupportPanel]);
 
   // aiOverallInsight 파싱: 문자열/객체 모두 대응
   const aiInsightParsed = useMemo(() => {
@@ -328,7 +316,27 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   };
 
   const handleAIGenerate = () => {
-    setShowAiSummary(true);
+    if (typeof onOpenAiSummaryPanel === 'function') {
+      const answer = aiInsightParsed.answerText || '';
+      const feedback = aiInsightParsed.feedbackText || '';
+      const combined = feedback ? `${answer}\n\n추천 방법\n${feedback}` : `${answer}`;
+      onOpenAiSummaryPanel({
+        setSeq: currentSetSeq,
+        aiInsightParsed,
+        onConfirm: async () => {
+          try {
+            if (currentSetSeq) {
+              await assessmentSetUpdateOverallInsight({ setSeq: currentSetSeq, textOverallInsight: combined });
+            }
+            setConfirmedInsightText(combined);
+            showToastMessage?.('AI 종합 의견이 확정되었습니다.');
+          } catch (e) {
+            console.error('[PsychologicalTest] overallInsight 저장 실패:', e);
+            showToastMessage?.('저장 중 오류가 발생했습니다.');
+          }
+        },
+      });
+    }
   };
 
   // 제목: PRE/PROG/POST 맵핑 (PROG는 회기 번호 포함)
@@ -345,142 +353,97 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   }, [currentQuestionType, currentSessionNo, seqToOrder]);
 
   return (
-    <div className="inner">
-      {/* 빈 상태 분기 */}
-      {noSet && (
-        <div className="empty-board">
-          <img src={emptyFace} alt="empty" />
-          <p className="empty-info">아직 생성한 심리 검사지가 없어요.<br />내담자에게 필요한 심리 검사지를 만들어보세요.</p>
-          <button className="type05" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
-        </div>
-      )}
-      {!noSet && waitingInput && (
-        <div className="empty-board">
-          <img src={emptyFace} alt="empty" />
-          <p className="empty-info">내담자의 심리 검사지 입력을 기다리고 있어요.<br />(링크 만료 : <span className="datetime">{expireTimeText || 'YY-MM-DD HH:MM'}</span>)</p>
-          <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
-          <div className="url-wrap">
-            <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
-            <button onClick={handleCopyUrl} className="copy-btn" type="button" aria-label="URL "></button>
-            <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL "></button>
+    <>
+      <div className="inner">
+        {/* 빈 상태 분기 */}
+        {noSet && (
+          <div className="empty-board">
+            <img src={emptyFace} alt="empty" />
+            <p className="empty-info">아직 생성한 심리 검사지가 없어요.<br />내담자에게 필요한 심리 검사지를 만들어보세요.</p>
+            <button className="type05" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
           </div>
-        </div>
-      )}
-      {/* 제출 데이터는 있으나 AI 미생성 */}
-      {!noSet && !waitingInput && hasSurveyData && !isAIGenerated && (
-        <div className="total-opinion create">
-          <div className="tit-wrap">
-            <strong>AI 종합 의견</strong>
+        )}
+        {!noSet && waitingInput && (
+          <div className="empty-board">
+            <img src={emptyFace} alt="empty" />
+            <p className="empty-info">내담자의 심리 검사지 입력을 기다리고 있어요.<br />(링크 만료 : <span className="datetime">{expireTimeText || 'YY-MM-DD HH:MM'}</span>)</p>
+            <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
+            <div className="url-wrap">
+              <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
+              <button onClick={handleCopyUrl} className="copy-btn" type="button" aria-label="URL "></button>
+              <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL "></button>
+            </div>
           </div>
-          <div className="create-board">
-            <strong>AI가 심리검사 종합 의견을 생성/분석하고 있습니다.</strong>
-            <button className="type01 h40" type="button" onClick={handleAIGenerate}>
-              <span>AI 생성하기</span>
-            </button>
-          </div>
-        </div>
-      )}
-      {/* 제출 데이터 존재 + AI 생성 */}
-      {!noSet && !waitingInput && hasSurveyData && isAIGenerated && (
-        <>
-          <div className="total-opinion">
-            {/* 신규 생성 링크 없는 경우 / 있는 경우 */}
-            {!generatedUrl ? (
-              <div className="survey-create">
-                <strong>내담자에게 필요한 심리 검사지를 만들어 보세요.</strong>
-                <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
-              </div>
-            ) : (
-              <div className="survey-create type01">
-                <div className="txt-wrap">
-                  <strong>{surveyTitle}</strong>
-                  <p>만료 <span className="datetime">{expireTimeText}</span></p>
-                </div>
-                <div className="url-wrap">
-                  <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
-                  <button onClick={handleCopyUrl} className="copy-btn" type="button" aria-label="URL 복사"></button>
-                  <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL 삭제"></button>
-                </div>
-              </div>
-            )}
+        )}
+        {/* 제출 데이터는 있으나 AI 미생성 */}
+        {!noSet && !waitingInput && hasSurveyData && !isAIGenerated && (
+          <div className="total-opinion create">
             <div className="tit-wrap">
               <strong>AI 종합 의견</strong>
             </div>
-            {!confirmedInsightText && (
-              <div className="create-board">
-                <strong>AI가 실시된 심리검사 종합 의견을 생성할 준비가 되었습니다.</strong>
-                <button className="type01 h40" type="button" onClick={handleAIGenerate}>
-                  <span>AI 생성하기</span>
-                </button>
-              </div>
-            )}
-            {confirmedInsightText && (
-              <div className="txt-box">
-                {serverInsightParsed ? (
-                  <>
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.answerText}</div>
-                    <br />
-                    <strong>추천 방법</strong>
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.feedbackText}</div>
-                  </>
-                ) : (
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{confirmedInsightText}</div>
-                )}
-              </div>
-            )}
+            <div className="create-board">
+              <strong>AI가 심리검사 종합 의견을 생성/분석하고 있습니다.</strong>
+              <button className="type01 h40" type="button" onClick={handleAIGenerate}>
+                <span>AI 생성하기</span>
+              </button>
+            </div>
           </div>
-          <SymptomChangePanel onOpenSurveySendModal={onOpenSurveySendModal} />
-        </>
-      )}
-      {/* AI 종합 의견 생성 패널 UI (로컬 관리) */}
-      <AiPanelCommon
-        isRecordings={true}
-        open={showAiSummary}
-        onClose={() => setShowAiSummary(false)}
-        onConfirm={async () => {
-          const answer = aiInsightParsed.answerText || '';
-          const feedback = aiInsightParsed.feedbackText || '';
-          const combined = feedback
-            ? `${answer}\n\n추천 방법\n${feedback}`
-            : `${answer}`;
-          try {
-            if (currentSetSeq) {
-              await assessmentSetUpdateOverallInsight({ setSeq: currentSetSeq, textOverallInsight: combined });
-            }
-            setConfirmedInsightText(combined);
-            showToastMessage?.('AI 종합 의견이 확정되었습니다.');
-            setShowAiSummary(false);
-          } catch (e) {
-            console.error('[PsychologicalTest] overallInsight 저장 실패:', e);
-            showToastMessage?.('저장 중 오류가 발생했습니다.');
-          }
-        }}
-        status="complete"
-        title="AI 종합 의견 생성"
-        description="AI가 심리 검사 종합 의견을 생성합니다."
-        infoMessage="AI 종합 의견이 생성 완료되었습니다."
-        keyInfo
-        keyInfoText="재생성된 내용을 확정하면 원래의 내용은 사라지고<br />다시 복구할 수 없어요."
-        renderComplete={() => (
+        )}
+        {/* 제출 데이터 존재 + AI 생성 */}
+        {!noSet && !waitingInput && hasSurveyData && isAIGenerated && (
           <>
-            <div className="complete-cont">
-              {aiInsightParsed.answerText ? (
-                <div style={{ whiteSpace: 'pre-wrap' }}>{aiInsightParsed.answerText}</div>
+            <div className="total-opinion">
+              {/* 신규 생성 링크 없는 경우 / 있는 경우 */}
+              {!generatedUrl ? (
+                <div className="survey-create">
+                  <strong>내담자에게 필요한 심리 검사지를 만들어 보세요.</strong>
+                  <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
+                </div>
               ) : (
-                <div>AI 종합 의견이 없습니다.</div>
+                <div className="survey-create type01">
+                  <div className="txt-wrap">
+                    <strong>{surveyTitle}</strong>
+                    <p>만료 <span className="datetime">{expireTimeText}</span></p>
+                  </div>
+                  <div className="url-wrap">
+                    <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
+                    <button onClick={handleCopyUrl} className="copy-btn" type="button" aria-label="URL 복사"></button>
+                    <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL 삭제"></button>
+                  </div>
+                </div>
               )}
-              {aiInsightParsed.feedbackText && (
-                <>
-                  <br />
-                  <strong style={{ fontWeight: 'bold', color: '#000' }}>추천 방법</strong>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{aiInsightParsed.feedbackText}</div>
-                </>
+              <div className="tit-wrap">
+                <strong>AI 종합 의견</strong>
+              </div>
+              {!confirmedInsightText && (
+                <div className="create-board">
+                  <strong>AI가 실시된 심리검사 종합 의견을 생성할 준비가 되었습니다.</strong>
+                  <button className="type01 h40" type="button" onClick={handleAIGenerate}>
+                    <span>AI 생성하기</span>
+                  </button>
+                </div>
+              )}
+              {confirmedInsightText && (
+                <div className="txt-box">
+                  {serverInsightParsed ? (
+                    <>
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.answerText}</div>
+                      <br />
+                      <strong>추천 방법</strong>
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.feedbackText}</div>
+                    </>
+                  ) : (
+                    <div style={{ whiteSpace: 'pre-wrap' }}>{confirmedInsightText}</div>
+                  )}
+                </div>
               )}
             </div>
+            <SymptomChangePanel onOpenSurveySendModal={onOpenSurveySendModal} />
           </>
         )}
-      />
-    </div>
+      </div>
+      {/* AI 종합 의견 생성 패널은 상위(Consults)에서 전역 렌더링 */}
+    </>
   );
 }
 

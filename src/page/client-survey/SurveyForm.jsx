@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 
-function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange, answers, onAnswersChange, onSave, onAutoSave, onComplete, onPrevAssessment, onNextAssessment, onShowIncompleteModal, scrollTargetSeq, onScrollTargetConsumed }) {
+function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange, hasIntermediateData, answers, onAnswersChange, onSave, onAutoSave, onComplete, onPrevAssessment, onNextAssessment, onShowIncompleteModal, scrollTargetSeq, onScrollTargetConsumed }) {
 
   // 실제 API 데이터 구조에서 필요한 정보 추출
   const processedData = useMemo(() => {
@@ -29,19 +29,23 @@ function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange
     if (!qt) return ''
     if (qt === 'PRE') return '사전 문진'
     if (qt === 'PROG') {
-      const seq = surveyData?.sessionSeq
-      return `경과 문진${seq ? ` ${seq}회기` : ''}`
+      // const seq = surveyData?.sessionSeq
+      // return `경과 문진${seq ? ` ${seq}회기` : ''}`
+      return '경과 문진'
     }
     if (qt === 'POST') return '사후 문진'
     return ''
   }, [surveyData])
 
   // 컴포넌트 렌더링 시 및 검사지 변경 시 스크롤을 맨 위로 즉시 이동
+  // 단, 특정 문항으로 이동 요청이 있거나 중간저장 데이터가 있는 경우 최상단 이동을 생략해 충돌 방지
   useEffect(() => {
+    if (scrollTargetSeq !== null && scrollTargetSeq !== undefined) return
+    if (hasIntermediateData) return
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     //! 부드럽게 이동 원할시 아래 주석을 해제
     // window.scrollTo({ top: 0, left: 0 })
-  }, [currentAssessmentIndex])
+  }, [currentAssessmentIndex, scrollTargetSeq, hasIntermediateData])
 
   // 스크롤 감지
   useEffect(() => {
