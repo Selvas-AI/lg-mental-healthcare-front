@@ -1,6 +1,6 @@
 import React, { useRef, useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, supportPanelState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
+import { maskingState, clientsState, currentSessionState, sessionDataState, editorConfirmState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete, assessmentList } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
@@ -13,7 +13,6 @@ import DailyManagement from './daily/DailyManagement';
 import DocumentBox from './document/DocumentBox';
 import ClientRegisterModal from './../components/ClientRegisterModal';
 import UploadModal from './components/UploadModal';
-import AiPanelCommon from '@/components/AiPanelCommon';
 import SurveySendModal from './psychologicalTest/components/SurveySendModal';
 import ToastPop from '@/components/ToastPop';
 import EditorModal from '../components/EditorModal';
@@ -124,8 +123,7 @@ function Consults() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editClient, setEditClient] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showAiSummary, setShowAiSummary] = useState(false);
-  const setSupportPanel = useSetRecoilState(supportPanelState);
+  // AiPanelCommon은 PsychologicalTest 내부에서 직접 관리합니다.
   const [showSurveySendModal, setShowSurveySendModal] = useState(false);
   const [sessionMngData, setSessionMngData] = useState(null);
   const [sessionData, setSessionData] = useState(null);
@@ -391,8 +389,6 @@ function Consults() {
               <ActiveComponent 
                 setShowUploadModal={setShowUploadModal} 
                 onOpenSurveySendModal={() => setShowSurveySendModal(true)}
-                setShowAiSummary={setShowAiSummary}
-                setSupportPanel={setSupportPanel}
                 sessionMngData={activeTab === 0 ? sessionMngData : undefined}
                 sessionData={activeTab === 0 ? sessionData : undefined}
                 audioData={activeTab === 0 ? audioData : undefined}
@@ -452,33 +448,6 @@ function Consults() {
           }}
         />
       )}
-      {/* AI 종합 의견 생성 패널 UI */}
-      <AiPanelCommon
-        isRecordings={true}
-        open={showAiSummary}
-        onClose={() => {
-          setShowAiSummary(false);
-          setSupportPanel(false);
-        }}
-        status="complete"
-        title="AI 종합 의견 생성"
-        description="AI가 심리 검사 종합 의견을 생성합니다."
-        infoMessage="AI 종합 의견이 생성 완료되었습니다."
-        keyInfo
-        keyInfoText="재생성된 내용을 확정하면 원래의 내용은 사라지고<br />다시 복구할 수 없어요."
-        renderComplete={() => (
-          <>
-            <div className="complete-cont">
-              <div>3회기에서는 지난 1,2회기 보다 우울 점수가 낮아졌습니다. 7회기 문항 [Q. 죽음에 대해 생각해 보신 적이 있습니까?] 에서 이전과 달리 1점을 선택했기 때문에 우울 증상이 많이 완화된 것으로 보입니다.</div>
-              <br />
-              <strong>추천 방법</strong>
-              <div className="bullet-line">증상이 심화되지 않도록 마음 챙김 훈련이 필요</div>
-              <div className="bullet-line">작은 목표를 정하여 성취하는 것이 중요(예를 들어 하루에 10분 산책, 간단한 집안일 완수 등)</div>
-              <div className="bullet-line">규칙적인 생활습관을 권장하며, 수면,식사, 운동과 관련된 구체적인 습관을 가지기</div>
-            </div>
-          </>
-        )}
-      />
       {showSurveySendModal && (
         <SurveySendModal
           modalOpen={showSurveySendModal}
@@ -492,6 +461,7 @@ function Consults() {
           clientId={clientId}
           sessionSeq={sessionSeq}
           showToastMessage={showToastMessage}
+          clientProfile={client}
         />
       )}
       <EditorModal

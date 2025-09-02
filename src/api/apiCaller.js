@@ -201,7 +201,7 @@ export const sessionMngUpdate = async (sessionMngData) => {
 }
 
 //? ===== 내담자 검사 관리 API =====
-// 내담자 검사세트 결과 조회
+//! 내담자 검사세트 결과 조회
 export const assessmentSetResult = async (setSeq) => {
     return await axiosIns.get('/api/assessmentSet/result', { params: { setSeq } })
 }
@@ -221,22 +221,22 @@ export const assessmentSetFind = async (setSeq) => {
     return await axiosIns.get('/api/assessmentSet/find', { params: { setSeq } })
 }
 
-//! 현재 진행중인 회기 그룹의 내담 검사세트 조회
+//! 현재 진행중인 회기 그룹의 내담 검사세트 조회 ?????
 export const assessmentSetCurrentList = async (clientSeq) => {
     return await axiosIns.get('/api/assessmentSet/currentList', { params: { clientSeq } })
 }
 
-//! 내담자검사 세트 링크 주소 수정
+//! 내담자검사 세트 링크 주소 수정 xx
 export const assessmentSetUpdateUrl = async (params) => {
     return await axiosIns.post('/api/assessmentSet/updateUrl', params)
 }
 
-//! 내담자검사 세트 종합의견 수정
+// 내담자검사 세트 종합의견 수정
 export const assessmentSetUpdateOverallInsight = async (params) => {
     return await axiosIns.post('/api/assessmentSet/updateOverallInsight', params)
 }
 
-//! AI 종합의견 dislike 의견 수정
+// AI 종합의견 dislike 의견 수정
 export const assessmentSetUpdateOverallInsightDislike = async (params) => {
     return await axiosIns.post('/api/assessmentSet/updateOverallInsightDislike', params)
 }
