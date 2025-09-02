@@ -1,8 +1,8 @@
-name: CI/CD for mental healthcare front dev server
+name: CI/CD for mental healthcare front real server
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
 
 jobs:
   build-and-push:
@@ -25,11 +25,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t ghcr.io/selvas-ai/lg-mental-healthcare/front/dev:latest .
+        docker build -t ghcr.io/selvas-ai/lg-mental-healthcare/front/real:latest .
 
     - name: Push Docker image
       run: |
-        docker push ghcr.io/selvas-ai/lg-mental-healthcare/front/dev:latest
+        docker push ghcr.io/selvas-ai/lg-mental-healthcare/front/real:latest
 
   deploy-to-ec2:
     name: SSH Deploy on EC2
@@ -40,9 +40,9 @@ jobs:
     - name: SSH to EC2 and deploy
       uses: appleboy/ssh-action@v0.1.10
       with:
-        host: ${{ secrets.SECRET_EC2_HOST_DEV }}
-        username: ${{ secrets.SECRET_EC2_USER_DEV }}
-        key: ${{ secrets.SECRET_EC2_SSH_KEY_DEV }}
+        host: ${{ secrets.SECRET_EC2_HOST_REAL }}
+        username: ${{ secrets.SECRET_EC2_USER_REAL }}
+        key: ${{ secrets.SECRET_EC2_SSH_KEY_REAL }}
         script: |
           docker login ghcr.io -u ${{ secrets.SECRET_GITHUB_USER }} -p ${{ secrets.SECRET_GITHUB_TOKEN }}
           cd /appData/deploy
