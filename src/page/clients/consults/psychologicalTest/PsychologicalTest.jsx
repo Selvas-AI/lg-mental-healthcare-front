@@ -60,7 +60,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   };
 
   // 증상별 변화 데이터 수집
-  const collectSymptomData = (assessmentSets) => {
+  const collectSymptomData = (assessmentSets, seqToOrderMap = {}) => {
     try {
       // 제출된 세트만 필터링하고 itemList가 있는 것만
       const submittedSets = assessmentSets.filter(set => set.submittedTime && set.itemList);
@@ -96,7 +96,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
             // 그룹 내 순번(또는 sessionNo)을 사용하고, 절대 sessionSeq 원값은 라벨에 쓰지 않음
             const seqKey = set.sessionSeq != null ? String(set.sessionSeq) : null;
             const sessionNoFromSet = set.sessionNo ?? null;
-            const orderFromMap = seqKey ? seqToOrder[seqKey] : null;
+            const orderFromMap = seqKey ? seqToOrderMap[seqKey] : null;
             const finalSessionNo = sessionNoFromSet ?? orderFromMap ?? localFallbackOrder;
             sessionLabel = `${finalSessionNo}회기`;
           } else {
@@ -110,9 +110,11 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
             score: item.totalScore,
             order: set.questionType === 'PRE' ? -1 : 
                     set.questionType === 'POST' ? 999 : 
-                    (set.sessionNo ?? seqToOrder[String(set.sessionSeq)] ?? localFallbackOrder),
+                    (set.sessionNo ?? seqToOrderMap[String(set.sessionSeq)] ?? localFallbackOrder),
             questionType: set.questionType,
             sessionSeq: set.sessionSeq,
+            assessmentName,
+            sessiongroupSeq: set.sessiongroupSeq ?? null,
             ...severityInfo
           });
         });
@@ -189,7 +191,13 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
           score: session.score || '',
           level: session.level,
           levelClass: session.levelClass,
-          memo: true
+          memo: true,
+          // 안정적 식별자 전달용: 상세 이동 시 인덱스 대신 사용
+          sessionSeq: session.sessionSeq ?? null,
+          order: session.order ?? null,
+          questionType: session.questionType ?? '',
+          assessmentName: session.assessmentName ?? undefined,
+          sessiongroupSeq: session.sessiongroupSeq ?? null
         }));
         
         symptomResults.push({
@@ -340,21 +348,22 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
     (async () => {
       try {
         const targetGroupSeq = currentSession?.sessiongroupSeq ?? null;
-        // 세션 목록 기반 그룹 내 순서 매핑 구축 (제목 표기용)
+        // 로컬 매핑을 바깥 스코프에 선언하여 이후 로직에서 재사용
+        let localSeqToOrder = {};
         try {
           const sessionsRes = await sessionList(parseInt(effectiveClientId, 10));
           const sessions = Array.isArray(sessionsRes?.data) ? sessionsRes.data : sessionsRes?.data?.data || [];
           const sameGroupSessions = sessions.filter(s => String(s?.sessiongroupSeq) === String(targetGroupSeq));
           const sorted = [...sameGroupSessions].sort((a, b) => (a?.sessionNo ?? 0) - (b?.sessionNo ?? 0));
-          const _seqToOrder = {};
+          localSeqToOrder = {};
           const _sessionNoToSeq = {};
           const _sessionNosInGroup = [];
           sorted.forEach((s, idx) => {
             const seq = s?.sessionSeq;
             const no = s?.sessionNo;
             if (seq != null) {
-              _seqToOrder[seq] = idx + 1;               // numeric key
-              _seqToOrder[String(seq)] = idx + 1;       // string key
+              localSeqToOrder[seq] = idx + 1;               // numeric key
+              localSeqToOrder[String(seq)] = idx + 1;       // string key
             }
             if (no != null && seq != null) {
               _sessionNoToSeq[no] = seq;                // numeric value
@@ -362,12 +371,12 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
             }
             if (no != null) _sessionNosInGroup.push(no);
           });
-          setSeqToOrder(_seqToOrder);
+          setSeqToOrder(localSeqToOrder);
           setSessionNoToSeq(_sessionNoToSeq);
           setSessionNosInGroup(_sessionNosInGroup);
           // 부모에 전달 (모달 재사용 목적)
           if (typeof onSessionMapsUpdate === 'function') {
-            onSessionMapsUpdate({ seqToOrder: _seqToOrder, sessionNoToSeq: _sessionNoToSeq, sessionNosInGroup: _sessionNosInGroup });
+            onSessionMapsUpdate({ seqToOrder: localSeqToOrder, sessionNoToSeq: _sessionNoToSeq, sessionNosInGroup: _sessionNosInGroup });
           }
         } catch (e) {
           console.warn('[PsychologicalTest] sessionList 조회 실패 또는 구조 상이', e);
@@ -466,7 +475,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
               })
             );
 
-            const symptomResults = collectSymptomData(results);
+            const symptomResults = collectSymptomData(results, localSeqToOrder);
             setSymptomData(symptomResults);
           }
         } catch (e) {
