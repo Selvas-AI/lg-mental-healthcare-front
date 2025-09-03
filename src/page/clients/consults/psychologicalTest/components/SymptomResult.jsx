@@ -36,6 +36,60 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
         ).map(({ _idx, ...rest }) => rest);
         return combined;
     }, [table, isReversed]);
+
+    // 차트용 데이터 구성: 사전 문진 맨 앞, 사후 문진 맨 뒤, 숫자 회기는 테이블 정렬의 반대로
+    const chartLabels = useMemo(() => {
+        if (!Array.isArray(table)) return [];
+        const hasNumber = (v) => /\d+/.test(String(v ?? ''));
+        const extractNum = (v) => {
+            const m = String(v ?? '').match(/(\d+)/);
+            return m ? parseInt(m[1], 10) : NaN;
+        };
+        const isPre = (v) => /사전/.test(String(v ?? ''));
+        const isPost = (v) => /사후/.test(String(v ?? ''));
+
+        const withIndex = table.map((row, idx) => ({ ...row, _idx: idx }));
+        const pre = withIndex.filter(r => isPre(r.session));
+        const post = withIndex.filter(r => isPost(r.session));
+        const numeric = withIndex.filter(r => hasNumber(r.session));
+        const others = withIndex.filter(r => !isPre(r.session) && !isPost(r.session) && !hasNumber(r.session));
+
+        // 테이블은 isReversed=false(오름), true(내림). 차트는 그 반대로 정렬
+        numeric.sort((a, b) => {
+            const na = extractNum(a.session);
+            const nb = extractNum(b.session);
+            return isReversed ? na - nb : nb - na;
+        });
+
+        const ordered = [...pre, ...numeric, ...others, ...post];
+        return ordered.map(({ session }) => session);
+    }, [table, isReversed]);
+
+    const chartValues = useMemo(() => {
+        if (!Array.isArray(table)) return [];
+        const hasNumber = (v) => /\d+/.test(String(v ?? ''));
+        const extractNum = (v) => {
+            const m = String(v ?? '').match(/(\d+)/);
+            return m ? parseInt(m[1], 10) : NaN;
+        };
+        const isPre = (v) => /사전/.test(String(v ?? ''));
+        const isPost = (v) => /사후/.test(String(v ?? ''));
+
+        const withIndex = table.map((row, idx) => ({ ...row, _idx: idx }));
+        const pre = withIndex.filter(r => isPre(r.session));
+        const post = withIndex.filter(r => isPost(r.session));
+        const numeric = withIndex.filter(r => hasNumber(r.session));
+        const others = withIndex.filter(r => !isPre(r.session) && !isPost(r.session) && !hasNumber(r.session));
+
+        numeric.sort((a, b) => {
+            const na = extractNum(a.session);
+            const nb = extractNum(b.session);
+            return isReversed ? na - nb : nb - na;
+        });
+
+        const ordered = [...pre, ...numeric, ...others, ...post];
+        return ordered.map(({ score }) => (score !== '' && score !== null ? Number(score) : null));
+    }, [table, isReversed]);
     
     const handleDetailClick = (rowIndex) => {
         // 현재 스크롤 위치 저장
@@ -70,8 +124,8 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
         <div className="result-con">
           <div className="chart-wrap">
             <SymptomBarChart
-              values={canvas.values}
-              labels={canvas.labels}
+              values={chartValues}
+              labels={chartLabels}
               min={canvas.min}
               max={canvas.max}
               className="line-chart02"
