@@ -92,11 +92,11 @@ function ClientSurvey() {
     })
 
     if (hasAnyAnswer) {
-      console.log('중간저장 데이터 발견:', savedAnswers)
+      // console.log('중간저장 데이터 발견:', savedAnswers)
       setHasIntermediateData(true)
       setAnswers(savedAnswers)
     } else {
-      console.log('중간저장 데이터 없음')
+      // console.log('중간저장 데이터 없음')
       setHasIntermediateData(false)
     }
   }
@@ -157,7 +157,7 @@ function ClientSurvey() {
       const urlSetItemSeq = getSetItemSeqFromUrl()
       const total = response.data?.itemList?.length ?? 0
 
-      console.log('[URL Params]', { urlAssessmentIndex, urlQuestionSeq, urlSetItemSeq, total })
+      // console.log('[URL Params]', { urlAssessmentIndex, urlQuestionSeq, urlSetItemSeq, total })
 
       if (Number.isFinite(urlAssessmentIndex) && total > 0) {
         // 우선 0-based로 시도
@@ -166,18 +166,18 @@ function ClientSurvey() {
         if (!response.data.itemList[idx] && response.data.itemList[urlAssessmentIndex - 1]) {
           idx = urlAssessmentIndex - 1
         }
-        console.log('[Init] currentAssessmentIndex by assessmentIndex =', idx)
+        // console.log('[Init] currentAssessmentIndex by assessmentIndex =', idx)
         setCurrentAssessmentIndex(idx)
       } else if (Number.isFinite(urlSetItemSeq) && Array.isArray(response.data?.itemList)) {
         const foundBySet = response.data.itemList.findIndex(it => it.setItemSeq === urlSetItemSeq)
         if (foundBySet >= 0) {
-          console.log('[Init] currentAssessmentIndex by setItemSeq =', foundBySet)
+          // console.log('[Init] currentAssessmentIndex by setItemSeq =', foundBySet)
           setCurrentAssessmentIndex(foundBySet)
         }
       } else if (Number.isFinite(urlQuestionSeq) && Array.isArray(response.data?.itemList)) {
         const found = response.data.itemList.findIndex(it => (it.assessmentInfo?.questions || []).some(q => q.questionSeq === urlQuestionSeq))
         if (found >= 0) {
-          console.log('[Init] currentAssessmentIndex by questionSeq =', found)
+          // console.log('[Init] currentAssessmentIndex by questionSeq =', found)
           setCurrentAssessmentIndex(found)
         }
       } else if (Array.isArray(response.data?.itemList)) {
@@ -193,7 +193,7 @@ function ClientSurvey() {
             break
           }
         }
-        console.log('[Init] currentAssessmentIndex by firstUnanswered =', defaultIndex, 'questionSeq =', firstUnansweredSeq)
+        // console.log('[Init] currentAssessmentIndex by firstUnanswered =', defaultIndex, 'questionSeq =', firstUnansweredSeq)
         setCurrentAssessmentIndex(defaultIndex)
         if (Number.isFinite(firstUnansweredSeq)) {
           setInitialScrollSeq(firstUnansweredSeq)
@@ -261,7 +261,7 @@ function ClientSurvey() {
       // API 호출
       const token = getTokenFromUrl()
       await clientExamTempSave({ token, params: apiParams })
-      console.log('중간저장 성공:', apiParams)
+      // console.log('중간저장 성공:', apiParams)
       
       // 모달 상태 강제 리셋 후 새로운 모달 표시
       setShowModal(false)
@@ -271,7 +271,7 @@ function ClientSurvey() {
         setModalOverrideMessage('')
         setModalType('save')
         setShowModal(true)
-        console.log('중간저장 모달 상태 설정 완료')
+        // console.log('중간저장 모달 상태 설정 완료')
       }, 100)
     } catch (error) {
       console.error('중간저장 실패:', error)
@@ -300,7 +300,7 @@ function ClientSurvey() {
       // API 호출 (조용한 자동 저장)
       const token = getTokenFromUrl()
       await clientExamTempSave({ token, params: apiParams })
-      console.log('자동저장 성공:', apiParams)
+      // console.log('자동저장 성공:', apiParams)
     } catch (e) {
       console.warn('자동 저장 실패:', e)
     }
@@ -319,13 +319,13 @@ function ClientSurvey() {
     
     const answeredQuestions = Object.keys(answers).length
     
-    console.log('총 문항 수:', totalQuestions)
-    console.log('응답한 문항 수:', answeredQuestions)
-    console.log('응답 데이터:', answers)
+    // console.log('총 문항 수:', totalQuestions)
+    // console.log('응답한 문항 수:', answeredQuestions)
+    // console.log('응답 데이터:', answers)
     
     if (answeredQuestions < totalQuestions) {
       // 미응답 모달 표시
-      console.log('미응답 모달 표시')
+      // console.log('미응답 모달 표시')
       setModalType('incomplete')
       setShowModal(true)
       return
@@ -341,14 +341,14 @@ function ClientSurvey() {
       
       const token = getTokenFromUrl()
       await clientExamSave({ token, params: apiParams })
-      console.log('완료 저장 성공:', apiParams)
+      // console.log('완료 저장 성공:', apiParams)
       
       // 모달 상태 강제 리셋 후 새로운 모달 표시
       setShowModal(false)
       setTimeout(() => {
         setModalType('complete')
         setShowModal(true)
-        console.log('완료 모달 상태 설정 완료')
+        // console.log('완료 모달 상태 설정 완료')
       }, 100)
     } catch (error) {
       console.error('완료 저장 실패:', error)
