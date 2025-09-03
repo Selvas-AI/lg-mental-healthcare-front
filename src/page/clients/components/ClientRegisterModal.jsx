@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ToastPop from "@/components/ToastPop";
 
 function ClientRegisterModal({ open, onClose, onSave, mode = "register", initialData = null }) {
   const [openGuardianSelect, setOpenGuardianSelect] = useState([]);
@@ -12,6 +13,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
   const [memo, setMemo] = useState(initialData?.memo || "");
   const maxLength = 500;
   const isOver = memo.length > maxLength;
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
   const INITIAL_FORM = {
     name: "",
     nickname: "",
@@ -209,9 +212,9 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     const missingFields = validateRequiredFields();
     if (missingFields.length > 0) {
       const fieldText = missingFields.join(', ');
-      //? joy : fieldText 사용하여 alert에 포함시킬 때 아래 코드 사용 
-      alert(`${fieldText} - 필수입력 값을 확인해 주세요.`);
-      // alert(`필수입력 값을 확인해 주세요.`);
+      setToastMessage(`${fieldText} - 필수입력 값을 확인해 주세요.`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
       return;
     }
     // 저장 시 editorRef에서 memo 읽기
@@ -470,6 +473,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
           <button className="type08" type="button" onClick={onClose}>취소</button>
           <button className="type08 black" type="button" onClick={handleSave}>{mode === "edit" ? "수정" : "저장"}</button>
         </div>
+        <ToastPop message={toastMessage} showToast={showToast} />
       </div>
     </div>
   );
