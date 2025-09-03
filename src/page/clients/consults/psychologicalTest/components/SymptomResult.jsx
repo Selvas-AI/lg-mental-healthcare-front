@@ -9,7 +9,32 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
 
     const displayedRows = useMemo(() => {
         if (!Array.isArray(table)) return [];
-        return isReversed ? [...table].slice().reverse() : table;
+
+        // 숫자 회기(예: "1회기")와 그 외(예: "사전 문진")를 분리
+        const withIndex = table.map((row, idx) => ({ ...row, _idx: idx }));
+        const hasNumber = (v) => /\d+/.test(String(v ?? ''));
+        const extractNum = (v) => {
+            const m = String(v ?? '').match(/(\d+)/);
+            return m ? parseInt(m[1], 10) : NaN;
+        };
+
+        const numericSessions = withIndex.filter((r) => hasNumber(r.session));
+        const otherSessions = withIndex.filter((r) => !hasNumber(r.session));
+
+        // 기본: 오름차순 정렬(1회기 -> N회기). 토글 시 내림차순.
+        numericSessions.sort((a, b) => {
+            const na = extractNum(a.session);
+            const nb = extractNum(b.session);
+            return isReversed ? nb - na : na - nb;
+        });
+
+        // 숫자 없는 항목(사전 문진 등)은 기본 상태에서는 하단, 토글 시 상단으로 배치
+        const combined = (
+            isReversed
+                ? [...otherSessions, ...numericSessions]
+                : [...numericSessions, ...otherSessions]
+        ).map(({ _idx, ...rest }) => rest);
+        return combined;
     }, [table, isReversed]);
     
     const handleDetailClick = (rowIndex) => {
@@ -21,12 +46,19 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
         const clientId = currentQuery.get('clientId');
         const currentTab = currentQuery.get('tab') || 'counsel';
         
+        // 클릭한 행의 실제 데이터 정보 추출
+        const clickedRow = displayedRows[rowIndex];
+        
         // 상세 페이지로 이동 후 뒤로가기 시 현재 탭과 스크롤 위치로 돌아오도록 설정
         const detailQuery = new URLSearchParams();
         if (clientId) detailQuery.set('clientId', clientId);
         detailQuery.set('returnTab', currentTab);
         detailQuery.set('scrollY', currentScrollY.toString());
-        detailQuery.set('targetRow', rowIndex.toString()); // 클릭한 행 인덱스도 저장
+        detailQuery.set('targetRow', rowIndex.toString());
+        
+        // 검사 식별 정보 추가
+        detailQuery.set('assessmentCategory', caption); // 검사 카테고리 (우울장애, 범불안장애 등)
+        detailQuery.set('sessionLabel', clickedRow.session); // 회기 라벨 (1회기, 사전 문진 등)
         
         navigate(`/clients/consults/psychologicalTestDetail?${detailQuery.toString()}`);
     };
