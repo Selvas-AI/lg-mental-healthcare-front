@@ -62,9 +62,9 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
   const getCurrentFieldKeys = () => {
     switch (panelType) {
       case 'summary':
-        return { codeKey: 'counselingSummaryCode', textKey: 'counselingSummaryAi' };
+        return { codeKey: 'counselingSummaryCode', textKey: 'counselingSummaryText' };
       case 'issue':
-        return { codeKey: 'concernTopicCode', textKey: 'concernTopicAi' };
+        return { codeKey: 'concernTopicCode', textKey: 'concernTopicText' };
       default:
         return null;
     }

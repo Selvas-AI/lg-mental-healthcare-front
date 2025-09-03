@@ -197,6 +197,20 @@ function CounselLogDetail() {
     setSupportPanel(false);
   };
 
+  // AiPanelCommon에서 dislikeFind 복원을 위한 필드 키 매핑 (세션 기반)
+  const getCurrentFieldKeys = () => {
+    switch (aiPanelKey) {
+      case 'nextPlan':
+        return { codeKey: 'nextSessionPlanCode', textKey: 'nextSessionPlanText' };
+      case 'mainProblem':
+        return { codeKey: 'chiefComplaintCode', textKey: 'chiefComplaintText' };
+      case 'sessionContent':
+        return { codeKey: 'sessionSummaryCode', textKey: 'sessionSummaryText' };
+      default:
+        return null;
+    }
+  };
+
   // AI 패널 확정하기 콜백 (setNextPlan, setMainProblem, setSessionContent 전달)
   const handleAiConfirm = () => {
     handleAiConfirmBase(setNextPlan, setMainProblem, setSessionContent);
@@ -336,7 +350,7 @@ function CounselLogDetail() {
       
       if (response.code === 200) {
         showToastMessage('상담일지가 저장되었습니다.');
-        console.log('저장 성공:', response);
+        // console.log('저장 성공:', response);
         // 저장 성공 시 Recoil 캐시를 최신 값으로 업데이트하여 영속 상태 유지
         if (currentSession?.sessionSeq) {
           setSessionNote({
@@ -427,7 +441,7 @@ function CounselLogDetail() {
       if (currentSession?.sessionSeq) {
         // 1. 전역 상태에서 해당 sessionSeq의 데이터가 있는지 확인
         if (sessionNote?.data && String(sessionNote.sessionSeq) === String(currentSession.sessionSeq)) {
-          console.log('전역 상태에서 데이터 로드 성공:', sessionNote.data);
+          // console.log('전역 상태에서 데이터 로드 성공:', sessionNote.data);
           mapSessionNoteToState(sessionNote.data);
           return;
         }
@@ -436,7 +450,7 @@ function CounselLogDetail() {
         try {
           const response = await sessionNoteFind(currentSession.sessionSeq);
           if (response.code === 200 && response.data) {
-            console.log('API 호출로 데이터 로드 성공:', response.data);
+            // console.log('API 호출로 데이터 로드 성공:', response.data);
             setSessionNote({
               sessionSeq: String(currentSession.sessionSeq),
               data: response.data,
@@ -741,8 +755,21 @@ function CounselLogDetail() {
           <div className="complete-cont"></div>
         )}
         onConfirm={handleAiConfirm}
-        onSkip={handleAiSkip}
+        onSkip={(code, text) => {
+          // AiPanelCommon은 (code, text) 2개만 전달하므로, 현재 패널 키에 맞게 6개 인자로 매핑
+          switch (aiPanelKey) {
+            case 'nextPlan':
+              return handleAiSkip(code || '', text || '', null, '', null, '');
+            case 'mainProblem':
+              return handleAiSkip(null, '', code || '', text || '', null, '');
+            case 'sessionContent':
+              return handleAiSkip(null, '', null, '', code || '', text || '');
+            default:
+              return handleAiSkip(null, '', null, '', null, '');
+          }
+        }}
         sessionSeq={sessionSeq}
+        currentFieldKeys={getCurrentFieldKeys()}
       />
       <ToastPop message={toastMessage} showToast={showToast} />
       <EditorConfirm
