@@ -326,7 +326,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.map((client, idx) => (
+                {filteredClients.filter(Boolean).map((client, idx) => (
                   <tr
                     key={client.clientSeq || idx}
                     className={
