@@ -1,33 +1,92 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { assessmentSetList, assessmentSetResult, sessionList, sessionFind, clientFind } from '@/api/apiCaller';
 
 const PsychologicalTestDetail = ({ 
-    testTitle = "PHQ-9 우울 검사 결과",
-    clientInfo = {
-        name: "홍길동",
-        phone: "010-1234-5678",
-        gender: "남",
-        birthDate: "1996-04-21(만 27세)"
+    testTitle: initTitle = "PHQ-9 우울 검사 결과",
+    clientInfo: initClientInfo = {
+        name: "",
+        phone: "",
+        gender: "",
+        birthDate: ""
     },
-    sessionInfo = {
-        session: "4회기",
-        date: "2025.05.02"
+    sessionInfo: initSessionInfo = {
+        session: "",
+        date: ""
     },
-    resultSummary = {
-        score: "25점",
-        severity: "최대입력텍스트",
-        severityLevel: "level-high",
-        description: "우울감과 관련된 다양한 증상을 심각하게 보고하고 있어요. 이로 인해 일상생활에서 겪는 어려움도 클 것으로 보여요. 현재의 심리적 상태를 자세히 확인하기 위한 추가적인 평가와 치료를 권고 드려요."
+    resultSummary: initResultSummary = {
+        score: "",
+        severity: "",
+        severityLevel: "",
+        description: ""
     },
-    surveyInfo = {
+    surveyInfo: initSurveyInfo = {
         title: "검사 문항 반응",
         description: "지난 2주간, 다음과 같은 문제를 얼마나 자주 겪었는지 해당되는 곳에 응답하여 주십시오."
     },
-    questions = [],
+    questions: initQuestions = [],
     onBackClick
 }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const [loading, setLoading] = useState(true);
+    const [hasRealData, setHasRealData] = useState(false);
+
+    const [title, setTitle] = useState(initTitle);
+    const [clientInfo, setClientInfo] = useState(initClientInfo);
+    const [sessionInfo, setSessionInfo] = useState(initSessionInfo);
+    const [resultSummary, setResultSummary] = useState(initResultSummary);
+    const [surveyInfo, setSurveyInfo] = useState(initSurveyInfo);
+    const [questions, setQuestions] = useState(initQuestions);
+    const [assessmentInfo, setAssessmentInfo] = useState(null);
+    const [clientAge, setClientAge] = useState(null);
+
+    const severityClass = (level) => {
+        const map = {
+            0: 'level-low',
+            1: 'level-mid',
+            2: 'level-high'
+        };
+        if (typeof level === 'string') return level; // 이미 class 문자열이면 그대로 사용
+        return map[level] || '';
+    };
+
+    const formatDateDot = (s) => {
+        if (!s) return '';
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return '';
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}.${m}.${dd}`;
+    };
+
+    const formatBirth = (yyyymmdd) => {
+        if (!yyyymmdd || yyyymmdd.length !== 8) return '';
+        return `${yyyymmdd.slice(0,4)}.${yyyymmdd.slice(4,6)}.${yyyymmdd.slice(6,8)}`;
+    };
+
+    const calcAge = (yyyymmdd) => {
+        if (!yyyymmdd || yyyymmdd.length !== 8) return null;
+        const y = Number(yyyymmdd.slice(0,4));
+        const m = Number(yyyymmdd.slice(4,6));
+        const d = Number(yyyymmdd.slice(6,8));
+        if (!y || !m || !d) return null;
+        const today = new Date();
+        let age = today.getFullYear() - y;
+        const mm = today.getMonth() + 1;
+        const dd = today.getDate();
+        if (mm < m || (mm === m && dd < d)) age -= 1;
+        return age >= 0 ? age : null;
+    };
+
+    const genderToKorean = (g) => {
+        const s = String(g || '').toUpperCase();
+        if (s === 'M') return '남';
+        if (s === 'F') return '여';
+        return s || '';
+    };
+
     useEffect(() => {
         // 즉시 상단으로 이동 (smooth 애니메이션 무시)
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -51,185 +110,236 @@ const PsychologicalTestDetail = ({
             navigate(`/clients/consults?${backQuery.toString()}`, { replace: true });
         }
     };
-    
-    // 기본 질문 데이터 (예시) - 임시 응답값 포함
-    const defaultQuestions = [
-        {
-            id: 1,
-            type: "default",
-            question: "기분이 가라앉거나 우울하거나 희망이 없다고 느꼈다.",
-            selectedValue: 2, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 2,
-            type: "default",
-            question: "평소 하던 일에 대한 흥미가 없어지거나 즐거움을 느끼지 못했다.",
-            selectedValue: 1, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 3,
-            type: "default",
-            question: "잠들기 어렵거나 자주 깬다. 혹은 잠을 너무 많이 잔다.",
-            selectedValue: 3, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 4,
-            type: "default",
-            question: "피곤하다고 느끼거나 기운이 거의 없다.",
-            selectedValue: 2, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 5,
-            type: "default",
-            question: "식욕이 줄었다. 혹은 너무 많이 먹는다.",
-            selectedValue: 0, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 6,
-            type: "default",
-            question: "내 자신이 실패자로 여겨지거나 자신과 가족을 실망시켰다고 느낀다.",
-            selectedValue: 1, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 7,
-            type: "default",
-            question: "신문을 읽거나 TV를 보는 것과 같은 일상적인 일에 집중하기 어렵다.",
-            selectedValue: 2, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 8,
-            type: "default",
-            question: "다른 사람들이 눈치 챌 정도로 평소보다 말과 행동이 느리다. 혹은 너무 안절부절 못해서 가만히 앉아 있을 수 없다.",
-            selectedValue: 1, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 9,
-            type: "default",
-            question: "차라리 죽는 것이 낫겠다고 생각하거나 어떻게든 자해를 하려고 생각한다.",
-            selectedValue: 0, // 임시 응답값
-            options: [
-                { value: 0, label: "전혀 없음" },
-                { value: 1, label: "며칠동안" },
-                { value: 2, label: "일주일 이상" },
-                { value: 3, label: "거의 매일" }
-            ]
-        },
-        {
-            id: 10,
-            type: "template01",
-            question: "최근 2주 동안에 당신의 불면증의 심한 정도를 아래에 표시하십시오.",
-            subQuestions: [
-                {
-                    id: "10a",
-                    question: "A. 잠들기 어려움",
-                    selectedValue: 2, // 임시 응답값
-                    options: [
-                        { value: 0, label: "전혀" },
-                        { value: 1, label: "약간" },
-                        { value: 2, label: "보통" },
-                        { value: 3, label: "심한" },
-                        { value: 4, label: "매우 심한" }
-                    ]
-                },
-                {
-                    id: "10b",
-                    question: "B. 수면 유지가 어려움 (자주 깸)",
-                    selectedValue: 3, // 임시 응답값
-                    options: [
-                        { value: 0, label: "전혀" },
-                        { value: 1, label: "약간" },
-                        { value: 2, label: "보통" },
-                        { value: 3, label: "심한" },
-                        { value: 4, label: "매우 심한" }
-                    ]
-                }
-            ]
-        },
-        {
-            id: 11,
-            type: "template02",
-            question: "지난 주 동안 공황발작 또는 제한된 증상 발작을 얼마나 자주 경험하셨습니까?",
-            selectedValue: 1, // 임시 응답값
-            options: [
-                { value: 0, label: "공황이나 제한된 증상 삽화 없음" },
-                { value: 1, label: "경도. 완전한 공황 발작은 없고, 제한된 증상 발작은 하루에 1회를 넘지 않음" },
-                { value: 2, label: "중증도. 주 1-2회의 완전한 공황 발작, 하루에 제한된 증상 발작을 여러 번 경험" },
-                { value: 3, label: "심함. 주 3회 이상의 완전한 공황 발작, 그러나 평균 하루에 1회 이상은 아님" },
-                { value: 4, label: "극심함. 하루에도 여러 번 완전한 공황 발작이 일어남. 발작이 없는 날보다 있는 날이 더 많음" }
-            ]
+
+    useEffect(() => {
+        const clientId = searchParams.get('clientId');
+        const sessionSeqParam = searchParams.get('sessionSeq');
+        const sessionNoParam = searchParams.get('sessionNo');
+        const sessiongroupSeqParam = searchParams.get('sessiongroupSeq');
+        const assessmentName = searchParams.get('assessmentName');
+        if (!clientId || !assessmentName) {
+            setLoading(false);
+            return;
         }
-    ];
 
-    const questionsToRender = questions.length > 0 ? questions : defaultQuestions;
+        const load = async () => {
+            try {
+                // 1) 클라이언트 정보
+                try {
+                    const cf = await clientFind({ clientSeq: parseInt(clientId, 10) });
+                    const c = cf?.data || cf || {};
+                    setClientInfo({
+                        name: c?.clientName || '',
+                        phone: c?.contactNumber || '',
+                        gender: genderToKorean(c?.gender),
+                        birthDate: formatBirth(c?.birthDate)
+                    });
+                    const age = calcAge(c?.birthDate);
+                    setClientAge(age);
+                } catch {}
 
-    const renderDefaultQuestion = (question) => (
-        <li key={question.id}>
-            <p className="question">{question.id}. {question.question}</p>
+                // 2) 세션 매핑 (sessionSeq 결정 및 회기/날짜 텍스트 구성)
+                let targetSessionSeq = sessionSeqParam ? parseInt(sessionSeqParam, 10) : null;
+                let sessionLabel = '';
+                let sessionDateText = '';
+
+                try {
+                    if (!targetSessionSeq) {
+                        const sl = await sessionList(parseInt(clientId, 10));
+                        const sessions = Array.isArray(sl?.data) ? sl.data : sl?.data?.data || [];
+                        const sameGroup = sessiongroupSeqParam
+                          ? sessions.filter(s => String(s?.sessiongroupSeq) === String(sessiongroupSeqParam))
+                          : sessions;
+                        const targetNo = sessionNoParam ? parseInt(sessionNoParam, 10) : null;
+                        const foundByNo = targetNo != null ? sameGroup.find(s => Number(s?.sessionNo) === targetNo) : null;
+                        if (foundByNo?.sessionSeq) targetSessionSeq = foundByNo.sessionSeq;
+                    }
+                    if (targetSessionSeq) {
+                        const sf = await sessionFind(parseInt(clientId, 10), parseInt(targetSessionSeq, 10));
+                        const s = sf?.data || {};
+                        const qt = String(s?.questionType || '').toUpperCase();
+                        if (qt === 'PRE') sessionLabel = '사전 문진';
+                        else if (qt === 'POST') sessionLabel = '사후 문진';
+                        else if (Number.isFinite(Number(s?.sessionNo))) sessionLabel = `${s.sessionNo}회기`;
+                        sessionDateText = formatDateDot(s?.sessionDate || s?.createdTime);
+                    }
+                    setSessionInfo({ session: sessionLabel, date: sessionDateText });
+                } catch {}
+
+                // 3) 검사세트 목록 -> 동일 그룹 내 최신 제출 항목들 조회
+                const as = await assessmentSetList(parseInt(clientId, 10));
+                const sets = Array.isArray(as?.data) ? as.data : [];
+                const groupFiltered = sessiongroupSeqParam
+                    ? sets.filter(it => String(it?.sessiongroupSeq) === String(sessiongroupSeqParam))
+                    : sets;
+                const submitted = groupFiltered.filter(it => !!it?.submittedTime);
+                if (submitted.length === 0) {
+                    setLoading(false);
+                    return;
+                }
+
+                // 4) 상세 결과 병렬 조회 후, 목표 assessmentName의 item 찾기
+                const withItems = await Promise.all(
+                    submitted.map(async (s) => {
+                        try {
+                            const res = await assessmentSetResult(s?.setSeq ?? s?.assessmentSetSeq ?? s?.id);
+                            const payload = res?.data ?? {};
+                            const itemList = Array.isArray(payload?.itemList)
+                                ? payload.itemList
+                                : (Array.isArray(payload?.data?.itemList) ? payload.data.itemList : []);
+                            const qType = payload?.questionType || payload?.data?.questionType || s?.questionType;
+                            return { ...s, itemList, questionType: qType };
+                        } catch {
+                            return { ...s, itemList: [] };
+                        }
+                    })
+                );
+
+                // 우선순위: sessionSeq가 지정되어 있으면 그 세트에서 찾고, 없으면 최신 제출 순으로 탐색
+                const sortedByTime = [...withItems].sort((a, b) => new Date(b.submittedTime) - new Date(a.submittedTime));
+                let candidateSets = targetSessionSeq
+                    ? sortedByTime.filter(s => String(s?.sessionSeq) === String(targetSessionSeq))
+                    : sortedByTime;
+                // sessionSeq가 없으면 URL의 questionType을 우선 반영 (POST 상세 진입 시 POST를 우선 선택)
+                if (!targetSessionSeq) {
+                    const qtParam = String(searchParams.get('questionType') || '').toUpperCase();
+                    if (qtParam === 'PRE' || qtParam === 'POST' || qtParam === 'PROG') {
+                        const filtered = candidateSets.filter(s => String(s?.questionType || '').toUpperCase() === qtParam);
+                        if (filtered.length > 0) {
+                            candidateSets = filtered;
+                        }
+                    } else {
+                        // 파라미터가 없으면 기존 PRE 우선, 없으면 POST 우선
+                        const pre = candidateSets.filter(s => String(s?.questionType || '').toUpperCase() === 'PRE');
+                        const post = candidateSets.filter(s => String(s?.questionType || '').toUpperCase() === 'POST');
+                        if (pre.length > 0) candidateSets = pre;
+                        else if (post.length > 0) candidateSets = post;
+                    }
+                }
+
+                let targetItem = null;
+                let targetSet = null;
+                for (const s of candidateSets) {
+                    const it = (s.itemList || []).find(x => String(x?.assessmentInfo?.assessmentName || '') === String(assessmentName));
+                    if (it) { targetItem = it; targetSet = s; break; }
+                }
+                if (!targetItem) {
+                    setLoading(false);
+                    return;
+                }
+
+                // 4-1) 사전/사후 문진 등 회기/날짜 보정 (sessionSeq가 없어 sessionFind를 못한 경우)
+                setSessionInfo(prev => {
+                    let session = prev.session;
+                    let date = prev.date;
+                    if (!session) {
+                        const qt = String(targetSet?.questionType || '').toUpperCase();
+                        if (qt === 'PRE') session = '사전 문진';
+                        else if (qt === 'POST') session = '사후 문진';
+                    }
+                    if (!date) {
+                        date = formatDateDot(targetSet?.submittedTime || targetSet?.assignedTime);
+                    }
+                    return { session, date };
+                });
+
+                // 5) 헤더 타이틀/요약 세팅 및 설명
+                const disorderRaw = targetItem?.assessmentInfo?.associatedDisorder || '';
+                setTitle(`${assessmentName}${disorderRaw ? ` ${disorderRaw}` : ''} 검사 결과`);
+                const sevLevel = targetItem?.severityLevel;
+                setResultSummary({
+                    score: (targetItem?.totalScore != null ? `${targetItem.totalScore}점` : ''),
+                    severity: targetItem?.severityTitle || '',
+                    severityLevel: severityClass(sevLevel),
+                    description: targetItem?.summaryTitle || ''
+                });
+                const notice = targetItem?.assessmentInfo?.clientNotice || '';
+                setAssessmentInfo(targetItem?.assessmentInfo || null);
+                setSurveyInfo(prev => ({ ...prev, description: notice }));
+
+                // 6) 질문 매핑 (questionitems 기반, SurveyForm 참고)
+                const mappedQuestions = [];
+                const qList = Array.isArray(targetItem?.questionList)
+                  ? targetItem.questionList
+                  : (Array.isArray(targetItem?.assessmentInfo?.questions) ? targetItem.assessmentInfo.questions : []);
+                qList.forEach((q, idx) => {
+                    const questionSeq = q?.questionSeq ?? q?.id ?? (idx + 1);
+                    const questionText = q?.questionText || q?.question || q?.title || '';
+                    const items = Array.isArray(q?.questionitems)
+                        ? q.questionitems
+                        : (Array.isArray(q?.options) ? q.options.map(op => ({ questionItemSeq: op.id ?? op.seq, itemScore: op.score ?? op.value, itemText: op.label ?? op.text }))
+                            : (Array.isArray(q?.answerList) ? q.answerList.map(op => ({ questionItemSeq: op.id ?? op.seq, itemScore: op.score ?? op.value, itemText: op.label ?? op.text })) : []));
+                    // 선택값 보강: selectedScore -> answerItemSeq 매칭 -> item.selected/checked 플래그
+                    let selectedScore = q?.selectedScore ?? q?.score ?? null;
+                    // API 스키마: answerQuestionitemSeq(선택된 항목의 questionItemSeq)
+                    if (selectedScore == null && q?.answerQuestionitemSeq != null) {
+                        const m = items.find(it => String(it.questionItemSeq) === String(q.answerQuestionitemSeq));
+                        if (m && m.itemScore != null) selectedScore = m.itemScore;
+                    }
+                    if (selectedScore == null) {
+                        const answerItemSeq = q?.answerItemSeq ?? q?.selectedItemSeq;
+                        if (answerItemSeq != null) {
+                            const m = items.find(it => String(it.questionItemSeq) === String(answerItemSeq));
+                            if (m && m.itemScore != null) selectedScore = m.itemScore;
+                        }
+                    }
+                    if (selectedScore == null) {
+                        const chosen = items.find(it => it?.selected === true || it?.isSelected === true || it?.checked === true);
+                        if (chosen && chosen.itemScore != null) selectedScore = chosen.itemScore;
+                    }
+                    mappedQuestions.push({ questionSeq, questionText, questionitems: items, selectedScore });
+                });
+                setQuestions(mappedQuestions);
+                setHasRealData(true);
+            } catch (e) {
+                console.error('[PsychologicalTestDetail] 데이터 로딩 실패:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [searchParams]);
+
+    // 헤더 동적 제목 반영: 타이틀 변경 시 상위 레이아웃으로 브로드캐스트
+    useEffect(() => {
+        try {
+            if (title) {
+                window.dispatchEvent(new CustomEvent('page-title', { detail: { title } }));
+            }
+        } catch {}
+    }, [title]);
+
+    // 질문유형 추론 (SurveyForm과 100% 동일하게)
+    const inferQuestionType = (question, info) => {
+        const a = info || assessmentInfo || {};
+        if (a?.basicFlag === true) return 'default';
+        if (a?.basicFlag === false) {
+            const hasSubItemPattern = /[A-Z]\.\s/.test(question?.questionText || '');
+            if (hasSubItemPattern) return 'type01';
+            return 'type02';
+        }
+        return 'default';
+    };
+
+    // 렌더러: questionitems 기반, readOnly
+    const renderDefaultQuestion = (question, index) => (
+        <li key={question.questionSeq}>
+            <p className="question">{index + 1}. {question.questionText}</p>
             <div className="answer">
                 <ul>
-                    {question.options.map((option, optionIndex) => (
-                        <li key={optionIndex}>
+                    {question.questionitems.map((item, itemIndex) => (
+                        <li key={item.questionItemSeq || itemIndex}>
                             <div className="input-wrap radio type01">
-                                <input 
-                                    id={`answer${String(optionIndex + 1).padStart(2, '0')}_q${String(question.id).padStart(2, '0')}`}
-                                    type="radio" 
-                                    name={`question${String(question.id).padStart(2, '0')}`}
-                                    checked={question.selectedValue === option.value}
+                                <input
+                                    id={`answer${itemIndex + 1}_q${question.questionSeq}`}
+                                    type="radio"
+                                    name={`question${question.questionSeq}`}
+                                    checked={Number(question.selectedScore) === Number(item.itemScore)}
                                     readOnly
                                 />
-                                <label htmlFor={`answer${String(optionIndex + 1).padStart(2, '0')}_q${String(question.id).padStart(2, '0')}`}>
-                                    {option.value}
-                                </label>
+                                <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`}>{item.itemScore}</label>
                             </div>
-                            <span>{option.label}</span>
+                            <span>{item.itemText}</span>
                         </li>
                     ))}
                 </ul>
@@ -237,58 +347,62 @@ const PsychologicalTestDetail = ({
         </li>
     );
 
-    const renderTemplate01Question = (question) => (
-        <li key={question.id} className="template01">
-            <p className="question">{question.id}. {question.question}</p>
-            <div className="answer-wrap">
-                {question.subQuestions.map((subQuestion) => (
-                    <div key={subQuestion.id} className="answer">
-                        <p className="sub-question">{subQuestion.question}</p>
-                        <ul>
-                            {subQuestion.options.map((option, optionIndex) => (
-                                <li key={optionIndex}>
-                                    <div className="input-wrap radio type01">
-                                        <input 
-                                            id={`answer${String(optionIndex + 1).padStart(2, '0')}_q${subQuestion.id}`}
-                                            type="radio" 
-                                            name={`question${subQuestion.id}`}
-                                            checked={subQuestion.selectedValue === option.value}
-                                            readOnly
-                                        />
-                                        <label htmlFor={`answer${String(optionIndex + 1).padStart(2, '0')}_q${subQuestion.id}`}>
-                                            {option.value}
-                                        </label>
-                                    </div>
-                                    <span>{option.label}</span>
-                                </li>
-                            ))}
-                        </ul>
+    const renderType01Question = (question, index) => {
+        // SurveyForm과 동일한 정규식: 주제 + 공백 + 서브라벨(A-Z). + 공백 + 서브텍스트
+        const match = (question.questionText || '').match(/^(.+?)\s+([A-Z])\.\s(.+)$/);
+        if (match) {
+            const [, mainTitle, subItemLabel, subItemText] = match;
+            return (
+                <li key={question.questionSeq} className="template01">
+                    {subItemLabel === 'A' && (
+                        <p className="question">{index + 1}. {mainTitle}</p>
+                    )}
+                    <div className="answer-wrap">
+                        <div className="answer">
+                            <p className="sub-question">{subItemLabel}. {subItemText}</p>
+                            <ul>
+                                {question.questionitems.map((item, itemIndex) => (
+                                    <li key={item.questionItemSeq || itemIndex}>
+                                        <div className="input-wrap radio type01">
+                                            <input
+                                                id={`answer${itemIndex + 1}_q${question.questionSeq}`}
+                                                type="radio"
+                                                name={`question${question.questionSeq}`}
+                                                checked={Number(question.selectedScore) === Number(item.itemScore)}
+                                                readOnly
+                                            />
+                                            <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`}>{item.itemScore}</label>
+                                        </div>
+                                        <span>{item.itemText}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
-                ))}
-            </div>
-        </li>
-    );
+                </li>
+            );
+        }
+        return renderDefaultQuestion(question, index);
+    };
 
-    const renderTemplate02Question = (question) => (
-        <li key={question.id} className="template02">
-            <p className="question">{question.id}. {question.question}</p>
+    const renderType02Question = (question, index) => (
+        <li key={question.questionSeq} className="template02">
+            <p className="question">{index + 1}. {question.questionText}</p>
             <div className="answer">
                 <ul>
-                    {question.options.map((option, optionIndex) => (
-                        <li key={optionIndex}>
+                    {question.questionitems.map((item, itemIndex) => (
+                        <li key={item.questionItemSeq || itemIndex}>
                             <div className="input-wrap radio type01">
-                                <input 
-                                    id={`answer${String(optionIndex + 1).padStart(2, '0')}_q${String(question.id).padStart(2, '0')}`}
-                                    type="radio" 
-                                    name={`question${String(question.id).padStart(2, '0')}`}
-                                    checked={question.selectedValue === option.value}
+                                <input
+                                    id={`answer${itemIndex + 1}_q${question.questionSeq}`}
+                                    type="radio"
+                                    name={`question${question.questionSeq}`}
+                                    checked={Number(question.selectedScore) === Number(item.itemScore)}
                                     readOnly
                                 />
-                                <label htmlFor={`answer${String(optionIndex + 1).padStart(2, '0')}_q${String(question.id).padStart(2, '0')}`}>
-                                    {option.value}
-                                </label>
+                                <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`}>{item.itemScore}</label>
                             </div>
-                            <span>{option.label}</span>
+                            <span>{item.itemText}</span>
                         </li>
                     ))}
                 </ul>
@@ -296,14 +410,16 @@ const PsychologicalTestDetail = ({
         </li>
     );
 
-    const renderQuestion = (question) => {
-        switch (question.type) {
-            case "template01":
-                return renderTemplate01Question(question);
-            case "template02":
-                return renderTemplate02Question(question);
+    const renderQuestion = (question, index) => {
+        const type = inferQuestionType(question, assessmentInfo);
+        switch (type) {
+            case 'type01':
+                return renderType01Question(question, index);
+            case 'type02':
+                return renderType02Question(question, index);
+            case 'default':
             default:
-                return renderDefaultQuestion(question);
+                return renderDefaultQuestion(question, index);
         }
     };
 
@@ -316,7 +432,7 @@ const PsychologicalTestDetail = ({
                     aria-label="뒤로가기"
                     onClick={handleBackClick}
                 ></button>
-                <strong>{testTitle}</strong>
+                <strong>{title}</strong>
             </div>
             
             <div className="info-bar">
@@ -332,7 +448,7 @@ const PsychologicalTestDetail = ({
                     </li>
                     <li>
                         <span>생년월일</span>
-                        <span>{clientInfo.birthDate}</span>
+                        <span>{clientInfo.birthDate}{clientAge != null ? `(만 ${clientAge}세)` : ''}</span>
                     </li>
                 </ul>
             </div>
@@ -340,8 +456,13 @@ const PsychologicalTestDetail = ({
             <div className="con-wrap">
                 <div className="overview">
                     <div className="top-info">
-                        <strong>{sessionInfo.session}</strong>
-                        <strong>{sessionInfo.date}</strong>
+                        {sessionInfo.session && !sessionInfo.session.includes('사전문진') && !sessionInfo.session.includes('사후문진') && (
+                            <strong>{sessionInfo.session}</strong>
+                        )}
+                        <strong>
+                            {sessionInfo.date}
+                            {sessionInfo.session === '사전문진' ? ' (사전 문진)' : sessionInfo.session === '사후문진' ? ' (사후 문진)' : ''}
+                        </strong>
                     </div>
                     <div className="tb-wrap">
                         <table>
@@ -376,7 +497,11 @@ const PsychologicalTestDetail = ({
                     </div>
                     <div className="list-wrap">
                         <ul>
-                            {questionsToRender.map(renderQuestion)}
+                            {questions && questions.length > 0 ? (
+                                questions.map((q, i) => renderQuestion(q, i))
+                            ) : (
+                                <li style={{ padding: '24px', color: '#888' }}>표시할 문항이 없습니다.</li>
+                            )}
                         </ul>
                     </div>
                 </div>

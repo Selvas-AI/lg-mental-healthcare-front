@@ -19,6 +19,7 @@ const RootLayout = () => {
   const isRecordingsPage = location.pathname.startsWith('/clients/recordings') || location.pathname.startsWith('/clients/sessions') || location.pathname.startsWith('/mypage');
   const showFooter = !isRecordingsPage || activeTab === 'aianalysis';
   const [sessionNumber, setSessionNumber] = useState('');
+  const [dynamicTitle, setDynamicTitle] = useState('');
 
   // main, footer의 className을 상태별로 조합
   function getMainClass() {
@@ -61,6 +62,18 @@ const RootLayout = () => {
     // main 스타일 초기화
     setSupportPanel(false);
   }, [location.pathname, setSupportPanel]);
+
+  // 상세 페이지에서 브로드캐스트하는 동적 타이틀 수신
+  useEffect(() => {
+    const handler = (e) => {
+      const t = e?.detail?.title || '';
+      if (location.pathname.startsWith('/clients/consults/psychologicalTestDetail')) {
+        setDynamicTitle(t);
+      }
+    };
+    window.addEventListener('page-title', handler);
+    return () => window.removeEventListener('page-title', handler);
+  }, [location.pathname]);
 
   const handleMenuClick = () => {
     setFold((prev) => !prev);
@@ -129,7 +142,7 @@ const RootLayout = () => {
       '/clients/sessions': '회기 목록',
       '/clients/recordings': sessionNumber ? `${sessionNumber}회기 녹취록` : '녹취록',
       '/clients/consults/detail': '3회기 상담일지',
-      '/clients/consults/psychologicalTestDetail': 'PHQ-9 우울 검사 결과',
+      '/clients/consults/psychologicalTestDetail': dynamicTitle || 'PHQ-9 우울 검사 결과',
     };
     return pathTitleMap[location.pathname] || '';
   };
