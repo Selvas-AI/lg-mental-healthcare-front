@@ -103,6 +103,20 @@ export const useClientManager = () => {
         }
       } else {
         // 내담자 등록
+        // 닉네임 필수 검증 (가입 시)
+        if (!clientData.nickname || clientData.nickname.trim().length === 0) {
+          showToastMessage('닉네임은 필수 입력값입니다.');
+          return { success: false, message: '닉네임 누락' };
+        }
+        // 보호자 데이터 정리: 의미 있는 값이 하나도 없으면 null, 있으면 유효 항목만 전송
+        const hasValidGuardianData = (guardians) => {
+          if (!Array.isArray(guardians) || guardians.length === 0) return false;
+          return guardians.some(g => (g?.guardianRelation || g?.guardianName || g?.guardianContact));
+        };
+        const cleanedGuardians = Array.isArray(clientData.guardians)
+          ? clientData.guardians.filter(g => g && (g.guardianRelation || g.guardianName || g.guardianContact))
+          : [];
+
         const registerData = {
           clientName: clientData.name,
           nickname: clientData.nickname || '',
@@ -112,21 +126,41 @@ export const useClientManager = () => {
           address: clientData.address || '',
           email: clientData.emailId && clientData.emailDomain ? `${clientData.emailId}@${clientData.emailDomain}` : '',
           job: clientData.job || '',
-          guardian: clientData.guardians || null,
+          guardian: hasValidGuardianData(clientData.guardians) ? cleanedGuardians : null,
           memo: clientData.memo || ''
         };
         
         const response = await clientCreate(registerData);
         if (response.code === 200) {
-          setClients(prevClients => [...prevClients, response.data]);
-          
-          // 추가 업데이트 함수가 있으면 실행
-          if (additionalUpdates?.addToClientList) {
-            additionalUpdates.addToClientList(response.data);
+          // 등록 직후 서버에서 생성된 필드 포함한 최신 데이터로 재조회
+          let createdClient = response.data;
+          try {
+            if (createdClient?.clientSeq) {
+              const findResponse = await clientFind({ clientSeq: createdClient.clientSeq });
+              if (findResponse.code === 200 && findResponse.data) {
+                createdClient = findResponse.data;
+              }
+            }
+          } catch (e) {
+            // 재조회 실패 시, 응답 데이터로 대체
           }
-          
+
+          // clients 상태에 병합(동일 clientSeq 존재 시 교체, 없으면 추가)
+          setClients(prevClients => {
+            const exists = prevClients.some(c => c && c.clientSeq === createdClient.clientSeq);
+            if (exists) {
+              return prevClients.map(c => (c && c.clientSeq === createdClient.clientSeq) ? createdClient : c);
+            }
+            return [...prevClients, createdClient];
+          });
+
+          // 추가 업데이트 함수가 있으면 최신 데이터로 전달
+          if (additionalUpdates?.addToClientList) {
+            additionalUpdates.addToClientList(createdClient);
+          }
+
           showToastMessage('내담자가 등록되었습니다.');
-          return { success: true, data: response.data };
+          return { success: true, data: createdClient };
         } else {
           showToastMessage(response.message || '내담자 등록에 실패했습니다.');
           return { success: false, message: response.message };

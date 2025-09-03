@@ -192,6 +192,10 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     if (!form.name || form.name.trim().length === 0) {
       missingFields.push('이름');
     }
+    // 닉네임 검증 (가입 모드에서만 필수)
+    if (mode === 'register' && (!form.nickname || form.nickname.trim().length === 0)) {
+      missingFields.push('닉네임');
+    }
     // 생년월일 검증
     if (!form.birthYear || !form.birthMonth || !form.birthDay) {
       missingFields.push('생년월일');
@@ -250,7 +254,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                   </div>
                 </li>
                 <li>
-                  <label htmlFor="nickname">닉네임</label>
+                  <label htmlFor="nickname" className={mode === 'register' ? 'necessary' : undefined}>닉네임</label>
                   <div className="input-wrap">
                     <input id="nickname" value={form.nickname || ""} onChange={handleFormChange} type="text" minLength={2} maxLength={10} placeholder="내담자 닉네임" />
                   </div>
