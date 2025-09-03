@@ -53,8 +53,9 @@ const CustomSelect = ({
     }
   };
 
-  // 옵션 선택
+  // 옵션 선택 (disabled 옵션은 선택 불가)
   const handleOptionSelect = (option) => {
+    if (option && option.disabled) return;
     const optionValue = getOptionValue(option);
     onChange(optionValue);
     setIsOpen(false);
@@ -107,8 +108,16 @@ const CustomSelect = ({
           {options.map((option, index) => (
             <li 
               key={index}
+              className={option?.disabled ? 'disabled' : ''}
             >
-              <a className="cursor-pointer" onClick={() => handleOptionSelect(option)}>{renderOptionContent(option, index)}</a>
+              <a 
+                className={`cursor-pointer ${option?.disabled ? 'disabled' : ''}`}
+                onClick={option?.disabled ? undefined : () => handleOptionSelect(option)}
+                aria-disabled={option?.disabled ? 'true' : 'false'}
+                tabIndex={option?.disabled ? -1 : 0}
+              >
+                {renderOptionContent(option, index)}
+              </a>
             </li>
           ))}
         </ul>

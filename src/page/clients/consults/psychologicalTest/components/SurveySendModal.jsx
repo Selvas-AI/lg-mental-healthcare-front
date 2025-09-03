@@ -53,7 +53,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
       return {
         value: `${n}회기`,
         label: `${n}회기`,
-        disabled: false,
+        disabled: seq != null ? completedProgSessions.includes(seq) : false,
         // 완료 여부는 sessionSeq 기준으로 판단
         complete: seq != null ? completedProgSessions.includes(seq) : false,
       };
@@ -184,7 +184,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
     if (!selectedSurveyType) return;
     // PROG인 경우 회기 선택 필수
     if (selectedSurveyType === 'PROG') {
-      const isValid = !!selectedSession && sessionOptions.some(opt => opt.value === selectedSession);
+      const isValid = !!selectedSession && sessionOptions.some(opt => opt.value === selectedSession && !opt.disabled);
       if (!isValid) {
         setConfirmTitle('알림');
         setConfirmMessage('경과 문진은 회기를 선택해 주세요.');
@@ -377,6 +377,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
                         type="radio" 
                         name="session" 
                         checked={selectedSurveyType === 'PRE'}
+                        disabled={isPreCompleted}
                         onChange={handleSurveyTypeChange}
                       />
                       <label htmlFor="PRE">
@@ -426,6 +427,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
                         type="radio" 
                         name="session"
                         checked={selectedSurveyType === 'POST'}
+                        disabled={isPostCompleted}
                         onChange={handleSurveyTypeChange}
                       />
                       <label htmlFor="POST">
