@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { counselorFind, counselorUpdate } from '@/api/apiCaller';
+import { logout } from '@/api';
 import ToastPop from '@/components/ToastPop';
 import Header from '@/layouts/Header';
 import { foldState } from '@/recoil';
 import { useRecoilValue } from 'recoil';
+import EditorConfirm from '@/page/clients/components/EditorConfirm.jsx';
 import './mypage.scss';
 
 export default function MyPage() {
   const fold = useRecoilValue(foldState);
   const [scroll, setScroll] = useState(() => typeof window !== "undefined" ? window.scrollY >= 100 : false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   
   // 폼 상태
   const [email, setEmail] = useState("");
@@ -200,9 +203,19 @@ export default function MyPage() {
       <div className="inner mypage">
         <div className="move-up">
           <strong className="page-title">마이페이지</strong>
-          <button className="save-btn type07 black" type="button" onClick={handleUpdate}>
-            저장
-          </button>
+          <div>
+            <button className="save-btn type07 black" type="button" onClick={handleUpdate}>
+              저장
+            </button>
+            <button
+              className="save-btn type07 black"
+              type="button"
+              style={{ marginLeft: 8 }}
+              onClick={() => setLogoutConfirmOpen(true)}
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
         
         <div className="form-section">
@@ -320,6 +333,21 @@ export default function MyPage() {
           </div>
         </div>
       </div>
+
+      {/* 로그아웃 확인 모달 */}
+      <EditorConfirm
+        open={logoutConfirmOpen}
+        title="로그아웃"
+        message={'로그아웃 하시겠습니까?'}
+        confirmText="확인"
+        cancelText="취소"
+        onConfirm={() => {
+          setLogoutConfirmOpen(false);
+          logout();
+        }}
+        onCancel={() => setLogoutConfirmOpen(false)}
+        onClose={() => setLogoutConfirmOpen(false)}
+      />
 
       <ToastPop message={toastMessage} showToast={showToast} />
     </>

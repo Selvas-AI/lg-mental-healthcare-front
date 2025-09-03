@@ -23,6 +23,11 @@ const clearAuthAndRedirect = () => {
   }
 }
 
+// 외부에서 호출 가능한 로그아웃 함수
+export const logout = () => {
+  clearAuthAndRedirect()
+}
+
 axiosIns.interceptors.request.use(
   config => {
     const accessToken = localStorage.getItem('accessToken')
