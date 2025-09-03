@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react'
 
-function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange, answers, onAnswersChange, onSave, onAutoSave, onComplete, onPrevAssessment, onNextAssessment, onShowIncompleteModal, scrollTargetSeq, onScrollTargetConsumed }) {
+function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange, hasIntermediateData, answers, onAnswersChange, onSave, onAutoSave, onComplete, onPrevAssessment, onNextAssessment, onShowIncompleteModal, scrollTargetSeq, onScrollTargetConsumed }) {
 
   // 실제 API 데이터 구조에서 필요한 정보 추출
   const processedData = useMemo(() => {
@@ -29,19 +29,17 @@ function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange
     if (!qt) return ''
     if (qt === 'PRE') return '사전 문진'
     if (qt === 'PROG') {
-      const seq = surveyData?.sessionSeq
-      return `경과 문진${seq ? ` ${seq}회기` : ''}`
+      // const seq = surveyData?.sessionSeq
+      // return `경과 문진${seq ? ` ${seq}회기` : ''}`
+      return '경과 문진'
     }
     if (qt === 'POST') return '사후 문진'
     return ''
   }, [surveyData])
 
-  // 컴포넌트 렌더링 시 및 검사지 변경 시 스크롤을 맨 위로 즉시 이동
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-    //! 부드럽게 이동 원할시 아래 주석을 해제
-    // window.scrollTo({ top: 0, left: 0 })
-  }, [currentAssessmentIndex])
+  // 특정 문항으로 스크롤이 일어난 직후에는 상단 스크롤을 생략하기 위한 플래그
+  const didScrollToTargetRef = useRef(false)
+  const targetScrollForIndexRef = useRef(null)
 
   // 스크롤 감지
   useEffect(() => {
@@ -92,13 +90,47 @@ function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange
     }
   }
 
+  // 상단 스크롤 유틸: window와 흔한 스크롤 컨테이너 모두 처리
+  const scrollToTop = () => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    } catch (_) {}
+    try { document.documentElement.scrollTop = 0 } catch (_) {}
+    try { document.body.scrollTop = 0 } catch (_) {}
+    const selectors = ['.survey-list', '.con-wrap', '.wrap', '.container']
+    selectors.forEach(sel => {
+      const el = document.querySelector(sel)
+      if (el && typeof el.scrollTop === 'number') {
+        el.scrollTop = 0
+      }
+    })
+  }
+
   // 부모로부터 스크롤 대상이 전달되면 스크롤 수행 후 소비 콜백 호출
+  // 이 효과가 먼저 실행되어야 다음 상단 스크롤 효과와 충돌하지 않음
   useEffect(() => {
     if (scrollTargetSeq !== null && scrollTargetSeq !== undefined) {
       scrollToQuestion(scrollTargetSeq)
+      didScrollToTargetRef.current = true
+      targetScrollForIndexRef.current = currentAssessmentIndex
       if (onScrollTargetConsumed) onScrollTargetConsumed()
     }
-  }, [scrollTargetSeq])
+  }, [scrollTargetSeq, onScrollTargetConsumed, currentAssessmentIndex])
+
+  // 검사지 변경 시 기본적으로 맨 위로 스크롤
+  // 단, 바로 직전에 특정 문항으로 스크롤했다면 이번 렌더에서는 상단 스크롤을 생략
+  useLayoutEffect(() => {
+    // 같은 검사지에서 방금 타겟 스크롤 했던 경우에는 상단 스크롤 생략
+    if (didScrollToTargetRef.current && targetScrollForIndexRef.current === currentAssessmentIndex) {
+      return
+    }
+    // DOM 반영 이후에 상단 스크롤 실행
+    requestAnimationFrame(() => {
+      scrollToTop()
+      didScrollToTargetRef.current = false
+      targetScrollForIndexRef.current = null
+    })
+  }, [currentAssessmentIndex])
 
   // 다음 검사지로 이동
   const handleNext = () => {

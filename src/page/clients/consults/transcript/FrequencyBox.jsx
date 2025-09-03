@@ -95,12 +95,12 @@ function FrequencyBox({ data, onAIGenerate, isPanel }) {
             </div>
             <div className="bar-labels">
               <div>
-                <span>{data?.counselor?.minutes ?? "-"}분</span>
-                <div className="value counselor-pct">{percents.counselor.toFixed(2)}%</div>
+                <span>{Math.floor(data?.counselor?.minutes) ?? "-"}분</span>
+                <div className="value counselor-pct">{Math.floor(percents.counselor)}%</div>
               </div>
               <div>
-                <span>{data?.client?.minutes ?? "-"}분</span>
-                <div className="value client-pct">{percents.client.toFixed(2)}%</div>
+                <span>{Math.floor(data?.client?.minutes) ?? "-"}분</span>
+                <div className="value client-pct">{Math.floor(percents.client)}%</div>
               </div>
             </div>
             <div className="bar-container" ref={barContainerRef}>
