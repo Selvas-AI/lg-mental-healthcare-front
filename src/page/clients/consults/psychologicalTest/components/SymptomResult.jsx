@@ -53,7 +53,7 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
                     <th className="sorting"><span>회기</span></th>
                     <th>점수</th>
                     <th>심각도</th>
-                    <th>메모</th>
+                    <th>결과 상세</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -48,14 +48,18 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
 
   // 회기 목록 (경과 문진용) - 동일 회기그룹의 실제 회기 번호 기반으로 옵션 생성
   const sessionOptions = useMemo(() => {
-    const makeOption = (n) => ({
-      value: `${n}회기`,
-      label: `${n}회기`,
-      disabled: false,
-      complete: completedProgSessions.includes(n),
-    });
+    const makeOption = (n) => {
+      const seq = sessionNoToSeq?.[n];
+      return {
+        value: `${n}회기`,
+        label: `${n}회기`,
+        disabled: false,
+        // 완료 여부는 sessionSeq 기준으로 판단
+        complete: seq != null ? completedProgSessions.includes(seq) : false,
+      };
+    };
     return sessionNosInGroup.map(makeOption);
-  }, [completedProgSessions, sessionNosInGroup]);
+  }, [completedProgSessions, sessionNosInGroup, sessionNoToSeq]);
   
   // step02: 필수 체크박스(항상 true, 해제 불가)
   const necessaryList = [
@@ -232,7 +236,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
         return;
       }
 
-      const baseUrl = 'http://localhost:5173/client-survey';
+      const baseUrl = `${import.meta.env.VITE_CLIENT_SURVEY_BASE_URL || window.location.origin}/client-survey`;
       // '3회기' 형태에서 숫자만 추출하여 sessionNo로 사용 후 sessionSeq 매핑 (PROG 전용)
       const selectedSessionNo = (() => {
         if (typeof selectedSession === 'string') {

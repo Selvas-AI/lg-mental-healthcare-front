@@ -350,7 +350,7 @@ function CounselLogDetail() {
       
       if (response.code === 200) {
         showToastMessage('상담일지가 저장되었습니다.');
-        console.log('저장 성공:', response);
+        // console.log('저장 성공:', response);
         // 저장 성공 시 Recoil 캐시를 최신 값으로 업데이트하여 영속 상태 유지
         if (currentSession?.sessionSeq) {
           setSessionNote({
@@ -441,7 +441,7 @@ function CounselLogDetail() {
       if (currentSession?.sessionSeq) {
         // 1. 전역 상태에서 해당 sessionSeq의 데이터가 있는지 확인
         if (sessionNote?.data && String(sessionNote.sessionSeq) === String(currentSession.sessionSeq)) {
-          console.log('전역 상태에서 데이터 로드 성공:', sessionNote.data);
+          // console.log('전역 상태에서 데이터 로드 성공:', sessionNote.data);
           mapSessionNoteToState(sessionNote.data);
           return;
         }
@@ -450,7 +450,7 @@ function CounselLogDetail() {
         try {
           const response = await sessionNoteFind(currentSession.sessionSeq);
           if (response.code === 200 && response.data) {
-            console.log('API 호출로 데이터 로드 성공:', response.data);
+            // console.log('API 호출로 데이터 로드 성공:', response.data);
             setSessionNote({
               sessionSeq: String(currentSession.sessionSeq),
               data: response.data,

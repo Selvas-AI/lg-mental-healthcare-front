@@ -41,6 +41,48 @@ function Consults() {
   const setCurrentSession = useSetRecoilState(currentSessionState);
   const setSessionDataRecoil = useSetRecoilState(sessionDataState);
   const [editOpen, setEditOpen] = useState(false);
+
+  // URL 파라미터 영속화 키
+  const LS_CLIENT_ID_KEY = 'lastClientId';
+  const LS_SESSION_SEQ_KEY = 'lastSessionSeq';
+
+  // URL에서 값이 누락되면 로컬스토리지의 최근 값을 주입해 보정
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    let changed = false;
+
+    // clientId 복원
+    if (!params.get('clientId')) {
+      const storedClientId = window.localStorage.getItem(LS_CLIENT_ID_KEY);
+      if (storedClientId) {
+        params.set('clientId', storedClientId);
+        changed = true;
+      }
+    }
+
+    // sessionSeq 복원
+    if (!params.get('sessionSeq')) {
+      const storedSessionSeq = window.localStorage.getItem(LS_SESSION_SEQ_KEY);
+      if (storedSessionSeq) {
+        params.set('sessionSeq', storedSessionSeq);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
+  }, [location.pathname]);
+
+  // URL에 값이 존재하면 최신 값으로 로컬스토리지 갱신 (변경 사항 유지)
+  useEffect(() => {
+    if (clientId) {
+      window.localStorage.setItem(LS_CLIENT_ID_KEY, String(clientId));
+    }
+    if (sessionSeq) {
+      window.localStorage.setItem(LS_SESSION_SEQ_KEY, String(sessionSeq));
+    }
+  }, [clientId, sessionSeq]);
   
   // URL 쿼리 파라미터에서 탭 인덱스 가져오기 (기본값: 0)
   const getTabIndexFromParam = (tabParam) => {
@@ -138,6 +180,49 @@ function Consults() {
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [aiPanelPayload, setAiPanelPayload] = useState(null); // { setSeq, aiInsightParsed, onConfirm }
   const setSupportPanel = useSetRecoilState(supportPanelState);
+  // AI 종합 의견: 최초 1회 2초 로딩 상태 관리
+  const [aiPanelStatus, setAiPanelStatus] = useState('complete');
+  const aiSummarySeenRef = useRef(false);
+  const aiSummaryTimerRef = useRef(null);
+  const AI_SUMMARY_STORAGE_KEY = 'aiPanelSeen:summary:overallInsight';
+
+  // 마운트 시 최초 오픈 여부 동기화
+  useEffect(() => {
+    try {
+      aiSummarySeenRef.current = localStorage.getItem(AI_SUMMARY_STORAGE_KEY) === '1';
+    } catch (_) {
+      // storage 사용 불가 시 무시
+    }
+  }, []);
+
+  // AI 종합 의견 패널 최초 오픈 시 2초 로딩 처리
+  useEffect(() => {
+    if (showAiSummary) {
+      if (!aiSummarySeenRef.current) {
+        aiSummarySeenRef.current = true;
+        try { localStorage.setItem(AI_SUMMARY_STORAGE_KEY, '1'); } catch (_) {}
+        setAiPanelStatus('creating');
+        if (aiSummaryTimerRef.current) clearTimeout(aiSummaryTimerRef.current);
+        aiSummaryTimerRef.current = setTimeout(() => {
+          setAiPanelStatus('complete');
+          aiSummaryTimerRef.current = null;
+        }, 2000);
+      } else {
+        setAiPanelStatus('complete');
+      }
+    } else {
+      if (aiSummaryTimerRef.current) {
+        clearTimeout(aiSummaryTimerRef.current);
+        aiSummaryTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (aiSummaryTimerRef.current) {
+        clearTimeout(aiSummaryTimerRef.current);
+        aiSummaryTimerRef.current = null;
+      }
+    };
+  }, [showAiSummary]);
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
@@ -537,7 +622,7 @@ function Consults() {
             setSupportPanel(false);
           }
         }}
-        status="complete"
+        status={aiPanelStatus}
         title="AI 종합 의견 생성"
         description="AI가 심리 검사 종합 의견을 생성합니다."
         infoMessage="AI 종합 의견이 생성 완료되었습니다."
