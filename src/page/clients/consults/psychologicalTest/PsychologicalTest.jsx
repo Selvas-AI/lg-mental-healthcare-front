@@ -2,9 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import emptyFace from '@/assets/images/common/empty_face.svg';
 import SymptomChangePanel from './components/SymptomChangePanel';
-import { assessmentSetList, assessmentSetDelete, assessmentSetUpdateOverallInsight, sessionList } from '@/api/apiCaller';
+import { assessmentSetList, assessmentSetDelete, assessmentSetUpdateOverallInsight, sessionList, assessmentSetResult } from '@/api/apiCaller';
 import { useLocation } from 'react-router-dom';
-import EditorConfirm from '@/page/clients/components/EditorConfirm';
 import { useSetRecoilState, useRecoilValue } from 'recoil';
 import { editorConfirmState, currentSessionState } from '@/recoil';
 
@@ -29,8 +28,192 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   const [aiOverallInsight, setAiOverallInsight] = useState(''); // AI 종합 의견 원문
   const [confirmedInsightText, setConfirmedInsightText] = useState(''); // 서버 저장된 텍스트(통합본)
   const [localRefreshKey, setLocalRefreshKey] = useState(0); // 로컬 재조회 트리거
+  const [symptomData, setSymptomData] = useState(null); // 증상별 변화 데이터
   const setGlobalEditorConfirm = useSetRecoilState(editorConfirmState);
   const location = useLocation();
+
+  // 카테고리 매핑 정보
+  const ASSESSMENT_CATEGORY_MAP = {
+    'PHQ-9': { id: 'result01', label: '우울장애', min: 0, max: 27 },
+    'GAD-7': { id: 'result02', label: '범불안장애', min: 0, max: 21 },
+    'K-PSS-10': { id: 'result03', label: '스트레스', min: 0, max: 40 },
+    'AUDIT': { id: 'result04', label: '알코올 사용장애', min: 0, max: 40 },
+    'ISI': { id: 'result05', label: '불면증', min: 0, max: 28 },
+    'PCL-5 PTSD': { id: 'result06', label: 'PTSD', min: 0, max: 80 },
+    'PDSS-SR': { id: 'result07', label: '공황장애', min: 0, max: 28 },
+    'ASRS-ADHD': { id: 'result08', label: 'ADHD', min: 0, max: 72 },
+    'Y-BOCS': { id: 'result09', label: '강박장애', min: 0, max: 40 },
+    'DSI-SS': { id: 'result10', label: '자살사고', min: 0, max: 12 }
+  };
+
+  // 레벨 정보 변환
+  const getSeverityInfo = (severityLevel, severityTitle) => {
+    const levelMap = {
+      0: { class: 'level-low', color: '파란색' },
+      1: { class: 'level-mid', color: '노란색' },
+      2: { class: 'level-high', color: '빨간색' }
+    };
+    return {
+      level: severityTitle || '',
+      levelClass: levelMap[severityLevel]?.class || ''
+    };
+  };
+
+  // 증상별 변화 데이터 수집
+  const collectSymptomData = (assessmentSets) => {
+    try {
+      // 제출된 세트만 필터링하고 itemList가 있는 것만
+      const submittedSets = assessmentSets.filter(set => set.submittedTime && set.itemList);
+      if (submittedSets.length === 0) return null;
+
+      // 카테고리별로 그룹화
+      const categoryData = {};
+      
+      submittedSets.forEach(set => {
+        if (!set.itemList) return;
+        
+        set.itemList.forEach(item => {
+          const assessmentName = item.assessmentInfo?.assessmentName;
+          if (!assessmentName || !ASSESSMENT_CATEGORY_MAP[assessmentName]) return;
+          
+          const categoryInfo = ASSESSMENT_CATEGORY_MAP[assessmentName];
+          if (!categoryData[assessmentName]) {
+            categoryData[assessmentName] = {
+              info: categoryInfo,
+              sessions: []
+            };
+          }
+          
+          // 세션 라벨 생성
+          let sessionLabel;
+          // 카테고리별 현재까지 누적된 세션 수를 이용한 로컬 폴백 순서 (1,2,3...)
+          const localFallbackOrder = (categoryData[assessmentName]?.sessions?.length || 0) + 1;
+          if (set.questionType === 'PRE') {
+            sessionLabel = '사전 문진';
+          } else if (set.questionType === 'POST') {
+            sessionLabel = '사후 문진';
+          } else if (set.questionType === 'PROG' && (set.sessionSeq != null || set.sessionNo != null)) {
+            // 그룹 내 순번(또는 sessionNo)을 사용하고, 절대 sessionSeq 원값은 라벨에 쓰지 않음
+            const seqKey = set.sessionSeq != null ? String(set.sessionSeq) : null;
+            const sessionNoFromSet = set.sessionNo ?? null;
+            const orderFromMap = seqKey ? seqToOrder[seqKey] : null;
+            const finalSessionNo = sessionNoFromSet ?? orderFromMap ?? localFallbackOrder;
+            sessionLabel = `${finalSessionNo}회기`;
+          } else {
+            sessionLabel = `${localFallbackOrder}회기`;
+          }
+          
+          const severityInfo = getSeverityInfo(item.severityLevel, item.severityTitle);
+          
+          categoryData[assessmentName].sessions.push({
+            sessionLabel,
+            score: item.totalScore,
+            order: set.questionType === 'PRE' ? -1 : 
+                    set.questionType === 'POST' ? 999 : 
+                    (set.sessionNo ?? seqToOrder[String(set.sessionSeq)] ?? localFallbackOrder),
+            questionType: set.questionType,
+            sessionSeq: set.sessionSeq,
+            ...severityInfo
+          });
+        });
+      });
+      
+      // UI 형태로 변환
+      const symptomResults = [];
+      let index = 1;
+      
+      Object.entries(categoryData).forEach(([assessmentName, data]) => {
+        // 세션 정렬 (PRE -> PROG 순서 -> POST)
+        const sortedSessions = data.sessions.sort((a, b) => a.order - b.order);
+
+        // 누락된 PROG 회기 보정: 1 ~ max 사이 결측 회기를 placeholder로 채움
+        const pre = sortedSessions.filter(s => s.questionType === 'PRE');
+        const post = sortedSessions.filter(s => s.questionType === 'POST');
+        const prog = sortedSessions.filter(s => s.questionType !== 'PRE' && s.questionType !== 'POST');
+
+        const numericOrders = prog
+          .map(s => Number(s.order))
+          .filter(n => Number.isFinite(n) && n > 0);
+        const maxOrder = numericOrders.length ? Math.max(...numericOrders) : 0;
+
+        const progByOrder = new Map();
+        prog.forEach(s => {
+          const n = Number(s.order);
+          if (Number.isFinite(n) && n > 0 && !progByOrder.has(n)) {
+            progByOrder.set(n, s);
+          }
+        });
+
+        const filledProg = [];
+        for (let i = 1; i <= maxOrder; i++) {
+          if (progByOrder.has(i)) {
+            const orig = progByOrder.get(i);
+            filledProg.push({ ...orig, sessionLabel: `${i}회기`, order: i });
+          } else {
+            filledProg.push({
+              sessionLabel: `${i}회기`,
+              score: '',
+              order: i,
+              questionType: 'PROG',
+              sessionSeq: null,
+              level: '',
+              levelClass: '',
+            });
+          }
+        }
+
+        // PRE/POST 결측 시 placeholder 추가
+        const preWithPlaceholder = pre.length > 0 ? pre : [{
+          sessionLabel: '사전 문진',
+          score: '',
+          order: -1,
+          questionType: 'PRE',
+          sessionSeq: null,
+          level: '',
+          levelClass: '',
+        }];
+
+        // POST는 실제 결과가 존재할 때만 렌더링 (placeholder 추가하지 않음)
+        const filledSessions = [...preWithPlaceholder, ...filledProg, ...(post.length > 0 ? post : [])];
+
+        // 차트용 데이터 (빈 점수는 null 처리)
+        const labels = filledSessions.map(s => s.sessionLabel);
+        const values = filledSessions.map(s => {
+          const score = parseFloat(s.score);
+          return isNaN(score) ? null : score;
+        });
+        
+        // 테이블용 데이터 (역순)
+        const tableData = [...filledSessions].reverse().map(session => ({
+          session: session.sessionLabel,
+          score: session.score || '',
+          level: session.level,
+          levelClass: session.levelClass,
+          memo: true
+        }));
+        
+        symptomResults.push({
+          id: data.info.id,
+          title: `${index}. ${data.info.label}`,
+          caption: data.info.label,
+          canvas: {
+            values,
+            labels,
+            min: data.info.min,
+            max: data.info.max
+          },
+          table: tableData
+        });
+        
+        index++;
+      });
+      
+      return symptomResults;
+    } catch (e) {
+      console.error('[collectSymptomData] 전체 처리 실패:', e);
+      return null;
+    }
+  };
 
   // 서버 저장 통합 텍스트 파싱: "\n\n추천 방법\n" 구분자로 분리
   const serverInsightParsed = useMemo(() => {
@@ -140,8 +323,10 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   // 최초 마운트 시: 특정 내담자의 검사세트 전체 목록 조회
   useEffect(() => {
     const query = new URLSearchParams(location.search);
-    const clientId = query.get('clientId');
-    if (!clientId) {
+    const queryClientId = query.get('clientId');
+    const effectiveClientId = queryClientId ?? (currentSession?.clientSeq != null ? String(currentSession.clientSeq) : null);
+    if (!effectiveClientId) {
+      // URL에도 Recoil에도 clientId가 없으면 대기
       return;
     }
 
@@ -157,7 +342,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
         const targetGroupSeq = currentSession?.sessiongroupSeq ?? null;
         // 세션 목록 기반 그룹 내 순서 매핑 구축 (제목 표기용)
         try {
-          const sessionsRes = await sessionList(parseInt(clientId, 10));
+          const sessionsRes = await sessionList(parseInt(effectiveClientId, 10));
           const sessions = Array.isArray(sessionsRes?.data) ? sessionsRes.data : sessionsRes?.data?.data || [];
           const sameGroupSessions = sessions.filter(s => String(s?.sessiongroupSeq) === String(targetGroupSeq));
           const sorted = [...sameGroupSessions].sort((a, b) => (a?.sessionNo ?? 0) - (b?.sessionNo ?? 0));
@@ -167,8 +352,14 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
           sorted.forEach((s, idx) => {
             const seq = s?.sessionSeq;
             const no = s?.sessionNo;
-            if (seq != null) _seqToOrder[seq] = idx + 1;
-            if (no != null && seq != null) _sessionNoToSeq[no] = seq;
+            if (seq != null) {
+              _seqToOrder[seq] = idx + 1;               // numeric key
+              _seqToOrder[String(seq)] = idx + 1;       // string key
+            }
+            if (no != null && seq != null) {
+              _sessionNoToSeq[no] = seq;                // numeric value
+              _sessionNoToSeq[String(no)] = String(seq);// string mapping
+            }
             if (no != null) _sessionNosInGroup.push(no);
           });
           setSeqToOrder(_seqToOrder);
@@ -179,11 +370,10 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
             onSessionMapsUpdate({ seqToOrder: _seqToOrder, sessionNoToSeq: _sessionNoToSeq, sessionNosInGroup: _sessionNosInGroup });
           }
         } catch (e) {
-          // 세션 목록 실패는 치명적이지 않으므로 콘솔만
           console.warn('[PsychologicalTest] sessionList 조회 실패 또는 구조 상이', e);
         }
 
-        const res = await assessmentSetList(parseInt(clientId, 10));
+        const res = await assessmentSetList(parseInt(effectiveClientId, 10));
         const list = Array.isArray(res?.data) ? res.data : [];
 
         if (list.length === 0) {
@@ -251,6 +441,37 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
           setIsAIGenerated(!!latest.aiOverallInsight);
           setAiOverallInsight(latest.aiOverallInsight || '');
           setConfirmedInsightText(latest.textOverallInsight || '');
+        }
+
+        // 증상별 변화 데이터 수집: 제출된 세트별 상세 결과 조회 후 매핑
+        try {
+          const submittedForResult = sameGroup.filter(it => !!it?.submittedTime);
+          if (submittedForResult.length === 0) {
+            setSymptomData(null);
+          } else {
+            const results = await Promise.all(
+              submittedForResult.map(async (s) => {
+                try {
+                  const res = await assessmentSetResult(getSetSeq(s));
+                  // 안전 추출: res.data 혹은 res.data.data에 itemList가 있을 수 있음
+                  const payload = res?.data ?? {};
+                  const itemList = Array.isArray(payload?.itemList)
+                    ? payload.itemList
+                    : (Array.isArray(payload?.data?.itemList) ? payload.data.itemList : []);
+                  return { ...s, itemList };
+                } catch (e) {
+                  console.warn('[PsychologicalTest] assessmentSetResult 실패:', e);
+                  return { ...s, itemList: [] };
+                }
+              })
+            );
+
+            const symptomResults = collectSymptomData(results);
+            setSymptomData(symptomResults);
+          }
+        } catch (e) {
+          console.error('[PsychologicalTest] 결과 조회/매핑 실패:', e);
+          setSymptomData(null);
         }
       } catch (err) {
         console.error('[PsychologicalTest] assessmentSetList 오류:', err);
@@ -438,7 +659,11 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
                 </div>
               )}
             </div>
-            <SymptomChangePanel onOpenSurveySendModal={onOpenSurveySendModal} />
+            <SymptomChangePanel
+              data={symptomData}
+              onOpenSurveySendModal={onOpenSurveySendModal}
+              hideSendButton={!!waitingInput || !!generatedUrl}
+            />
           </>
         )}
       </div>
