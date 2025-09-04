@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 import emptyFace from '@/assets/images/common/empty_face.svg';
 import SymptomChangePanel from './components/SymptomChangePanel';
 import { assessmentSetList, assessmentSetDelete, assessmentSetUpdateOverallInsight, sessionList, assessmentSetResult } from '@/api/apiCaller';
@@ -490,9 +491,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   }, [location.search, refreshKey, localRefreshKey, currentSession]);
 
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(generatedUrl).then(() => {
-      showToastMessage?.('심리 검사지 전송 링크가 복사 되었습니다.');
-    });
+    showToastMessage?.('심리 검사지 전송 링크가 복사 되었습니다.');
   };
 
   const handleRemoveUrl = async () => {
@@ -600,7 +599,9 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
             <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
             <div className="url-wrap">
               <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
-              <button onClick={handleCopyUrl} className="copy-btn" type="button" aria-label="URL "></button>
+              <CopyToClipboard text={generatedUrl} onCopy={handleCopyUrl}>
+                <button className="copy-btn" type="button" aria-label="URL 복사"></button>
+              </CopyToClipboard>
               <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL "></button>
             </div>
           </div>
@@ -637,7 +638,9 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
                   </div>
                   <div className="url-wrap">
                     <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
-                    <button onClick={handleCopyUrl} className="copy-btn" type="button" aria-label="URL 복사"></button>
+                    <CopyToClipboard text={generatedUrl} onCopy={handleCopyUrl}>
+                      <button className="copy-btn" type="button" aria-label="URL 복사"></button>
+                    </CopyToClipboard>
                     <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL 삭제"></button>
                   </div>
                 </div>
