@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => {
       ? {
           proxy: {
             '/api': {
-              // target: env.VITE_PROXY_TARGET, //개발
-              target: env.VITE_API_BASE_URL, //운영
+              // target: 'http://43.202.89.215', // 운영
+              target: 'http://52.78.24.168', // 테스트
               changeOrigin: true,
               secure: false,
             },

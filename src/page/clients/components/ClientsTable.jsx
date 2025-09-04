@@ -4,6 +4,8 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { clientsState, maskingState } from "@/recoil";
 import { clientSearch } from "@/api/apiCaller";
 import emptyFace from "@/assets/images/common/empty_face.svg";
+import arrowLeft from "@/assets/images/icon/arrow_left_bk.svg";
+import arrowRight from "@/assets/images/icon/arrow_right_bk.svg";
 
 function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoClient, onCloseMemo }) {
   const navigate = useNavigate();
@@ -12,6 +14,8 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
   const masked = useRecoilValue(maskingState);
   const [searchValue, setSearchValue] = useState("");
   const [filteredClients, setFilteredClients] = useState(clients);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 7;
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc': 오름차순, 'desc': 내림차순
   const [sessionStatus, setSessionStatus] = useState(1); // 1: 진행중, 0: 종결
 
@@ -56,6 +60,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     // 검색 결과도 현재 정렬 순서에 따라 정렬
     const sortedResult = sortClientsByName(result, sortOrder);
     setFilteredClients(sortedResult);
+    setCurrentPage(1);
   };
 
   const handleInputChange = e => {
@@ -147,6 +152,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
     setSortOrder(newOrder);
     const sortedClients = sortClientsByName(filteredClients, newOrder);
     setFilteredClients(sortedClients);
+    setCurrentPage(1);
   };
 
   // To-Do 클릭 라우팅
@@ -177,215 +183,259 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
   useEffect(() => {
     const sortedClients = sortClientsByName(clients, sortOrder);
     setFilteredClients(sortedClients);
+    setCurrentPage(1);
   }, [clients, sortOrder]);
+
+  // 페이지 계산
+  const totalPages = Math.ceil((filteredClients?.length || 0) / ITEMS_PER_PAGE) || 1;
+  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIdx = startIdx + ITEMS_PER_PAGE;
+  const pageClients = filteredClients.slice(startIdx, endIdx);
 
   return (
     <>
       <div className="con-wrap">
-          <div className="tb-controls">
-            <div className="left">
-              <div className="raido-toggle">
-                <div className="toggle-btn">
-                  <input 
-                    id="radio03" 
-                    type="radio" 
-                    name="raidoToggle" 
-                    checked={sessionStatus === 1}
-                    onChange={() => handleStatusChange(1)}
-                  />
-                  <label htmlFor="radio03">진행중</label>
-                </div>
-                <div className="toggle-btn">
-                  <input 
-                    id="radio04" 
-                    type="radio" 
-                    name="raidoToggle" 
-                    checked={sessionStatus === 0}
-                    onChange={() => handleStatusChange(0)}
-                  />
-                  <label htmlFor="radio04">종결</label>
-                </div>
+        <div className="tb-controls">
+          <div className="left">
+            <div className="raido-toggle">
+              <div className="toggle-btn">
+                <input 
+                  id="radio03" 
+                  type="radio" 
+                  name="raidoToggle" 
+                  checked={sessionStatus === 1}
+                  onChange={() => handleStatusChange(1)}
+                />
+                <label htmlFor="radio03">진행중</label>
+              </div>
+              <div className="toggle-btn">
+                <input 
+                  id="radio04" 
+                  type="radio" 
+                  name="raidoToggle" 
+                  checked={sessionStatus === 0}
+                  onChange={() => handleStatusChange(0)}
+                />
+                <label htmlFor="radio04">종결</label>
               </div>
             </div>
-            <div className="right">
-              <div className="input-wrap search">
-                <input
-                  type="text"
-                  name="client-search"
-                  placeholder="내담자 검색"
-                  value={searchValue}
-                  onChange={handleInputChange}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
-                />
-                <button className="search-btn" type="button" aria-label="검색" onClick={handleSearch}></button>
-              </div>
-              {/* 필터 (기획상 삭제, 필요시 구현) */}
-              {/* <div className="filter-wrap">
-                <button className="filter-btn" type="button">
-                  필터<span className="chk-num">(2)</span>
-                </button>
-                <div className="filter-pop">
-                  <div className="inner">
-                    <div className="tit-wrap">
-                      <span>필터<span className="chk-num">(2)</span></span>
-                    </div>
-                    <div className="list-wrap">
-                      <ul>
-                        <li>
-                          <div className="input-wrap checkbox">
-                            <input id="noRecording" type="checkbox" name="filter" />
-                            <label htmlFor="noRecording">녹취록 없음</label>
-                          </div>
-                        </li>
-                        <li>
-                          <div className="input-wrap checkbox">
-                            <input id="aiUnchecked" type="checkbox" name="filter" />
-                            <label htmlFor="aiUnchecked">녹취록 AI분석 미확인</label>
-                          </div>
-                        </li>
-                        <li>
-                          <div className="input-wrap checkbox">
-                            <input id="noSessionLog" type="checkbox" name="filter" />
-                            <label htmlFor="noSessionLog">상담일지 미작성</label>
-                          </div>
-                        </li>
-                        <li>
-                          <div className="input-wrap checkbox">
-                            <input id="noCaseFormulation" type="checkbox" name="filter" />
-                            <label htmlFor="noCaseFormulation">사례개념화 미작성</label>
-                          </div>
-                        </li>
-                        <li>
-                          <div className="input-wrap checkbox">
-                            <input id="caseAiSuggested" type="checkbox" name="filter" />
-                            <label htmlFor="caseAiSuggested">사례개념화 AI추천</label>
-                          </div>
-                        </li>
-                        <li>
-                          <div className="input-wrap checkbox">
-                            <input id="psychTestRequest" type="checkbox" name="filter" />
-                            <label htmlFor="psychTestRequest">심리검사 요청</label>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="btn-wrap">
-                      <button type="button">초기화</button>
-                    </div>
+          </div>
+          <div className="right">
+            <div className="input-wrap search">
+              <input
+                type="text"
+                name="client-search"
+                placeholder="내담자 검색"
+                value={searchValue}
+                onChange={handleInputChange}
+                onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+              />
+              <button className="search-btn" type="button" aria-label="검색" onClick={handleSearch}></button>
+            </div>
+            {/* 필터 (기획상 삭제, 필요시 구현) */}
+            {/* <div className="filter-wrap">
+              <button className="filter-btn" type="button">
+                필터<span className="chk-num">(2)</span>
+              </button>
+              <div className="filter-pop">
+                <div className="inner">
+                  <div className="tit-wrap">
+                    <span>필터<span className="chk-num">(2)</span></span>
+                  </div>
+                  <div className="list-wrap">
+                    <ul>
+                      <li>
+                        <div className="input-wrap checkbox">
+                          <input id="noRecording" type="checkbox" name="filter" />
+                          <label htmlFor="noRecording">녹취록 없음</label>
+                        </div>
+                      </li>
+                      <li>
+                        <div className="input-wrap checkbox">
+                          <input id="aiUnchecked" type="checkbox" name="filter" />
+                          <label htmlFor="aiUnchecked">녹취록 AI분석 미확인</label>
+                        </div>
+                      </li>
+                      <li>
+                        <div className="input-wrap checkbox">
+                          <input id="noSessionLog" type="checkbox" name="filter" />
+                          <label htmlFor="noSessionLog">상담일지 미작성</label>
+                        </div>
+                      </li>
+                      <li>
+                        <div className="input-wrap checkbox">
+                          <input id="noCaseFormulation" type="checkbox" name="filter" />
+                          <label htmlFor="noCaseFormulation">사례개념화 미작성</label>
+                        </div>
+                      </li>
+                      <li>
+                        <div className="input-wrap checkbox">
+                          <input id="caseAiSuggested" type="checkbox" name="filter" />
+                          <label htmlFor="caseAiSuggested">사례개념화 AI추천</label>
+                        </div>
+                      </li>
+                      <li>
+                        <div className="input-wrap checkbox">
+                          <input id="psychTestRequest" type="checkbox" name="filter" />
+                          <label htmlFor="psychTestRequest">심리검사 요청</label>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="btn-wrap">
+                    <button type="button">초기화</button>
                   </div>
                 </div>
-              </div> */}
-            </div>
-          </div>
-          <div className={`tb-wrap${filteredClients.length === 0 ? ' empty' : ''}`}>
-            {filteredClients.length === 0 && (
-              <div className="empty-data">
-                <img src={emptyFace} alt="empty" />
-                <p className="empty-info">내담자명 검색결과가 없습니다.</p>
               </div>
-            )}
-            <table>
-              <caption>내담자 리스트</caption>
-              <colgroup>
-                <col style={{ width: "156px" }} />
-                <col style={{ width: "208px" }} />
-                <col style={{ width: "104px" }} />
-                <col style={{ width: "452px" }} />
-                <col style={{ width: "120px" }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th className="sorting">
-                    <span onClick={handleSortToggle}>이름</span>
-                  </th>
-                  <th>전화번호</th>
-                  <th>회기</th>
-                  <th>
-                    <div className="step-title">
-                      <span>To-Do</span>
-                      <div className="info">
-                        <div
-                          className="info-icon"
-                          aria-label="툴팁 안내 아이콘"
-                          onMouseEnter={() => setShowTooltip(true)}
-                          onMouseLeave={() => setShowTooltip(false)}
-                        ></div>
-                        <div
-                          className={`tooltip${showTooltip ? " show" : ""}`}
-                        >
-                          <ul>
-                            <li>1. 해당 회차에서 작성하거나 확인하지 않은 업무인 경우에 TO-DO로 표시돼요.</li>
-                            <li>2. AI는 도움 드리지만 자동으로 생성하지 않아요.</li>
-                            <li>3. AI는 실수 할 수 있으므로 상담사 선생님이 확정을 해야 해요.</li>
-                          </ul>
-                        </div>
+            </div> */}
+          </div>
+        </div>
+        <div className={`tb-wrap${filteredClients.length === 0 ? ' empty' : ''}`}>
+          {filteredClients.length === 0 && (
+            <div className="empty-data">
+              <img src={emptyFace} alt="empty" />
+              <p className="empty-info">내담자명 검색결과가 없습니다.</p>
+            </div>
+          )}
+          <table>
+            <caption>내담자 리스트</caption>
+            <colgroup>
+              <col style={{ width: "156px" }} />
+              <col style={{ width: "208px" }} />
+              <col style={{ width: "104px" }} />
+              <col style={{ width: "452px" }} />
+              <col style={{ width: "120px" }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th className="sorting">
+                  <span onClick={handleSortToggle}>이름</span>
+                </th>
+                <th>전화번호</th>
+                <th>회기</th>
+                <th>
+                  <div className="step-title">
+                    <span>To-Do</span>
+                    <div className="info">
+                      <div
+                        className="info-icon"
+                        aria-label="툴팁 안내 아이콘"
+                        onMouseEnter={() => setShowTooltip(true)}
+                        onMouseLeave={() => setShowTooltip(false)}
+                      ></div>
+                      <div
+                        className={`tooltip${showTooltip ? " show" : ""}`}
+                      >
+                        <ul>
+                          <li>1. 해당 회차에서 작성하거나 확인하지 않은 업무인 경우에 TO-DO로 표시돼요.</li>
+                          <li>2. AI는 도움 드리지만 자동으로 생성하지 않아요.</li>
+                          <li>3. AI는 실수 할 수 있으므로 상담사 선생님이 확정을 해야 해요.</li>
+                        </ul>
                       </div>
                     </div>
-                  </th>
-                  <th>메모</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClients.filter(Boolean).map((client, idx) => (
-                  <tr
-                    key={client.clientSeq || idx}
-                    className={
-                      [isNewByRegistrationDate(client.registrationDate) ? "new" : "", selectedClientId === client.clientSeq ? "selected" : ""].join(" ").trim()
+                  </div>
+                </th>
+                <th>메모</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageClients.filter(Boolean).map((client, idx) => (
+                <tr
+                  key={client.clientSeq || idx}
+                  className={
+                    [isNewByRegistrationDate(client.registrationDate) ? "new" : "", selectedClientId === client.clientSeq ? "selected" : ""].join(" ").trim()
+                  }
+                  onClick={() => onSelectClient && onSelectClient(client.clientSeq)}
+                  style={{ cursor: onSelectClient ? "pointer" : undefined }}
+                >
+                  <td>
+                    <Link
+                      to={`/clients/sessions?clientId=${client.clientSeq}`}
+                    >
+                      {masked ? maskName(client.clientName) : client.clientName}{client.nickname && `(${client.nickname})`}
+                    </Link>
+                  </td>
+                  <td>{masked ? maskPhoneNumber(client.contactNumber) : formatPhoneNumber(client.contactNumber)}</td>
+                  <td>
+                    {isNewByRegistrationDate(client.registrationDate)
+                      ? <span className="text-[#32D074]">신규</span>
+                      : <span>-</span>
                     }
-                    onClick={() => onSelectClient && onSelectClient(client.clientSeq)}
-                    style={{ cursor: onSelectClient ? "pointer" : undefined }}
-                  >
-                    <td>
-                      <Link
-                        to={`/clients/sessions?clientId=${client.clientSeq}`}
-                      >
-                        {masked ? maskName(client.clientName) : client.clientName}{client.nickname && `(${client.nickname})`}
-                      </Link>
-                    </td>
-                    <td>{masked ? maskPhoneNumber(client.contactNumber) : formatPhoneNumber(client.contactNumber)}</td>
-                    <td>
-                      {isNewByRegistrationDate(client.registrationDate)
+                    {/* 기존 로직 (회기 존재 여부) 보관
+                    {client.currentSession === null ? (
+                      isNewByRegistrationDate(client.registrationDate)
                         ? <span className="text-[#32D074]">신규</span>
                         : <span>-</span>
-                      }
-                      {/* 기존 로직 (회기 존재 여부) 보관
-                      {client.currentSession === null ? (
-                        isNewByRegistrationDate(client.registrationDate)
-                          ? <span className="text-[#32D074]">신규</span>
-                          : <span>-</span>
-                      ) : (
-                        <Link to={`/clients/consults?clientId=${client.clientSeq}${client.currentSession && client.currentSession.sessionSeq ? `&sessionSeq=${client.currentSession.sessionSeq}` : ''}`}>
-                          {client.currentSession.sessionNo}회기 
-                        </Link>
-                      )}
-                      */}
-                    </td>
-                    <td>
-                      <div className="flex-wrap">
-                        {(() => {
-                          const todos = generateTodos(client);
-                          return todos.length > 0 ? (
-                            todos.map((todo, i) => (
-                              <a className="cursor-pointer" key={i} onClick={(e) => { e.stopPropagation(); handleTodoClick(client, todo); }}>{todo}</a>
-                            ))
-                          ) : (
-                            "-"
-                          );
-                        })()}
-                      </div>
-                    </td>
-                    <td>
-                      <button className="type12 h40" type="button" onClick={e => {
-                        e.stopPropagation();
-                        setMemoClient(client);
-                      }}>메모확인</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      <Link to={`/clients/consults?clientId=${client.clientSeq}${client.currentSession && client.currentSession.sessionSeq ? `&sessionSeq=${client.currentSession.sessionSeq}` : ''}`}>
+                        {client.currentSession.sessionNo}회기 
+                      </Link>
+                    )}
+                    */}
+                  </td>
+                  <td>
+                    <div className="flex-wrap">
+                      {(() => {
+                        const todos = generateTodos(client);
+                        return todos.length > 0 ? (
+                          todos.map((todo, i) => (
+                            <a className="cursor-pointer" key={i} onClick={(e) => { e.stopPropagation(); handleTodoClick(client, todo); }}>{todo}</a>
+                          ))
+                        ) : (
+                          "-"
+                        );
+                      })()}
+                    </div>
+                  </td>
+                  <td>
+                    <button className="type12 h40" type="button" onClick={e => {
+                      e.stopPropagation();
+                      setMemoClient(client);
+                    }}>메모확인</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+        {/* 페이지네이션 */}
+        <div className="pagination" role="navigation">
+          <div className="pagination-inner">
+            <div className="arrow-group">
+              <a
+                  className="prev cursor-pointer"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  aria-label="이전 페이지"
+                >
+                  <img src={arrowLeft} alt="이전 페이지로 이동 화살표 이미지" />
+                </a>
+            </div>
+            <div className="page-links">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <a
+                  key={p}
+                  className={p === currentPage ? 'on cursor-pointer' : 'cursor-pointer'}
+                  title={`${p} 페이지`}
+                  onClick={() => setCurrentPage(p)}
+                >
+                  {p}
+                </a>
+              ))}
+              <div className="arrow-group">
+                <a
+                  className="next cursor-pointer"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  aria-label="다음 페이지"
+                >
+                  <img src={arrowRight} alt="다음 페이지로 이동 화살표 이미지" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
 
     </>
   );

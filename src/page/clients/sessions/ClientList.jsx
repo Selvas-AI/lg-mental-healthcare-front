@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange, masked }) {
+function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange, masked, selectedClientSeq }) {
   const [search, setSearch] = useState("");
   
   // 이름 마스킹 함수
@@ -60,15 +60,20 @@ function ClientList({ clients, onSelect, fold, sessionStatus, onStatusChange, ma
           <ul>
             {filtered.length > 0 ? (
               filtered.map(client => (
-                <li key={client.clientSeq}>
+                <li
+                  key={client.clientSeq}
+                  className={String(client.clientSeq) === String(selectedClientSeq) ? 'bg-[rgba(239,242,243,0.6)]' : ''}
+                >
                   <a
                     href="#"
+                    className={String(client.clientSeq) === String(selectedClientSeq) ? '!text-[#1C1D1E]' : ''}
                     onClick={e => {
                       e.preventDefault();
                       onSelect && onSelect(client);
                     }}
                   >
-                    {masked ? maskName(client.clientName) : client.clientName}{client.nickname ? ` (${client.nickname})` : ""}
+                    {masked ? maskName(client.clientName) : client.clientName}
+                    {client.nickname ? ` (${client.nickname})` : ""}
                   </a>
                 </li>
               ))

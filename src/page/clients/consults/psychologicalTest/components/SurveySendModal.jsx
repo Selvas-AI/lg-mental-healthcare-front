@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 import CustomSelect from '@/components/CustomSelect';
 import { assessmentSetCreate, assessmentSetUpdateUrl, assessmentSetList, sessionList } from '@/api/apiCaller';
 import EditorConfirm from '@/page/clients/components/EditorConfirm';
@@ -236,7 +237,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
         return;
       }
 
-      const baseUrl = `${import.meta.env.VITE_CLIENT_SURVEY_BASE_URL || window.location.origin}/client-survey`;
+      const baseUrl = `http://43.202.89.215/client-survey`;
       // '3회기' 형태에서 숫자만 추출하여 sessionNo로 사용 후 sessionSeq 매핑 (PROG 전용)
       const selectedSessionNo = (() => {
         if (typeof selectedSession === 'string') {
@@ -303,11 +304,9 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
   
   // URL 복사
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(generatedUrl).then(() => {
-      if (typeof showToastMessage === 'function') {
-        showToastMessage('심리 검사지 전송 링크가 복사 되었습니다.');
-      }
-    });
+    if (typeof showToastMessage === 'function') {
+      showToastMessage('심리 검사지 전송 링크가 복사 되었습니다.');
+    }
   };
   
   // 모달 닫기 및 초기화
@@ -523,12 +522,13 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
                   readOnly 
                   value={generatedUrl}
                 />
-                <button 
-                  className="copy-btn" 
-                  type="button" 
-                  aria-label="URL 복사"
-                  onClick={handleCopyUrl}
-                ></button>
+                <CopyToClipboard text={generatedUrl} onCopy={handleCopyUrl}>
+                  <button 
+                    className="copy-btn" 
+                    type="button" 
+                    aria-label="URL 복사"
+                  ></button>
+                </CopyToClipboard>
               </div>
               <div className="survey-info">
                 <strong className="info-tit">생성된 심리 검사지 정보</strong>

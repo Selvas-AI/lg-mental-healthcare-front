@@ -23,6 +23,7 @@ function Clients() {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [masked, setMasked] = useRecoilState(maskingState);
+  const [listRefreshKey, setListRefreshKey] = useState(0); // ClientsTable 강제 리마운트용 키
   
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo } = useClientManager();
@@ -36,10 +37,21 @@ function Clients() {
     };
 
     const result = await saveClient(formData, null, additionalUpdates);
-    if (result.success) {
+    if (result?.success) {
       setRegisterOpen(false);
       // 내담자 목록 새로고침
       await loadClients();
+      // ClientsTable 즉시 리마운트하여 내부 목록 재조회
+      setListRefreshKey((k) => k + 1);
+      // 성공 메시지 토스트 노출 (서버 메시지 우선)
+      setToastMessage(result?.message || '내담자가 등록되었습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } else {
+      // 실패 메시지 토스트 노출 (서버 메시지 우선)
+      setToastMessage(result?.message || '내담자 등록에 실패했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
     }
   };
 
@@ -116,20 +128,14 @@ function Clients() {
           <EmptyClients onRegister={handleRegister} />
         ) : (
           <ClientsTable
+            key={listRefreshKey}
             onSelectClient={setSelectedClientId}
             selectedClientId={selectedClientId}
             memoClient={memoClient}
             setMemoClient={setMemoClient}
             onCloseMemo={handleCloseMemo}
           />
-        )}
-        <div className="pagination" role="navigation">
-          <div className="pagination-inner">
-            <div className="page-links">
-              <a className="on" title="1 페이지">1</a>
-            </div>
-          </div>
-        </div>
+        )}        
       </div>
       {memoClient && (
         <EditorModal
@@ -138,6 +144,9 @@ function Clients() {
         onSave={async (memoValue) => {
           const result = await saveMemo(memoClient.clientSeq, memoValue);
           if (result.success) {
+            setToastMessage('내담자 메모가 저장되었습니다');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
             handleCloseMemo();
           }
         }}

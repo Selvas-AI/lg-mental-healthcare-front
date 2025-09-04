@@ -108,11 +108,14 @@ function SignUp() {
       const response = await authRegister(userData);
       
       if (response.code === 200) {
-        // 회원가입 성공
-        setToastMessage('회원가입이 완료되었습니다.');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 2000);
-        setTimeout(() => navigate('/login'), 2000);
+        // 회원가입 성공: 로그인 페이지로 이동하며 토스트 메시지 전달
+        navigate('/login', {
+          state: {
+            signupSuccess: true,
+            toastMessage: '회원가입이 완료되었습니다.'
+          }
+        });
+        return;
       } else if (response.code === 302) {
         // 중복 이메일 에러
         setDuplicateEmailError(true);

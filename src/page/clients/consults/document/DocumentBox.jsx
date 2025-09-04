@@ -1,41 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import { currentSessionState } from '@/recoil';
+import { assessmentSetList, sessionList } from '@/api/apiCaller';
 import emptyFace from '@/assets/images/common/empty_face.svg';
 
-// 더미 데이터
-const documentData = [
-  {
-    id: 1,
-    type: '동의서',
-    title: '상담 동의서',
-    submitDate: '2025.04.26(토) 오전 10시',
-    status: '작성 요청',
-    isCompleted: false
-  },
-  {
-    id: 2,
-    type: '동의서',
-    title: '개인정보 수집 ⋅ 제3자 제공동의서',
-    submitDate: '2025.04.19(토) 오전 10시',
-    status: '작성 완료',
-    isCompleted: true
-  },
-  {
-    id: 3,
-    type: '검사지',
-    title: '스트레스 자가 진단',
-    submitDate: '2025.04.12(토) 오전 10시',
-    status: '작성 완료',
-    isCompleted: true
-  },
-  {
-    id: 4,
-    type: '검사지',
-    title: '불안 자가 진단(BAI)',
-    submitDate: '2025.04.05(토) 오전 10시',
-    status: '작성 완료',
-    isCompleted: true
-  }
+// 동의서 더미 데이터 (실제 API가 없으므로 UI 유지용)
+const consentDocumentData = [
+  // {
+  //   id: 'consent-1',
+  //   type: '동의서',
+  //   title: '상담 동의서',
+  //   submitDate: '2025.04.26(토) 오전 10시',
+  //   status: '작성 요청',
+  //   isCompleted: false
+  // },
+  // {
+  //   id: 'consent-2',
+  //   type: '동의서',
+  //   title: '개인정보 수집 ⋅ 제3자 제공동의서',
+  //   submitDate: '2025.04.19(토) 오전 10시',
+  //   status: '작성 완료',
+  //   isCompleted: true
+  // }
 ];
 
 const statusOptions = [
@@ -47,12 +34,130 @@ const statusOptions = [
 function DocumentBox() {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentSession = useRecoilValue(currentSessionState);
   const [selectedDocumentType, setSelectedDocumentType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const selectBoxRef = useRef(null);
   const optionListRef = useRef(null);
   const [listHeight, setListHeight] = useState(0);
+  const [assessmentData, setAssessmentData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // 검사지 데이터 조회
+  useEffect(() => {
+    const fetchAssessmentData = async () => {
+      if (!currentSession?.clientSeq) return;
+      
+      setLoading(true);
+      try {
+        // 회기 순서 매핑을 위한 sessionList 조회
+        let seqToOrderMap = {};
+        try {
+          const sessionRes = await sessionList(currentSession.clientSeq);
+          if (sessionRes?.code === 200 && Array.isArray(sessionRes.data)) {
+            const sessions = sessionRes.data;
+            const currentGroupSessions = sessions.filter(s => s.sessiongroupSeq === currentSession.sessiongroupSeq);
+            // sessionSeq 기준으로 정렬 후 순서 매핑
+            currentGroupSessions.sort((a, b) => a.sessionSeq - b.sessionSeq);
+            currentGroupSessions.forEach((session, index) => {
+              seqToOrderMap[String(session.sessionSeq)] = index + 1;
+            });
+            console.log('seqToOrderMap:', seqToOrderMap);
+          }
+        } catch (e) {
+          console.warn('sessionList 조회 실패:', e);
+        }
+
+        // 현재 내담자의 모든 검사세트 조회
+        const response = await assessmentSetList(currentSession.clientSeq);
+        if (response.code === 200 && response.data) {
+          console.log('검사세트 전체 데이터:', response.data);
+          
+          // PROG 타입만 필터링하여 순서 매핑
+          const progItems = response.data.filter(item => item.questionType === 'PROG');
+          
+          // API 데이터를 문서 형태로 변환
+          const transformedData = response.data.map((item, index) => {
+            // questionType에 따른 문서명 생성
+            let documentTitle = '검사지';
+            let sessionLabel;
+            
+            if (item.questionType === 'PRE') {
+              sessionLabel = '사전 문진';
+              documentTitle = '사전문진 검사지';
+            } else if (item.questionType === 'POST') {
+              sessionLabel = '사후 문진';
+              documentTitle = '사후문진 검사지';
+            } else if (item.questionType === 'PROG' && (item.sessionSeq != null || item.sessionNo != null)) {
+              // 그룹 내 순번(또는 sessionNo)을 사용하고, 절대 sessionSeq 원값은 라벨에 쓰지 않음
+              const seqKey = item.sessionSeq != null ? String(item.sessionSeq) : null;
+              const sessionNoFromSet = item.sessionNo ?? null;
+              const orderFromMap = seqKey ? seqToOrderMap[seqKey] : null;
+              
+              // PROG 타입에서 현재 항목의 순서 계산 (배열에서의 위치 + 1)
+              const progIndex = progItems.findIndex(progItem => progItem.setSeq === item.setSeq);
+              const progFallbackOrder = progIndex >= 0 ? progIndex + 1 : 1;
+              
+              const finalSessionNo = sessionNoFromSet ?? orderFromMap ?? progFallbackOrder;
+              sessionLabel = `${finalSessionNo}회기`;
+              documentTitle = `${finalSessionNo}회기 검사지`;
+              console.log(`sessionSeq: ${item.sessionSeq}, orderFromMap: ${orderFromMap}, progFallbackOrder: ${progFallbackOrder}, finalSessionNo: ${finalSessionNo}`);
+            } else {
+              // PROG 타입이지만 sessionSeq가 없는 경우
+              const progIndex = progItems.findIndex(progItem => progItem.setSeq === item.setSeq);
+              const progFallbackOrder = progIndex >= 0 ? progIndex + 1 : 1;
+              sessionLabel = `${progFallbackOrder}회기`;
+              documentTitle = `${progFallbackOrder}회기 검사지`;
+            }
+
+            return {
+              id: item.setSeq,
+              type: '검사지',
+              title: documentTitle,
+              submitDate: formatDate(item.assignedUrlExpireTime || item.createdTime || item.createdAt),
+              status: item.submittedTime ? '작성 완료' : '작성 요청',
+              isCompleted: !!item.submittedTime,
+              setSeq: item.setSeq,
+              questionType: item.questionType, // PRE/PROG/POST
+              sessiongroupSeq: item.sessiongroupSeq
+            };
+          });
+          
+          console.log('변환된 문서 데이터:', transformedData);
+          setAssessmentData(transformedData);
+        }
+      } catch (error) {
+        console.error('검사지 데이터 조회 실패:', error);
+        setAssessmentData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssessmentData();
+  }, [currentSession?.clientSeq, currentSession?.sessiongroupSeq]);
+
+  // 날짜 포맷팅 함수
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[date.getDay()];
+      const hour = date.getHours();
+      const minute = String(date.getMinutes()).padStart(2, '0');
+      const period = hour >= 12 ? '오후' : '오전';
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      
+      return `${year}.${month}.${day}(${weekday}) ${period} ${displayHour}시${minute !== '00' ? ` ${minute}분` : ''}`;
+    } catch (e) {
+      return '-';
+    }
+  };
 
   const handleDocumentTypeChange = (type) => {
     setSelectedDocumentType(type);
@@ -87,7 +192,7 @@ function DocumentBox() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isStatusDropdownOpen]);
 
-  const handleResultView = (documentId) => {
+  const handleResultView = (document) => {
     // 현재 스크롤 위치 저장
     const currentScrollY = window.scrollY;
     
@@ -101,7 +206,13 @@ function DocumentBox() {
     if (clientId) detailQuery.set('clientId', clientId);
     detailQuery.set('returnTab', currentTab);
     detailQuery.set('scrollY', currentScrollY.toString());
-    detailQuery.set('documentId', documentId.toString()); // 문서 ID도 저장
+    
+    // 검사지인 경우 setSeq 사용, 동의서인 경우 documentId 사용
+    if (document.type === '검사지' && document.setSeq) {
+      detailQuery.set('setSeq', document.setSeq.toString());
+    } else {
+      detailQuery.set('documentId', document.id.toString());
+    }
     
     navigate(`/clients/consults/psychologicalTestDetail?${detailQuery.toString()}`);
   };
@@ -115,8 +226,11 @@ function DocumentBox() {
     return option ? option.label : '상태 전체';
   };
 
+  // 동의서와 검사지 데이터 합치기
+  const allDocuments = [...consentDocumentData, ...assessmentData];
+
   // 선택된 문서 타입과 상태에 따라 문서 필터링
-  const filteredDocuments = documentData.filter(document => {
+  const filteredDocuments = allDocuments.filter(document => {
     // 문서 타입 필터링
     let typeMatch = true;
     if (selectedDocumentType === 'consent') {
@@ -138,7 +252,11 @@ function DocumentBox() {
 
   return (
     <div className="inner">
-      {documentData.length === 0 ? (
+      {loading ? (
+        <div className="con-wrap empty">
+          <p className="empty-info">문서 데이터를 불러오는 중...</p>
+        </div>
+      ) : allDocuments.length === 0 ? (
         <div className="con-wrap empty">
           <img src={emptyFace} alt="empty" />
           <p className="empty-info">내담자에게 전송한 문서 내역이 없습니다.</p>
@@ -255,7 +373,7 @@ function DocumentBox() {
                       className="type12 h40" 
                       type="button" 
                       disabled={!document.isCompleted}
-                      onClick={() => handleResultView(document.id)}
+                      onClick={() => handleResultView(document)}
                     >
                       결과보기
                     </button>
