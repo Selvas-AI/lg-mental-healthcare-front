@@ -236,7 +236,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
         return;
       }
 
-      const baseUrl = `${import.meta.env.VITE_CLIENT_SURVEY_BASE_URL || window.location.origin}/client-survey`;
+      const baseUrl = `http://43.202.89.215/client-survey`;
       // '3회기' 형태에서 숫자만 추출하여 sessionNo로 사용 후 sessionSeq 매핑 (PROG 전용)
       const selectedSessionNo = (() => {
         if (typeof selectedSession === 'string') {

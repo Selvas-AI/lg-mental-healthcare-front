@@ -17,7 +17,8 @@ function EditorModal({
 
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.innerText = initialValue || '';
+      // 개행 문자를 <br> 태그로 변환하여 표시
+      editorRef.current.innerHTML = (initialValue || '').replace(/\n/g, '<br>');
     }
     setValue(initialValue || '');
   }, [initialValue, open]);
@@ -37,7 +38,7 @@ function EditorModal({
             className="editor"
             contentEditable
             data-placeholder={placeholder}
-            onInput={e => setValue(e.currentTarget.textContent)}
+            onInput={e => setValue(e.currentTarget.innerText)}
             ref={editorRef}
             suppressContentEditableWarning={true}
             style={isOver ? { borderColor: 'red', minHeight: '100px' } : { minHeight: '100px' }}

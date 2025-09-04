@@ -136,7 +136,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
   }, [sessionSeq]);
   
   // 상담일지 상세 페이지로 이동하는 함수
-  const navigateToCounselDetail = async () => {
+  const navigateToCounselDetail = async (scrollTarget = null) => {
     // 상세로 이동 전 캐시 최신화 (없거나 다른 세션일 경우만)
     if (sessionSeq && (!sessionNote || sessionNote.sessionSeq !== sessionSeq || !sessionNote.data)) {
       try {
@@ -149,6 +149,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
     const params = new URLSearchParams();
     if (clientId) params.set('clientId', clientId);
     if (sessionSeq) params.set('sessionSeq', sessionSeq);
+    if (scrollTarget) params.set('scrollTo', scrollTarget);
     navigate(`/clients/consults/detail?${params.toString()}`);
   };
   
@@ -195,7 +196,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <div className={`urgency ${crisisClass(note?.crisisStageLevel)}`}>
               <div className="box-tit">
                 <strong>1. 자살, 위기 수준의 긴급도</strong>
-                <a className="edit-btn cursor-pointer" onClick={navigateToCounselDetail}>수정</a>
+                <a className="edit-btn cursor-pointer" onClick={() => navigateToCounselDetail('step01')}>수정</a>
               </div>
               <div className="con-wrap">
                 <div className="risk-scale">
@@ -236,7 +237,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <div className="severity">
               <div className="box-tit">
                 <strong>2. 현재 증상의 심각도</strong>
-                <a className="edit-btn cursor-pointer" onClick={navigateToCounselDetail}>수정</a>
+                <a className="edit-btn cursor-pointer" onClick={() => navigateToCounselDetail('step02')}>수정</a>
               </div>
               <div className="con-wrap">
                 {(() => { const sev = buildSeverity(note); return (
@@ -253,7 +254,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="1. 주호소 문제"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step03')}
               toggleable={true}
             >
               {renderSaveText(logData[0]?.mainIssue)}
@@ -262,7 +263,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="2. 상담 내용"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step04')}
               toggleable={true}
             >
               {renderSaveText(logData[0]?.content)}
@@ -271,7 +272,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="3. 상담사 소견"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step04')}
               toggleable={true}
             >
               {renderSaveText(logData[0]?.opinion)}
@@ -280,7 +281,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="4. 객관적 관찰"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step05')}
               toggleable={true}
             >
               {renderSaveText(logData[0]?.observation)}
@@ -289,7 +290,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="5. 상담 목표"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step06')}
               toggleable={true}
             >
               {renderSaveText((logData[0]?.goals || []).join('\n'))}
@@ -298,7 +299,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="6. 다음 상담 계획"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step07')}
               toggleable={true}
             >
               {renderSaveText(logData[0]?.nextPlan)}
@@ -312,7 +313,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="7. 고민되는 점"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step08')}
               toggleable={logData[0]?.mind ? true : false}
             >
               {logData[0]?.mind ? (
@@ -327,7 +328,7 @@ function CounselLog({ setIsNoshow, sessionData }) {
             <TranscriptBox
               title="8. 사례개념화"
               editable={true}
-              onEdit={navigateToCounselDetail}
+              onEdit={() => navigateToCounselDetail('step09')}
               toggleable={logData[0]?.caseConcept ? true : false}
             >
               {logData[0]?.caseConcept ? (

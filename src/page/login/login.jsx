@@ -1,17 +1,22 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authLogin } from '@/api/apiCaller';
 import imgLogo from '@/assets/images/logo.svg';
 import txtLogo from '@/assets/images/onshim.svg';
 import './login.scss';
+import ToastPop from '@/components/ToastPop';
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [id, setId] = useState("test@mail.com");
   const [idError, setIdError] = useState(false);
   const [pw, setPw] = useState("selvas1!");
   const [pwError, setPwError] = useState(false);
   const [loginError, setLoginError] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
   // 이메일 형식 체크
   const validateEmail = (value) => {
     return /^[\w-.]+@[\w-]+\.[\w-.]+$/.test(value);
@@ -54,6 +59,13 @@ function Login() {
     const value = e.target.value;
     // 포커스 아웃 시 비밀번호 형식 검증
     setPwError(value.length > 0 && !validatePassword(value));
+  };
+
+  // 비밀번호 입력에서 Enter 키로 로그인 실행
+  const handlePwKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
   };
 
   const handleLogin = async () => {
@@ -99,6 +111,18 @@ function Login() {
     }
   };
 
+  // 회원가입 성공 후 라우터 state로 전달된 토스트 메시지 표시
+  useEffect(() => {
+    const state = location.state;
+    if (state?.signupSuccess) {
+      setToastMessage(state.toastMessage || '회원가입이 완료되었습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+      // 한 번 표시 후 state 제거
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, location.pathname, navigate]);
+
   return (
     <div className="wrapper login">
       <main>
@@ -133,6 +157,7 @@ function Login() {
                   value={pw}
                   onChange={handlePwChange}
                   onBlur={handlePwBlur}
+                  onKeyDown={handlePwKeyDown}
                 />
                 {pwError && (
                   <p className="error-txt">8~16자의 영문 대/소문자, 숫자, 특수문자로 구성되어 있습니다.</p>
@@ -160,6 +185,7 @@ function Login() {
           </div>
         </div>
       </main>
+      <ToastPop message={toastMessage} showToast={showToast} />
     </div>
   );
 }

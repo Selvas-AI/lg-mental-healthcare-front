@@ -3,41 +3,25 @@ import './recordings.scss';
 import IconLoading from "@/assets/images/common/loading.svg";
 
 function SectionSummaryPanel({ open, onClose, sectionData = [] }) {
-  // 로딩 상태 관리 및 최초 오픈 여부 저장
+  // 로딩 상태 관리
   const [status, setStatus] = useState('complete');
-  const firstOpenShownRef = useRef(false);
   const openTimerRef = useRef(null);
-  const STORAGE_KEY = 'aiPanelSeen:sectionSummary';
   
-  // 마운트 시 localStorage에서 최초 본 여부 동기화
-  useEffect(() => {
-    try {
-      firstOpenShownRef.current = localStorage.getItem(STORAGE_KEY) === '1';
-    } catch (_) {
-      // storage 사용 불가 시 무시
-    }
-  }, []);
-  
-  // 패널 오픈 시 최초 1회 2초 로딩 처리
+  // 패널 오픈 시마다 2초 로딩 처리
   useEffect(() => {
     if (open) {
-      if (!firstOpenShownRef.current) {
-        firstOpenShownRef.current = true;
-        try { localStorage.setItem(STORAGE_KEY, '1'); } catch (_) {}
-        setStatus('creating');
-        if (openTimerRef.current) clearTimeout(openTimerRef.current);
-        openTimerRef.current = setTimeout(() => {
-          setStatus('complete');
-          openTimerRef.current = null;
-        }, 2000);
-      } else {
+      setStatus('creating');
+      if (openTimerRef.current) clearTimeout(openTimerRef.current);
+      openTimerRef.current = setTimeout(() => {
         setStatus('complete');
-      }
+        openTimerRef.current = null;
+      }, 2000);
     } else {
       if (openTimerRef.current) {
         clearTimeout(openTimerRef.current);
         openTimerRef.current = null;
       }
+      setStatus('complete');
     }
     return () => {
       if (openTimerRef.current) {

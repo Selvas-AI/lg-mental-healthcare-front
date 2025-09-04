@@ -3,28 +3,11 @@ import AiPanelCommon from "@/components/AiPanelCommon";
 import { dislikeUpdate } from '@/api/apiCaller';
 
 function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, sessionSeq, onConfirm: onConfirmCallback, showToastMessage, panelType = "summary" }) {
-  // 패널 타입 ("summary" 또는 "issue")
   // 패널 표시 상태(loading/complete 등) 관리
   const [panelStatus, setPanelStatus] = useState(status);
-  // 패널 타입별 최초 오픈 여부 저장
-  const firstOpenShownRef = useRef({ summary: false, issue: false });
   // 오픈시 로딩 타이머
   const openTimerRef = useRef(null);
-  const STORAGE_KEYS = {
-    summary: 'aiPanelSeen:transcript:summary',
-    issue: 'aiPanelSeen:transcript:issue'
-  };
 
-  // 마운트 시 localStorage에서 최초 본 여부 동기화
-  useEffect(() => {
-    try {
-      firstOpenShownRef.current.summary = localStorage.getItem(STORAGE_KEYS.summary) === '1';
-      firstOpenShownRef.current.issue = localStorage.getItem(STORAGE_KEYS.issue) === '1';
-    } catch (_) {
-      // storage 사용 불가 시 무시
-    }
-  }, []);
-  
   // llm_answer/llm_feedback 구조에서 텍스트만 추출하는 헬퍼
   const extractTextParts = (value) => {
   if (!value) return { answer: '', feedback: '' };
@@ -269,28 +252,21 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
     );
   };
 
-  // 패널이 열릴 때 상태 설정 (패널 타입별 최초 1회 2초 로딩)
+  // 패널 오픈 시마다 2초 로딩 처리
   useEffect(() => {
     if (open) {
-      const key = panelType === 'issue' ? 'issue' : 'summary';
-      if (!firstOpenShownRef.current[key]) {
-        firstOpenShownRef.current[key] = true;
-        // 본 적 없으면 즉시 기록하여 새로고침 후에도 재사용
-        try { localStorage.setItem(STORAGE_KEYS[key], '1'); } catch (_) {}
-        setPanelStatus('creating');
-        if (openTimerRef.current) clearTimeout(openTimerRef.current);
-        openTimerRef.current = setTimeout(() => {
-          setPanelStatus('complete');
-          openTimerRef.current = null;
-        }, 2000);
-      } else {
+      setPanelStatus('creating');
+      if (openTimerRef.current) clearTimeout(openTimerRef.current);
+      openTimerRef.current = setTimeout(() => {
         setPanelStatus('complete');
-      }
+        openTimerRef.current = null;
+      }, 2000);
     } else {
       if (openTimerRef.current) {
         clearTimeout(openTimerRef.current);
         openTimerRef.current = null;
       }
+      setPanelStatus('complete');
     }
     return () => {
       if (openTimerRef.current) {
@@ -298,7 +274,7 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
         openTimerRef.current = null;
       }
     };
-  }, [open, panelType]);
+  }, [open]);
   
   return (
     <AiPanelCommon

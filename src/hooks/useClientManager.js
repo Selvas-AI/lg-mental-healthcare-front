@@ -98,8 +98,8 @@ export const useClientManager = () => {
           showToastMessage('내담자 정보가 수정되었습니다.');
           return { success: true, data: response.data };
         } else {
-          showToastMessage(response.message || '내담자 정보 수정에 실패했습니다.');
-          return { success: false, message: response.message };
+          showToastMessage(response?.message || '내담자 정보 수정에 실패했습니다.');
+          return { success: false, message: response?.message };
         }
       } else {
         // 내담자 등록
@@ -131,7 +131,8 @@ export const useClientManager = () => {
         };
         
         const response = await clientCreate(registerData);
-        if (response.code === 200) {
+        const createCode = typeof response?.code === 'string' ? parseInt(response.code, 10) : response?.code;
+        if (createCode === 200) {
           // 등록 직후 서버에서 생성된 필드 포함한 최신 데이터로 재조회
           let createdClient = response.data;
           try {
@@ -147,11 +148,17 @@ export const useClientManager = () => {
 
           // clients 상태에 병합(동일 clientSeq 존재 시 교체, 없으면 추가)
           setClients(prevClients => {
-            const exists = prevClients.some(c => c && c.clientSeq === createdClient.clientSeq);
-            if (exists) {
-              return prevClients.map(c => (c && c.clientSeq === createdClient.clientSeq) ? createdClient : c);
+            const clientSeqVal = createdClient && createdClient.clientSeq;
+            if (clientSeqVal) {
+              const exists = prevClients.some(c => c && c.clientSeq === clientSeqVal);
+              if (exists) {
+                return prevClients.map(c => (c && c.clientSeq === clientSeqVal) ? createdClient : c);
+              }
+              return [...prevClients, createdClient];
             }
-            return [...prevClients, createdClient];
+            // clientSeq가 없거나 createdClient가 null인 경우: null 제거 후 단순 추가
+            const safePrev = prevClients.filter(Boolean);
+            return createdClient ? [...safePrev, createdClient] : safePrev;
           });
 
           // 추가 업데이트 함수가 있으면 최신 데이터로 전달
@@ -162,8 +169,8 @@ export const useClientManager = () => {
           showToastMessage('내담자가 등록되었습니다.');
           return { success: true, data: createdClient };
         } else {
-          showToastMessage(response.message || '내담자 등록에 실패했습니다.');
-          return { success: false, message: response.message };
+          showToastMessage(response?.message || '내담자 등록에 실패했습니다.');
+          return { success: false, message: response?.message };
         }
       }
     } catch (error) {

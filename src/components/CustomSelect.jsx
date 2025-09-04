@@ -14,6 +14,7 @@ import React, { useState, useRef, useEffect } from 'react';
  * @param {number} maxHeight - 옵션 리스트 최대 높이 (기본값: 200)
  * @param {Function} getOptionValue - 옵션에서 값을 추출하는 함수 (기본값: option => option)
  * @param {Function} getOptionLabel - 옵션에서 라벨을 추출하는 함수 (기본값: option => option)
+ * @param {*} initialScrollToValue - (선택값이 없을 때) 메뉴가 열리면 해당 값 위치로 스크롤
  */
 const CustomSelect = ({
   options = [],
@@ -28,9 +29,13 @@ const CustomSelect = ({
   maxHeight = 200,
   getOptionValue = (option) => option,
   getOptionLabel = (option) => option,
+  initialScrollToValue,
+  initialScrollOffset = -28,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
+  const listRef = useRef(null);
+  const itemRefs = useRef(new Map()); // key: optionValue, value: <li> element
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -45,6 +50,34 @@ const CustomSelect = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // 메뉴가 열릴 때 스크롤 위치 맞추기
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const container = listRef.current;
+    if (!container) return;
+
+    // 1) value가 있으면 → 해당 값으로 스크롤
+    if (value != null && value !== '') {
+      const targetEl = itemRefs.current.get(value);
+      if (targetEl) {
+        targetEl.scrollIntoView({ block: 'center' });
+        container.scrollTop += (initialScrollOffset || 0);
+      }
+      return;
+    }
+
+    // 2) 선택값이 없으면 → initialScrollToValue로 스크롤
+    if (initialScrollToValue) {
+      const targetEl = itemRefs.current.get(initialScrollToValue);
+      if (targetEl) {
+        targetEl.scrollIntoView({ block: 'center' });
+        container.scrollTop += (initialScrollOffset || 0);
+      }
+    }
+  }, [isOpen, value, initialScrollToValue, initialScrollOffset]);
+
 
   // 드롭다운 토글
   const handleToggle = () => {
@@ -101,25 +134,36 @@ const CustomSelect = ({
           style={{ 
             maxHeight: isOpen ? Math.min(options.length * 40, maxHeight) : 0,
             // overflow: 'hidden',
+            overflow: isOpen ? 'auto' : 'hidden',
             transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
             display: 'block'
           }}
+          ref={listRef}
         >
-          {options.map((option, index) => (
-            <li 
-              key={index}
-              className={option?.disabled ? 'disabled' : ''}
-            >
-              <a 
-                className={`cursor-pointer ${option?.disabled ? 'disabled' : ''}`}
-                onClick={option?.disabled ? undefined : () => handleOptionSelect(option)}
-                aria-disabled={option?.disabled ? 'true' : 'false'}
-                tabIndex={option?.disabled ? -1 : 0}
+          {itemRefs.current.clear() /* ★ 렌더 시 Map 초기화 */}
+          {options.map((option, index) => {
+            const optionValue = getOptionValue(option); 
+            itemRefs.current.set(optionValue, document.createElement('li'));
+            return (
+              <li 
+                key={index}
+                className={option?.disabled ? 'disabled' : ''}
+                ref={(el) => {                                   // ★ 값 -> LI 엘리먼트 매핑
+                  if (!el) itemRefs.current.delete(optionValue);
+                  else itemRefs.current.set(optionValue, el);
+                }}
               >
-                {renderOptionContent(option, index)}
-              </a>
-            </li>
-          ))}
+                <a 
+                  className={`cursor-pointer ${option?.disabled ? 'disabled' : ''}`}
+                  style={option?.disabled ? { color: '#ccc', cursor: 'default' } : {}}
+                  onClick={option?.disabled ? undefined : () => handleOptionSelect(option)}
+                  aria-disabled={option?.disabled ? 'true' : 'false'}
+                  tabIndex={option?.disabled ? -1 : 0}
+                >
+                  {renderOptionContent(option, index)}
+                </a>
+              </li>
+            )})}
         </ul>
       </div>
     </div>
