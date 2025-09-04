@@ -1,6 +1,6 @@
 import React, { useRef, useLayoutEffect, useState, useEffect, useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { maskingState, clientsState, currentSessionState, sessionDataState, editorConfirmState, supportPanelState } from "@/recoil";
+import { maskingState, clientsState, currentSessionState, sessionDataState, editorConfirmState, supportPanelState, audioUploadState } from "@/recoil";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sessionMngFind, sessionFind, clientFind, sessionCurrentUpdate, sessionList, audioFind, audioDelete, assessmentList } from '@/api/apiCaller';
 import { useClientManager } from '@/hooks/useClientManager';
@@ -41,6 +41,7 @@ function Consults() {
   const setCurrentSession = useSetRecoilState(currentSessionState);
   const setSessionDataRecoil = useSetRecoilState(sessionDataState);
   const [editOpen, setEditOpen] = useState(false);
+  const setAudioUploadState = useSetRecoilState(audioUploadState);
 
   // URL 파라미터 영속화 키
   const LS_CLIENT_ID_KEY = 'lastClientId';
@@ -105,6 +106,12 @@ function Consults() {
       }
       const res = await audioDelete(Number(sessionSeq));
       if (res?.code === 200) {
+        // 녹음파일 삭제 시 해당 세션의 업로드 상태도 초기화
+        setAudioUploadState(prev => {
+          const newState = { ...prev };
+          delete newState[sessionSeq];
+          return newState;
+        });
         setAudioData(null); // Transcript에서 audioFileExists를 false로 유도
         showToastMessage('녹취파일이 삭제되었습니다.');
       } else {
@@ -180,41 +187,25 @@ function Consults() {
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [aiPanelPayload, setAiPanelPayload] = useState(null); // { setSeq, aiInsightParsed, onConfirm }
   const setSupportPanel = useSetRecoilState(supportPanelState);
-  // AI 종합 의견: 최초 1회 2초 로딩 상태 관리
+  // AI 종합 의견: 패널 오픈 시마다 2초 로딩 상태 관리
   const [aiPanelStatus, setAiPanelStatus] = useState('complete');
-  const aiSummarySeenRef = useRef(false);
   const aiSummaryTimerRef = useRef(null);
-  const AI_SUMMARY_STORAGE_KEY = 'aiPanelSeen:summary:overallInsight';
 
-  // 마운트 시 최초 오픈 여부 동기화
-  useEffect(() => {
-    try {
-      aiSummarySeenRef.current = localStorage.getItem(AI_SUMMARY_STORAGE_KEY) === '1';
-    } catch (_) {
-      // storage 사용 불가 시 무시
-    }
-  }, []);
-
-  // AI 종합 의견 패널 최초 오픈 시 2초 로딩 처리
+  // AI 종합 의견 패널 오픈 시마다 2초 로딩 처리
   useEffect(() => {
     if (showAiSummary) {
-      if (!aiSummarySeenRef.current) {
-        aiSummarySeenRef.current = true;
-        try { localStorage.setItem(AI_SUMMARY_STORAGE_KEY, '1'); } catch (_) {}
-        setAiPanelStatus('creating');
-        if (aiSummaryTimerRef.current) clearTimeout(aiSummaryTimerRef.current);
-        aiSummaryTimerRef.current = setTimeout(() => {
-          setAiPanelStatus('complete');
-          aiSummaryTimerRef.current = null;
-        }, 2000);
-      } else {
+      setAiPanelStatus('creating');
+      if (aiSummaryTimerRef.current) clearTimeout(aiSummaryTimerRef.current);
+      aiSummaryTimerRef.current = setTimeout(() => {
         setAiPanelStatus('complete');
-      }
+        aiSummaryTimerRef.current = null;
+      }, 2000);
     } else {
       if (aiSummaryTimerRef.current) {
         clearTimeout(aiSummaryTimerRef.current);
         aiSummaryTimerRef.current = null;
       }
+      setAiPanelStatus('complete');
     }
     return () => {
       if (aiSummaryTimerRef.current) {
@@ -223,7 +214,7 @@ function Consults() {
       }
     };
   }, [showAiSummary]);
-  
+
   // 내담자 관리 커스텀 훅 사용
   const { saveClient, saveMemo, toastMessage, showToast, showToastMessage } = useClientManager();
   
@@ -366,6 +357,7 @@ function Consults() {
           setSessionMngData(null);
           setSessionData(null);
           setAudioData(null);
+          setCurrentSession(null);
         }
       } else {
         setSessionMngData(null);
@@ -421,6 +413,23 @@ function Consults() {
     }
   };
 
+  const sessionListAll = useRecoilValue(sessionDataState); // 회기 목록(최신이 0번이라면, 이전은 +1)
+
+  const prevSessionDateTime = (() => {
+    if (!Array.isArray(sessionListAll) || !sessionSeq) return null;
+    const idx = sessionListAll.findIndex(s => String(s.sessionSeq) === String(sessionSeq));
+    // 편집 대상의 "직전 회기"는 목록에서 다음 인덱스라고 가정 (최신이 0번)
+    const prev = idx >= 0 ? sessionListAll[idx + 1] : null;
+    if (!prev?.sessionDate) return null;
+    const [datePart, timePart] = prev.sessionDate.split(' ');
+    const [y, m, d] = datePart.split('-').map(Number);
+    const [hh, mm] = timePart.split(':').map(Number);
+    return new Date(y, m - 1, d, hh, mm);
+  })();
+
+  const prevSessionDateOnly = prevSessionDateTime
+    ? new Date(prevSessionDateTime.getFullYear(), prevSessionDateTime.getMonth(), prevSessionDateTime.getDate())
+    : null;
 
   return (
     <>
@@ -534,6 +543,48 @@ function Consults() {
                   // fallback: 업로드 응답 데이터로 즉시 세팅
                   setAudioData(audioInfo);
                 }
+
+                // 서버 처리 완료 모니터링 시작 (5초 후부터 2초 간격으로 확인)
+                setTimeout(() => {
+                  const checkProcessingComplete = async () => {
+                    try {
+                      const audioResponse = await audioFind(sessionSeq);
+                      if (audioResponse?.code === 200 && audioResponse.data) {
+                        // 서버 처리 완료 시 업로드 상태 초기화
+                        setAudioUploadState(prev => {
+                          const newState = { ...prev };
+                          delete newState[sessionSeq];
+                          return newState;
+                        });
+                        setAudioData(audioResponse.data);
+                        return true; // 처리 완료
+                      }
+                      return false; // 아직 처리 중
+                    } catch (error) {
+                      console.error('오디오 처리 상태 확인 오류:', error);
+                      return false;
+                    }
+                  };
+
+                  const monitorInterval = setInterval(async () => {
+                    const isComplete = await checkProcessingComplete();
+                    if (isComplete) {
+                      clearInterval(monitorInterval);
+                    }
+                  }, 2000); // 2초 간격으로 확인
+
+                  // 최대 5분 후 자동 정리 (타임아웃 방지)
+                  setTimeout(() => {
+                    clearInterval(monitorInterval);
+                    // 타임아웃 시에도 상태 초기화
+                    setAudioUploadState(prev => {
+                      const newState = { ...prev };
+                      delete newState[sessionSeq];
+                      return newState;
+                    });
+                  }, 300000); // 5분
+                }, 5000); // 5초 후 모니터링 시작
+
               } else if (audioInfo) {
                 setAudioData(audioInfo);
               }
@@ -574,6 +625,8 @@ function Consults() {
         onClose={() => setEditOpen(false)}
         onSave={handleEditSave}
         initialSessionDate={sessionData?.sessionDate}
+        minDate={prevSessionDateOnly}      // 날짜 제한
+        minDateTime={prevSessionDateTime}  // 같은 날 시간 제한
       />
       {/* 공통 확인 모달: .inner 바깥 영역 */}
       <EditorConfirm
@@ -653,4 +706,3 @@ function Consults() {
 }
 
 export default Consults;
-

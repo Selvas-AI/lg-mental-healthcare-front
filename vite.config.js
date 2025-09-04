@@ -21,7 +21,8 @@ export default defineConfig(({ mode }) => {
       ? {
           proxy: {
             '/api': {
-              target: 'http://43.202.89.215',
+              target: 'http://43.202.89.215', // 운영
+              // target: 'http://52.78.24.168', // 테스트
               changeOrigin: true,
               secure: false,
             },

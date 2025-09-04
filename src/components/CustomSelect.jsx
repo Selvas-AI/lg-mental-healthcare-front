@@ -155,6 +155,7 @@ const CustomSelect = ({
               >
                 <a 
                   className={`cursor-pointer ${option?.disabled ? 'disabled' : ''}`}
+                  style={option?.disabled ? { color: '#ccc', cursor: 'default' } : {}}
                   onClick={option?.disabled ? undefined : () => handleOptionSelect(option)}
                   aria-disabled={option?.disabled ? 'true' : 'false'}
                   tabIndex={option?.disabled ? -1 : 0}

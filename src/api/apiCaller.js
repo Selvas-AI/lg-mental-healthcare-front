@@ -201,7 +201,7 @@ export const sessionMngUpdate = async (sessionMngData) => {
 }
 
 //? ===== 내담자 검사 관리 API =====
-//! 내담자 검사세트 결과 조회
+// 내담자 검사세트 결과 조회
 export const assessmentSetResult = async (setSeq) => {
     return await axiosIns.get('/api/assessmentSet/result', { params: { setSeq } })
 }
@@ -216,7 +216,7 @@ export const assessmentSetListWithItem = async (setSeqList) => {
     return await axiosIns.get('/api/assessmentSet/listWithItem', { params: { setSeqList } })
 }
 
-//! 내담자 검사세트 조회(목록정보 포함)
+//? 내담자 검사세트 조회(목록정보 포함)
 export const assessmentSetFind = async (setSeq) => {
     return await axiosIns.get('/api/assessmentSet/find', { params: { setSeq } })
 }
@@ -226,7 +226,7 @@ export const assessmentSetCurrentList = async (clientSeq) => {
     return await axiosIns.get('/api/assessmentSet/currentList', { params: { clientSeq } })
 }
 
-//! 내담자검사 세트 링크 주소 수정 xx
+// 내담자검사 세트 링크 주소 수정
 export const assessmentSetUpdateUrl = async (params) => {
     return await axiosIns.post('/api/assessmentSet/updateUrl', params)
 }
