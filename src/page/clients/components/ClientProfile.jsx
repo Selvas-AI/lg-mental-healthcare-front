@@ -165,7 +165,11 @@ function formatPhoneNumber(phone) {
       <div className="client-profile">
         <div className="name-wrap">
           <div className="left">
-            <strong>{name}</strong>
+            <strong>{name}&nbsp;
+              {profileData.nickname && (
+                <span className="nickname">({profileData.nickname})</span>
+              )}
+            </strong>
             {profileData.crisisLevel === 4 && <span className="tag critical">고위험</span>}
             {profileData.crisisLevel === 3 && <span className="tag danger">위험</span>}
             {profileData.crisisLevel === 2 && <span className="tag caution">주의</span>}

@@ -82,6 +82,7 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
   };
   
   const timeOptions = generateTimeOptions();
+  const defaultScrollTime = '오전 9:00';
 
   // 초기 sessionDate 파싱: "YYYY-MM-DD HH:MM" -> Date, "오전/오후 H:MM"
   const parseInitialSession = (sessionStr) => {
@@ -104,12 +105,18 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
     if (open) {
       if (initialSessionDate) {
         const { date, timeLabel } = parseInitialSession(initialSessionDate);
-        if (date) setSelectedDate(date);
-        if (timeLabel && timeOptions.includes(timeLabel)) setSelectedTime(timeLabel);
+        if (date) {
+          setSelectedDate(date);
+        }
+        if (timeLabel && timeOptions.includes(timeLabel)) {
+          setSelectedTime(timeLabel);
+        }
+      } else {
+        // 지정된 값이 없다면 오늘 날짜 선택
+        setSelectedDate(new Date());
       }
       setCurrentStep(2);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialSessionDate]);
 
   // const handleRecordSelect = (recordId) => {
@@ -291,6 +298,7 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
                 placeholderText="날짜 선택"
                 locale={ko}
                 showPopperArrow={false}
+                disabledKeyboardNavigation //다른달에도 해당일자에 색표시되는거 제거
                 popperClassName="custom-datepicker-popper"
                 renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
                   <div className="custom-datepicker-header">
@@ -325,6 +333,7 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
                 getOptionValue={(option) => option}
                 getOptionLabel={(option) => option}
                 maxHeight={260}
+                initialScrollToValue={!selectedTime ? defaultScrollTime : undefined}  // ✅ 선택값이 없을 때만 9시로 스크롤
               />
             </div>
           </div>

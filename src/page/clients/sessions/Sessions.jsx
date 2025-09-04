@@ -333,6 +333,7 @@ function Sessions() {
         sessionStatus={sessionStatus}
         onStatusChange={handleStatusChange}
         masked={masked}
+        selectedClientSeq={clientId}
       />
       <div className="inner">
         <div className="move-up">
