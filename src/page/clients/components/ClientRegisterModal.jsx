@@ -70,6 +70,10 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       // 이메일 도메인 직접 입력 시 select-box 초기화
       setForm(f => ({ ...f, emailDomain: value }));
       setSelectedEmailDomain(''); // select-box 선택 상태 초기화
+    } else if (id === 'phoneNumber') {
+      // 연락처: 숫자만 허용, 최대 11자리(010 11자리, 011 10자리)
+      const digits = (value || '').replace(/\D/g, '').slice(0, 11);
+      setForm(f => ({ ...f, phoneNumber: digits }));
     } else {
       setForm(f => ({ ...f, [id]: value }));
     }
@@ -93,39 +97,43 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
           birthDay = birthStr.slice(6,8);
         }
       }
+      // 이메일 분리 처리
       let emailId = '', emailDomain = '';
-      if (initialData.email && initialData.email.includes('@')) {
-        [emailId, emailDomain] = initialData.email.split('@');
-        // 미리 정의된 도메인인 경우 selectedEmailDomain 설정
-        if (['naver.com', 'gmail.com', 'daum.net'].includes(emailDomain)) {
-          setSelectedEmailDomain(emailDomain);
-        } else {
-          setSelectedEmailDomain(''); // 직접 입력된 도메인인 경우
+      if (initialData.email) {
+        const emailParts = initialData.email.split('@');
+        if (emailParts.length === 2) {
+          emailId = emailParts[0];
+          emailDomain = emailParts[1];
         }
-      } else {
-        setSelectedEmailDomain(''); // 이메일이 없는 경우
       }
-      let phoneNumber = initialData.contactNumber || initialData.phone || '';
-      let memo = initialData.memo || '';
       setForm({
-        ...INITIAL_FORM,
         name: initialData.clientName || initialData.name || '',
         nickname: initialData.nickname || '',
         birthYear,
         birthMonth,
         birthDay,
-        gender: initialData.gender === 'F' ? 'female' : initialData.gender === 'M' ? 'male' : '',
-        phoneNumber,
+        gender: initialData.gender || '',
+        phoneNumber: initialData.contactNumber || initialData.phone || '',
         address: initialData.address || '',
         emailId,
         emailDomain,
         job: initialData.job || '',
-        memo,
-        guardians
+        guardians,
+        memo: initialData.memo || ''
       });
-    } else if (open && !initialData) {
+      setMemo(initialData.memo || '');
+      
+      // contentEditable 요소에 개행 처리된 텍스트 설정
+      if (editorRef.current && initialData.memo) {
+        editorRef.current.innerHTML = initialData.memo.replace(/\n/g, '<br>');
+      }
+    } else if (open) {
+      // 새 등록 모드일 때 초기화
       setForm(INITIAL_FORM);
-      setSelectedEmailDomain(''); // 새 등록 시 selectedEmailDomain 초기화
+      setMemo('');
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '';
+      }
     }
   }, [open, initialData]);
 
@@ -192,8 +200,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     if (!form.name || form.name.trim().length === 0) {
       missingFields.push('이름');
     }
-    // 닉네임 검증 (가입 모드에서만 필수)
-    if (mode === 'register' && (!form.nickname || form.nickname.trim().length === 0)) {
+    // 닉네임 검증
+    if (!form.nickname || form.nickname.trim().length === 0) {
       missingFields.push('닉네임');
     }
     // 생년월일 검증
@@ -211,8 +219,22 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     return missingFields;
   };
 
+  // 연락처 형식 검증: 010은 11자리, 011은 10자리만 허용
+  const isValidPhone = (v) => {
+    if (!v) return false;
+    return /^010\d{8}$/.test(v) || /^011\d{7}$/.test(v);
+  };
+
   // 저장 처리 함수
-  const handleSave = () => {
+  const handleSave = async () => {
+    // 연락처가 입력된 경우 형식 검증을 우선 수행 (비어있으면 필수값 검증에서 처리)
+    if (!isValidPhone(form.phoneNumber)) {
+      setToastMessage('연락처 형식을 확인해 주세요.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+      return;
+    }
+
     const missingFields = validateRequiredFields();
     if (missingFields.length > 0) {
       const fieldText = missingFields.join(', ');
@@ -231,7 +253,20 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
         ? form.guardians
         : [{ guardianRelation: '', guardianName: '', guardianContact: '' }]
     };
-    onSave(safeForm);
+    // onSave 결과를 기다려 실패 메시지를 모달 내부 토스트로 노출
+    try {
+      const result = await onSave(safeForm);
+      if (result && result.success === false) {
+        setToastMessage(result.message || '처리 중 오류가 발생했습니다.');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+        return;
+      }
+    } catch (e) {
+      setToastMessage('처리 중 오류가 발생했습니다.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    }
   };
 
   return (
@@ -254,7 +289,7 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                   </div>
                 </li>
                 <li>
-                  <label htmlFor="nickname" className={mode === 'register' ? 'necessary' : undefined}>닉네임</label>
+                  <label htmlFor="nickname" className="necessary">닉네임</label>
                   <div className="input-wrap">
                     <input id="nickname" value={form.nickname || ""} onChange={handleFormChange} type="text" minLength={2} maxLength={10} placeholder="내담자 닉네임" />
                   </div>

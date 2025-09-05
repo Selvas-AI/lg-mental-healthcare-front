@@ -52,3 +52,33 @@ export const editorConfirmState = atom({
     confirmText: '확인',
   },
 });
+
+// 음성파일 업로드 상태 관리 (세션별)
+export const audioUploadState = atom({
+  key: 'audioUploadState',
+  default: {},
+  effects_UNSTABLE: [
+    ({ setSelf, onSet }) => {
+      const storageKey = 'audioUploadState';
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setSelf(JSON.parse(saved));
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+      onSet((newVal, _, isReset) => {
+        try {
+          if (isReset || newVal == null) {
+            localStorage.removeItem(storageKey);
+          } else {
+            localStorage.setItem(storageKey, JSON.stringify(newVal));
+          }
+        } catch (e) {
+          // ignore storage errors
+        }
+      });
+    }
+  ],
+});

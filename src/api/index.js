@@ -56,6 +56,10 @@ axiosIns.interceptors.response.use(
         case 401:
           // RefreshToken 로직 주석처리
           console.warn('401 Unauthorized - 토큰 만료 또는 유효하지 않음')
+          // 내담자 설문 엔드포인트는 로그인 리다이렉트 예외 처리
+          if (config?.url?.includes('/api/examination/')) {
+            return Promise.reject(new Error('Unauthorized'))
+          }
           clearAuthAndRedirect()
           return Promise.reject(new Error('Unauthorized'))
           
@@ -101,8 +105,13 @@ axiosIns.interceptors.response.use(
     // 서버에서 HTTP 401을 직접 반환한 경우 처리
     const status = error?.response?.status
     const code = error?.response?.data?.code
+    const reqUrl = error?.config?.url
     if (status === 401 || code === 401 || code === '401') {
       console.warn('HTTP/Body 401 감지 - 토큰 만료 또는 유효하지 않음, 로그인으로 이동합니다.')
+      // 내담자 설문 엔드포인트는 로그인 리다이렉트 예외 처리
+      if (reqUrl && reqUrl.includes('/api/examination/')) {
+        return Promise.reject(error)
+      }
       clearAuthAndRedirect()
       return Promise.reject(error)
     }

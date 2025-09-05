@@ -1479,3 +1479,24 @@ html .ui-button.ui-state-disabled:active {
 .react-datepicker__day:not([aria-disabled=true]):hover, .react-datepicker__month-text:not([aria-disabled=true]):hover, .react-datepicker__quarter-text:not([aria-disabled=true]):hover, .react-datepicker__year-text:not([aria-disabled=true]):hover {
     background-color: transparent;
 }
+
+//! React Datepicker 스타일
+/* 달력의 다른 달(바깥달)은 계속 숨기기 */
+.react-datepicker__day--disabled.react-datepicker__day--outside-month {
+opacity: 0 !important;
+}
+
+/* 비활성 날짜(예: minDate 이전)는 보이되 흐리게 + 커서 처리 */
+.react-datepicker__day--disabled {
+opacity: 1 !important;               /* 보이게 */
+color: #b6b6b6 !important;           /* 흐리게 */
+cursor: not-allowed;
+background: transparent;
+}
+
+/* 우리만의 강조: minDate 이전임을 더 확실히 (선택된 날과 구분) */
+.react-datepicker__day.is-before-min {
+color: #b6b6b6;
+font-weight: 500;
+background: transparent;
+}

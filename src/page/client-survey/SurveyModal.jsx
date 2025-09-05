@@ -3,7 +3,7 @@ import React from 'react'
 function SurveyModal({ 
   modalType = 'start', // 'start', 'complete', 'incomplete', 'save', 'exit'
   hasIntermediateData = false,
-  userName = '홍길동',
+  userName = '-',
   onClose, 
   onCancel, 
   onStart,
@@ -20,8 +20,7 @@ function SurveyModal({
       case 'complete':
         return {
           className: 'modal client-survey type01',
-          // title: `${userName}님의 검사가 완료되어 제출 되었습니다.`,
-          title: '검사가 완료되어 제출 되었습니다.',
+          title: `${userName}님의 검사가 완료되어 제출 되었습니다.`,
           message: '검사 결과는 담당 상담사님께 문의해 주세요.',
           buttons: [
             { text: '확인', className: 'type10', onClick: onConfirm }
@@ -70,8 +69,8 @@ function SurveyModal({
         return {
           className: 'modal client-survey',
           title: hasIntermediateData 
-            ? '검사를 이어서 실시하시겠습니까?' 
-            : '심리 검사를 실시하겠습니까?',
+            ? `${userName}님의 검사를 이어서 실시하시겠습니까?` 
+            : `${userName}님의 심리 검사를 실시하겠습니까?`,
           message: hasIntermediateData 
             ? '이전에 중간 저장한 문항 이후 부터 검사를 다시 시작합니다.'
             : '검사는 중간에 잠시 멈출 수 있으며, 나중에 이어서 계속 진행하실 수 있습니다.<br />최종 응답을 제출한 후에는 답안을 수정할 수 없습니다.',

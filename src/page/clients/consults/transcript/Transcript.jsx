@@ -6,8 +6,8 @@ import KeywordBubblePack from "./KeywordBubblePack";
 import FrequencyBox from "./FrequencyBox";
 import StressBox from "./StressBox";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSetRecoilState } from 'recoil';
-import { recordingsTabState, editorConfirmState } from '@/recoil';
+import { useSetRecoilState, useRecoilValue } from 'recoil';
+import { recordingsTabState, editorConfirmState, audioUploadState } from '@/recoil';
 import TranscriptBox from "./TranscriptBox";
 import { transcriptFind } from '@/api/apiCaller';
 // 삭제 동작은 부모(Consults)에서 처리
@@ -18,6 +18,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
   const [audioFileExists, setAudioFileExists] = useState(false);
   const setRecordingsActiveTab = useSetRecoilState(recordingsTabState);
   const setGlobalEditorConfirm = useSetRecoilState(editorConfirmState);
+  const audioUpload = useRecoilValue(audioUploadState);
   const [localFrequency, setLocalFrequency] = useState({ counselor: { minutes: 0 }, client: { minutes: 0 } });
   
   // sessionMngData에서 실제 데이터 추출
@@ -40,6 +41,30 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
   const getSessionSeqFromQuery = () => {
     const qs = new URLSearchParams(location.search);
     return qs.get('sessionSeq');
+  };
+
+  // 현재 세션의 업로드 상태 확인
+  const isSessionUploading = () => {
+    const sessionSeq = getSessionSeqFromQuery();
+    if (!sessionSeq) return false;
+    
+    const sessionUploadState = audioUpload[sessionSeq];
+    return sessionUploadState && 
+            (sessionUploadState.status === 'uploading' || sessionUploadState.status === 'processing');
+  };
+
+  // 녹취록 업로드 버튼 클릭 핸들러
+  const handleUploadClick = () => {
+    if (isSessionUploading()) {
+      setGlobalEditorConfirm({
+        open: true,
+        title: '업로드 진행 중',
+        message: '파일을 업로드하고 있습니다. 잠시만 기다려주세요.<br/>(시간이 오래 걸리면 새로고침을 해주세요.)',
+        confirmText: '확인',
+      });
+      return;
+    }
+    setShowUploadModal(true);
   };
 
   // Transcript 데이터에서 발화자별 발화 시간을 계산하는 함수들 (Recordings.jsx와 동일 로직)
@@ -298,7 +323,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
         <strong>녹취록</strong>
         <div className="btn-wrap">
           {!audioFileExists ? (
-            <button className="upload-btn type03 h40" type="button" onClick={handleUpload}>
+            <button className="upload-btn type03 h40" type="button" onClick={handleUploadClick}>
               녹취록 업로드
             </button>
           ) : (
@@ -308,14 +333,23 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
             <button
               className="type05"
               type="button"
-              onClick={() =>
-                setGlobalEditorConfirm({
-                  open: true,
-                  title: '안내',
-                  message: '업로드 된 녹취록이 없습니다. 녹취록을 먼저 업로드 해주세요.',
-                  confirmText: '확인',
-                })
-              }
+              onClick={() => {
+                if (isSessionUploading()) {
+                  setGlobalEditorConfirm({
+                    open: true,
+                    title: '업로드 진행 중',
+                    message: '파일을 업로드하고 있습니다. 잠시만 기다리세요.<br/>(시간이 오래 걸리면 새로고침을 해주세요.)',
+                    confirmText: '확인',
+                  });
+                } else {
+                  setGlobalEditorConfirm({
+                    open: true,
+                    title: '안내',
+                    message: '업로드 된 녹취록이 없습니다. 녹취록을 먼저 업로드 해주세요.',
+                    confirmText: '확인',
+                  });
+                }
+              }}
             >
               녹취록 상세
             </button>
@@ -330,10 +364,24 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
       {!audioFileExists && (
         <div className="empty-board">
           <img src={emptyFace} alt="empty" />
-          <p className="empty-tit">업로드된 녹취록이 없습니다.</p>
-          <p className="empty-info">
-            [녹취록 업로드]를 선택하여 PC에 있는 녹취록을 업로드 할 수 있어요.
-          </p>
+          {isSessionUploading() ? (
+            <>
+              <p className="empty-tit">녹취록을 업로드하고 있습니다.</p>
+              <p className="empty-info">
+                서버에서 파일을 처리하고 있습니다. 잠시만 기다려주세요.
+              </p>
+              <p className="empty-info">
+                (시간이 오래 걸리면 새로고침을 해주세요.)
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="empty-tit">업로드된 녹취록이 없습니다.</p>
+              <p className="empty-info">
+                [녹취록 업로드]를 선택하여 PC에 있는 녹취록을 업로드 할 수 있어요.
+              </p>
+            </>
+          )}
         </div>
       )}
       {audioFileExists && !hasAllAiData && (

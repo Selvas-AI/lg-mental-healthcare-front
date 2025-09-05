@@ -72,8 +72,8 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
       }
     },
     nextPlan: {
-      title: '차회기 상담 계획 AI 생성',
-      infoMessage: '차회기 상담 계획이 생성 완료되었습니다.',
+      title: '다음 상담 계획 AI 생성',
+      infoMessage: '다음 상담 계획이 생성 완료되었습니다.',
       renderComplete: () => {
         if (aiGeneratedData.nextPlan?.llm_answer) {
           return (
@@ -114,7 +114,7 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
   // AI 패널 확정하기 콜백
   const handleAiConfirm = (setNextPlan, setMainProblem, setSessionContent) => {
     if (aiPanelKey === 'nextPlan' && aiGeneratedData.nextPlan?.llm_answer) {
-      // 차회기 상담 계획 텍스트를 nextPlan 상태에 반영 (llm_feedback도 포함)
+      // 다음 상담 계획 텍스트를 nextPlan 상태에 반영 (llm_feedback도 포함)
       let content = aiGeneratedData.nextPlan.llm_answer;
       if (aiGeneratedData.nextPlan.llm_feedback) {
         content += '\n' + aiGeneratedData.nextPlan.llm_feedback;

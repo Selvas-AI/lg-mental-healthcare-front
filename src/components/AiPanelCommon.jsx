@@ -61,6 +61,7 @@ function AiPanelCommon({
         if (isRecordings && setSeq) {
           const resp = await assessmentSetFind(parseInt(setSeq, 10));
           const data = resp?.data ?? null;
+          console.log('assessmentSetFind:', data);
           const codeValue = data?.aiOverallInsightDislikeCode ?? null;
           const textValue = data?.aiOverallInsightDislikeText ?? null;
           if ((codeValue && String(codeValue).trim() !== '') || (textValue && String(textValue).trim() !== '')) {

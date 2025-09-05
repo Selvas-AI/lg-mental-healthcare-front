@@ -371,7 +371,9 @@ function SurveyForm({ surveyData, currentAssessmentIndex, onBack, onScrollChange
               type="button"
               onClick={handleNext}
             >
-              {processedData.isLastAssessment ? '완료' : '다음 검사지'}
+              {processedData.isLastAssessment
+                ? '완료'
+                : `다음 검사지 (${currentAssessmentIndex + 1}/${processedData.totalAssessments})`}
             </button>
           </div>
         </div>

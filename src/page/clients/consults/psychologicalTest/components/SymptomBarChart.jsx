@@ -102,8 +102,9 @@ function SymptomBarChart({ values = [], labels = [], min = 0, max, className = '
           },
           y: {
             beginAtZero: true,
-            min: yMin,
-            max: yMax,
+            //! min, max 설정 값 주석 처리 
+            // min: yMin,
+            // max: yMax,
             ticks: {
               font: {
                 family: "Pretendard",

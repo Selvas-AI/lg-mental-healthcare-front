@@ -4,7 +4,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { ko } from "date-fns/locale";
 import CustomSelect from '@/components/CustomSelect';
 
-const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
+const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate, minDate, minDateTime }) => {
   const [selectedRecord, setSelectedRecord] = useState("");
   const [currentStep, setCurrentStep] = useState(2); // 1: 녹음파일 선택(주석처리), 2: 날짜/시간 선택
   const [selectedDate, setSelectedDate] = useState(null);
@@ -21,52 +21,6 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
     return `${year}.${month}.${day}`;
   };
 
-  // 더미 녹음파일 데이터
-  // const recordFiles = [
-  //   {
-  //     id: "record01",
-  //     name: "김마음 녹음파일 1",
-  //     date: "2025.04.23(수)",
-  //     duration: "50:11"
-  //   },
-  //   {
-  //     id: "record02", 
-  //     name: "박케어 녹음파일 2",
-  //     date: "2025.04.23(수)",
-  //     duration: "50:11"
-  //   },
-  //   {
-  //     id: "record03",
-  //     name: "4월 16일 두번째 상담 녹취",
-  //     date: "2025.04.23(수)", 
-  //     duration: "50:11"
-  //   },
-  //   {
-  //     id: "record04",
-  //     name: "녹음파일명 노출영역입니다.",
-  //     date: "2025.04.23(수)",
-  //     duration: "50:11"
-  //   },
-  //   {
-  //     id: "record05",
-  //     name: "녹음파일명 노출영역입니다.",
-  //     date: "2025.04.23(수)",
-  //     duration: "50:11"
-  //   },
-  //   {
-  //     id: "record06",
-  //     name: "녹음파일명 노출영역입니다.",
-  //     date: "2025.04.23(수)",
-  //     duration: "50:11"
-  //   },
-  //   {
-  //     id: "record07",
-  //     name: "녹음파일명 노출영역입니다.",
-  //     date: "2025.04.23(수)",
-  //     duration: "50:11"
-  //   }
-  // ];
-
   // 30분 단위로 24시간 전체 시간 옵션 생성
   const generateTimeOptions = () => {
     const options = [];
@@ -82,6 +36,7 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
   };
   
   const timeOptions = generateTimeOptions();
+  const defaultScrollTime = '오전 9:00';
 
   // 초기 sessionDate 파싱: "YYYY-MM-DD HH:MM" -> Date, "오전/오후 H:MM"
   const parseInitialSession = (sessionStr) => {
@@ -104,12 +59,18 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
     if (open) {
       if (initialSessionDate) {
         const { date, timeLabel } = parseInitialSession(initialSessionDate);
-        if (date) setSelectedDate(date);
-        if (timeLabel && timeOptions.includes(timeLabel)) setSelectedTime(timeLabel);
+        if (date) {
+          setSelectedDate(date);
+        }
+        if (timeLabel && timeOptions.includes(timeLabel)) {
+          setSelectedTime(timeLabel);
+        }
+      } else {
+        // 지정된 값이 없다면 오늘 날짜 선택
+        setSelectedDate(new Date());
       }
       setCurrentStep(2);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialSessionDate]);
 
   // const handleRecordSelect = (recordId) => {
@@ -129,32 +90,84 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
     }
   };
 
-  // 시간 문자열 24시간 형식으로 변환
+  // HH:MM(24h) 문자열로 변환 (이미 있으니 그대로 사용)
   const convertTo24Hour = (timeStr) => {
     if (!timeStr) return null;
-    
     const parts = timeStr.split(' ');
     if (parts.length !== 2) return null;
-    
     const [period, time] = parts;
-    const timeParts = time.split(':');
-    if (timeParts.length !== 2) return null;
-    
-    const hour = parseInt(timeParts[0]);
-    const minute = parseInt(timeParts[1]);
-    
-    if (isNaN(hour) || isNaN(minute)) return null;
-    
-    let hour24 = hour;
-    
-    if (period === '오후' && hour !== 12) {
-      hour24 = hour + 12;
-    } else if (period === '오전' && hour === 12) {
-      hour24 = 0;
-    }
-    
-    return `${hour24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    const [h, m] = time.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    let hour24 = h;
+    if (period === '오후' && h !== 12) hour24 = h + 12;
+    if (period === '오전' && h === 12) hour24 = 0;
+    return `${String(hour24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   };
+
+  // 선택된 날짜가 minDateTime과 같은 날인지
+  const isSameDayWithMin = (date) => {
+    if (!date || !minDateTime) return false;
+    return (
+      date.getFullYear() === minDateTime.getFullYear() &&
+      date.getMonth() === minDateTime.getMonth() &&
+      date.getDate() === minDateTime.getDate()
+    );
+  };
+
+  // CustomSelect에 줄 옵션: 같은 날이면 minDateTime 이전 시간은 disabled
+  const timeOptionsForSelect = timeOptions.map((timeStr) => {
+    // timeStr: "오전 9:00" 형태
+    const value24 = convertTo24Hour(timeStr); // "09:00"
+    let disabled = false;
+
+    if (selectedDate && minDateTime && isSameDayWithMin(selectedDate)) {
+      const [hh, mm] = value24.split(':').map(Number);
+      const candidate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        hh, mm
+      );
+      // 직전 회기 "이후만" 허용 → 이전/같음은 disabled
+      disabled = candidate <= minDateTime;
+    }
+
+    return { label: timeStr, value: timeStr, disabled };
+  });
+
+  // 같은 날로 바꾸었을 때, 현재 선택된 시간이 불가 상태면 리셋
+  useEffect(() => {
+    if (!selectedDate || !selectedTime || !minDateTime) return;
+    if (!isSameDayWithMin(selectedDate)) return;
+
+    const selected24 = convertTo24Hour(selectedTime);
+    const [hh, mm] = selected24.split(':').map(Number);
+    const chosen = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      hh, mm
+    );
+    if (chosen <= minDateTime) {
+      setSelectedTime(""); // 불가한 시간이면 선택 해제
+    }
+  }, [selectedDate, selectedTime, minDateTime]);
+
+  // 저장 버튼 보호: 같은 날이면서 minDateTime 이전/같음이면 저장 비활성화
+  const isSaveDisabled = (() => {
+    if (!selectedDate || !selectedTime) return true;
+    if (!minDateTime) return false;
+    if (!isSameDayWithMin(selectedDate)) return false;
+    const selected24 = convertTo24Hour(selectedTime);
+    const [hh, mm] = selected24.split(':').map(Number);
+    const chosen = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      hh, mm
+    );
+    return chosen <= minDateTime;
+  })();
 
   const handleSave = () => {
     if (selectedDate && selectedTime) {
@@ -291,24 +304,32 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
                 placeholderText="날짜 선택"
                 locale={ko}
                 showPopperArrow={false}
+                disabledKeyboardNavigation
+                // 날짜는 직전 회기 "날짜" 이전은 선택 불가
+                minDate={minDate || null}
+                filterDate={(date) => {
+                  if (!minDate) return true;
+                  // 날짜 단위 비교 (같은 날은 허용 → 시간은 아래 CustomSelect에서 필터링)
+                  const d0 = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+                  const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                  return d1 >= d0;
+                }}
+                dayClassName={(date) => {
+                  if (!minDate) return;
+                  const d0 = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+                  const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                  return d1 < d0 ? 'is-before-min' : undefined; // 표시만 다르게
+                }}
                 popperClassName="custom-datepicker-popper"
                 renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
                   <div className="custom-datepicker-header">
-                    <button 
-                      type="button" 
-                      className="custom-nav-btn prev" 
-                      onClick={decreaseMonth}
-                    >
+                    <button type="button" className="custom-nav-btn prev" onClick={decreaseMonth}>
                       <span></span>
                     </button>
                     <div className="custom-month-year">
                       {date.getFullYear()}.{String(date.getMonth() + 1).padStart(2, '0')}
                     </div>
-                    <button 
-                      type="button" 
-                      className="custom-nav-btn next" 
-                      onClick={increaseMonth}
-                    >
+                    <button type="button" className="custom-nav-btn next" onClick={increaseMonth}>
                       <span></span>
                     </button>
                   </div>
@@ -318,13 +339,14 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
             <div className="select-area">
               <span className="necessary">시간</span>
               <CustomSelect
-                options={timeOptions}
+                options={timeOptionsForSelect}
                 value={selectedTime}
                 onChange={setSelectedTime}
                 placeholder="시간선택"
-                getOptionValue={(option) => option}
-                getOptionLabel={(option) => option}
+                getOptionValue={(option) => option.value}
+                getOptionLabel={(option) => option.label}
                 maxHeight={260}
+                initialScrollToValue={!selectedTime ? defaultScrollTime : undefined}
               />
             </div>
           </div>
@@ -344,7 +366,7 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate }) => {
             className="type08 black" 
             type="button"
             onClick={handleSave}
-            disabled={!selectedDate || !selectedTime}
+            disabled={isSaveDisabled}
           >
             저장
           </button>

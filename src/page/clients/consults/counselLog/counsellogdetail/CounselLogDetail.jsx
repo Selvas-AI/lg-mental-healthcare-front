@@ -23,6 +23,7 @@ function CounselLogDetail() {
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   const sessionSeq = query.get('sessionSeq');
+  const scrollTo = query.get('scrollTo');
   
   const handleStepNavClick = (e, targetId) => {
     e.preventDefault();
@@ -48,6 +49,7 @@ function CounselLogDetail() {
   const {
     aiPanelKey,
     openedPanel: aiOpenedPanel,
+    aiGeneratedData,
     setAiGeneratedData,
     getAiPanelConfigs,
     handleOpenAiPanel,
@@ -57,51 +59,79 @@ function CounselLogDetail() {
     setOpenedPanel: setAiOpenedPanel
   } = useAiPanel(sessionSeq, showToastMessage);
   
-  // AI 패널 최초 오픈 시 2초간 creating 노출 후 complete로 전환
+  // AI 패널 오픈 시마다 2초간 creating 노출 후 complete로 전환
   const [aiPanelStatus, setAiPanelStatus] = useState('complete');
   const aiPanelTimerRef = useRef(null);
-  const aiPanelShownOnceRef = useRef(false);
-  const AI_PANEL_SEEN_STORAGE_KEY = 'aiPanelSeen:counselLog';
 
-  // 최초 마운트 시, 저장된 본 적 여부를 가져와 설정
-  useEffect(() => {
-    try {
-      const seen = localStorage.getItem(AI_PANEL_SEEN_STORAGE_KEY) === '1';
-      aiPanelShownOnceRef.current = !!seen;
-    } catch (_) {
-      // storage 사용 불가 시 무시
+useEffect(() => {
+  if (aiOpenedPanel === 'ai') {
+    setAiPanelStatus('creating');
+    if (aiPanelTimerRef.current) clearTimeout(aiPanelTimerRef.current);
+    aiPanelTimerRef.current = setTimeout(() => {
+      setAiPanelStatus('complete');
+      aiPanelTimerRef.current = null;
+    }, 2000);
+  } else {
+    if (aiPanelTimerRef.current) {
+      clearTimeout(aiPanelTimerRef.current);
+      aiPanelTimerRef.current = null;
     }
-  }, []);
-  useEffect(() => {
-    if (aiOpenedPanel === 'ai') {
-      // 페이지 생애 동안 최초 1회만 2초 로딩 노출
-      if (!aiPanelShownOnceRef.current) {
-        aiPanelShownOnceRef.current = true;
-        // 본 적 없음으로 확인되면 즉시 저장 (중간에 닫혀도 이후엔 로딩 생략)
-        try { localStorage.setItem(AI_PANEL_SEEN_STORAGE_KEY, '1'); } catch (_) {}
-        setAiPanelStatus('creating');
-        if (aiPanelTimerRef.current) clearTimeout(aiPanelTimerRef.current);
-        aiPanelTimerRef.current = setTimeout(() => {
-          setAiPanelStatus('complete');
-          aiPanelTimerRef.current = null;
-        }, 2000);
-      } else {
-        setAiPanelStatus('complete');
-      }
-    } else {
-      // 닫힐 때 타이머 정리
-      if (aiPanelTimerRef.current) {
-        clearTimeout(aiPanelTimerRef.current);
-        aiPanelTimerRef.current = null;
-      }
+    setAiPanelStatus('complete');
+  }
+  return () => {
+    if (aiPanelTimerRef.current) {
+      clearTimeout(aiPanelTimerRef.current);
+      aiPanelTimerRef.current = null;
     }
-    return () => {
-      if (aiPanelTimerRef.current) {
-        clearTimeout(aiPanelTimerRef.current);
-        aiPanelTimerRef.current = null;
-      }
-    };
-  }, [aiOpenedPanel]);
+  };
+}, [aiOpenedPanel]);
+
+// AI 패널이 열려 있고, 현재 패널키의 생성 데이터가 갱신될 때마다 2초 로딩 → 완료
+useEffect(() => {
+  if (aiOpenedPanel !== 'ai' || !aiPanelKey) return;
+
+  // 현재 패널 키에 해당하는 생성 결과 객체 (예: aiGeneratedData.mainProblem)
+  const currentData = aiGeneratedData?.[aiPanelKey];
+
+  // 데이터가 갱신될 때만 로딩 재시작: 생성 텍스트가 오거나(성공) null→object 변화 등
+  // 필요하면 조건을 좀 더 엄격히(llm_answer 유무)로 걸 수도 있음
+  if (currentData) {
+    setAiPanelStatus('creating');
+    if (aiPanelTimerRef.current) clearTimeout(aiPanelTimerRef.current);
+    aiPanelTimerRef.current = setTimeout(() => {
+      setAiPanelStatus('complete');
+      aiPanelTimerRef.current = null;
+    }, 2000);
+  }
+
+  return () => {
+    if (aiPanelTimerRef.current) {
+      clearTimeout(aiPanelTimerRef.current);
+      aiPanelTimerRef.current = null;
+    }
+  };
+}, [aiOpenedPanel, aiPanelKey, aiGeneratedData]);
+
+// 패널이 열린 상태에서 aiPanelKey가 바뀌면 2초 로딩 다시 시작
+useEffect(() => {
+  if (aiOpenedPanel !== 'ai' || !aiPanelKey) return;
+
+  setAiPanelStatus('creating');
+  if (aiPanelTimerRef.current) clearTimeout(aiPanelTimerRef.current);
+  aiPanelTimerRef.current = setTimeout(() => {
+    setAiPanelStatus('complete');
+    aiPanelTimerRef.current = null;
+  }, 2000);
+
+  return () => {
+    if (aiPanelTimerRef.current) {
+      clearTimeout(aiPanelTimerRef.current);
+      aiPanelTimerRef.current = null;
+    }
+  };
+}, [aiOpenedPanel, aiPanelKey]);
+
+
   // 상담일지 폼 상태들
   const [currentRisk, setCurrentRisk] = useState('');
   const [pastRisk, setPastRisk] = useState('');
@@ -197,6 +227,21 @@ function CounselLogDetail() {
     setSupportPanel(false);
   };
 
+  // URL 파라미터로 전달된 scrollTo 값에 따라 해당 섹션으로 스크롤 이동
+  useEffect(() => {
+    if (scrollTo) {
+      // 페이지 로드 후 약간의 지연을 두고 스크롤 이동 (DOM 렌더링 완료 대기)
+      const timer = setTimeout(() => {
+        const targetElement = document.getElementById(scrollTo);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500); // 500ms 지연
+
+      return () => clearTimeout(timer);
+    }
+  }, [scrollTo]);
+
   // AiPanelCommon에서 dislikeFind 복원을 위한 필드 키 매핑 (세션 기반)
   const getCurrentFieldKeys = () => {
     switch (aiPanelKey) {
@@ -252,15 +297,17 @@ function CounselLogDetail() {
     // 모든 텍스트 필드 타입 안전성 보장 (string이 아닐 경우 빈 문자열 처리)
     const safeMainProblem = typeof mainProblem === 'string' ? mainProblem : '';
     const safeSessionContent = typeof sessionContent === 'string' ? sessionContent : '';
+    const safeCounselorOpinion = typeof counselorOpinion === 'string' ? counselorOpinion : '';
     const safeObservation = typeof observation === 'string' ? observation : '';
     const safeGoal = typeof goal === 'string' ? goal : '';
     const safeNextPlan = typeof nextPlan === 'string' ? nextPlan : '';
     const textRequiredFields = [
       { value: safeMainProblem.trim(), name: '주호소 문제' },
-      { value: safeSessionContent.trim(), name: '상담기록' },
+      { value: safeSessionContent.trim(), name: '상담내용' },
+      { value: safeCounselorOpinion.trim(), name: '상담사 소견' },
       { value: safeObservation.trim(), name: '객관적 관찰' },
       { value: safeGoal.trim(), name: '상담 목표' },
-      { value: safeNextPlan.trim(), name: '차회기 상담 계획' }
+      { value: safeNextPlan.trim(), name: '다음 상담 계획' }
     ];
 
     for (const field of textRequiredFields) {
@@ -277,7 +324,7 @@ function CounselLogDetail() {
       { value: counselorOpinion, name: '상담사 소견', limit: 500 },
       { value: observation, name: '객관적 관찰', limit: 500 },
       { value: goal, name: '상담 목표', limit: 500 },
-      { value: nextPlan, name: '차회기 상담 계획', limit: 500 },
+      { value: nextPlan, name: '다음 상담 계획', limit: 500 },
       { value: concern, name: '고민되는 점', limit: 500 },
       { value: caseConcept, name: '사례개념화', limit: 500 },
       { value: riskFactorEtc, name: '위험요인 기타', limit: 100 }
@@ -676,7 +723,7 @@ function CounselLogDetail() {
                 />
               </div>
             </CounselLogStep>
-            <CounselLogStep id="step07" title="차회기 상담 계획" 
+            <CounselLogStep id="step07" title="다음 상담 계획" 
               rightButton
               onAiClick={() => {
                 setOpenedPanel(null);

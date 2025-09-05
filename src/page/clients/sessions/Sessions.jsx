@@ -333,6 +333,7 @@ function Sessions() {
         sessionStatus={sessionStatus}
         onStatusChange={handleStatusChange}
         masked={masked}
+        selectedClientSeq={clientId}
       />
       <div className="inner">
         <div className="move-up">
@@ -422,6 +423,25 @@ function Sessions() {
         open={recordSelectOpen}
         onClose={() => setRecordSelectOpen(false)}
         onSave={handleRecordSelect}
+        // 날짜: 직전 회기 "날짜" 이전은 전부 비활성화
+        minDate={(() => {
+          if (!sessionData || sessionData.length === 0) return null;
+          const last = sessionData[0];
+          if (!last?.sessionDate) return null;
+          const [datePart] = last.sessionDate.split(' ');
+          const [y, m, d] = datePart.split('-').map(Number);
+          return new Date(y, m - 1, d);
+        })()}
+        // 시간: 같은 날이면 직전 회기의 "시간" 이전 옵션은 비활성화
+        minDateTime={(() => {
+          if (!sessionData || sessionData.length === 0) return null;
+          const last = sessionData[0]; // "YYYY-MM-DD HH:MM"
+          if (!last?.sessionDate) return null;
+          const [datePart, timePart] = last.sessionDate.split(' ');
+          const [y, m, d] = datePart.split('-').map(Number);
+          const [hh, mm] = timePart.split(':').map(Number);
+          return new Date(y, m - 1, d, hh, mm);
+        })()}
       />
       <EditorModal
         open={memoModalOpen}
