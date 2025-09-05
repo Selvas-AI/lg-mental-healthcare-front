@@ -310,7 +310,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
   };
   
   // 모달 닫기 및 초기화
-  const handleClose = () => {
+  const closeInternal = () => {
     onClose();
     setTimeout(() => {
       setStep(1);
@@ -318,6 +318,15 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
       setSelectedSession('');
       setExtraChecked({});
     }, 300);
+  };
+
+  const handleClose = () => {
+    // step 3에서 닫힐 경우 완료 처리 호출 후 닫기
+    if (step === 3) {
+      handleComplete();
+      return;
+    }
+    closeInternal();
   };
   
   // 완료 버튼 - 생성은 step02에서 이미 처리됨
@@ -327,7 +336,7 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
         await onCompleted();
       } catch (_) {}
     }
-    handleClose();
+    closeInternal();
   };
   
   // 선택된 검사지 목록 생성
