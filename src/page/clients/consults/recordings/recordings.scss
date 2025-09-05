@@ -299,16 +299,36 @@
                         border: none;
                         &.skip-backward-btn {
                             background: url(@/assets/images/icon/skip_backward.svg) no-repeat center/contain;
+                            &:hover {
+                                background: url(@/assets/images/icon/skip_backward_hover.svg) no-repeat center/contain;
+                            }
+                            &:active {
+                                transform: scale(0.94);
+                                filter: brightness(0.9);
+                            }
                         }
                         &.play-btn {
                             background: url(@/assets/images/icon/play.svg) no-repeat center/contain;
+                            &:hover {
+                                background: url(@/assets/images/icon/play_hover.svg) no-repeat center/contain;
+                            }
                         }
                         &.pause-btn {
                             background: url(@/assets/images/icon/pause.svg) no-repeat center/contain;
                             display: none;
+                            &:hover {
+                                background: url(@/assets/images/icon/pause_hover.svg) no-repeat center/contain;
+                            }
                         }
                         &.skip-forward-btn {
                             background: url(@/assets/images/icon/skip_forward.svg) no-repeat center/contain;
+                            &:hover {
+                                background: url(@/assets/images/icon/skip_forward_hover.svg) no-repeat center/contain;
+                            }
+                            &:active {
+                                transform: scale(0.94);
+                                filter: brightness(0.9);
+                            }
                         }
                     }
                 }

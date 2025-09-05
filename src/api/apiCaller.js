@@ -50,6 +50,12 @@ export const counselorUpdate = async (params) => {
 }
 
 //? ===== 내담자 검사 (내담자용) 관리 API =====
+// 검사세트 대상 내담자 정보 조회
+export const clientExamClientInfo = async ({ token }) => {
+    return await axiosIns.get('/api/examination/clientInfo', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+}
 // 내담자검사 세트 조회
 export const clientExamSet = async ({ token }) => {
     return await axiosIns.get('/api/examination/assessmentSet', {

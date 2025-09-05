@@ -606,71 +606,69 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
             </div>
           </div>
         )}
-        {/* 제출 데이터는 있으나 AI 미생성 */}
-        {!noSet && !waitingInput && hasSurveyData && !isAIGenerated && (
-          <div className="total-opinion create">
-            <div className="tit-wrap">
-              <strong>AI 종합 의견</strong>
-            </div>
-            <div className="create-board">
-              <strong>AI가 심리검사 종합 의견을 생성/분석하고 있습니다.</strong>
-              <button className="type01 h40" type="button" onClick={handleAIGenerate}>
-                <span>AI 생성하기</span>
-              </button>
-            </div>
-          </div>
-        )}
-        {/* 제출 데이터 존재 + AI 생성 */}
-        {!noSet && !waitingInput && hasSurveyData && isAIGenerated && (
+        {/* 제출 데이터 존재: 분석 중/완료 공통 */}
+        {!noSet && !waitingInput && hasSurveyData && (
           <>
-            <div className="total-opinion">
-              {/* 신규 생성 링크 없는 경우 / 있는 경우 */}
-              {!generatedUrl ? (
-                <div className="survey-create">
-                  <strong>내담자에게 필요한 심리 검사지를 만들어 보세요.</strong>
-                  <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
-                </div>
-              ) : (
-                <div className="survey-create type01">
-                  <div className="txt-wrap">
-                    <strong>{surveyTitle}</strong>
-                    <p>만료 <span className="datetime">{expireTimeText}</span></p>
+            {isAIGenerated ? (
+              <div className="total-opinion">
+                {/* 신규 생성 링크 없는 경우 / 있는 경우 */}
+                {!generatedUrl ? (
+                  <div className="survey-create">
+                    <strong>내담자에게 필요한 심리 검사지를 만들어 보세요.</strong>
+                    <button className="type05 h44" type="button" onClick={onOpenSurveySendModal}>심리 검사지 생성</button>
                   </div>
-                  <div className="url-wrap">
-                    <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
-                    <CopyToClipboard text={generatedUrl} onCopy={handleCopyUrl}>
-                      <button className="copy-btn" type="button" aria-label="URL 복사"></button>
-                    </CopyToClipboard>
-                    <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL 삭제"></button>
+                ) : (
+                  <div className="survey-create type01">
+                    <div className="txt-wrap">
+                      <strong>{surveyTitle}</strong>
+                      <p>만료 <span className="datetime">{expireTimeText}</span></p>
+                    </div>
+                    <div className="url-wrap">
+                      <input className="url-box" name="url-input" type="text" readOnly value={generatedUrl} />
+                      <CopyToClipboard text={generatedUrl} onCopy={handleCopyUrl}>
+                        <button className="copy-btn" type="button" aria-label="URL 복사"></button>
+                      </CopyToClipboard>
+                      <button onClick={handleRemoveUrl} className="remove-btn" type="button" aria-label="URL 삭제"></button>
+                    </div>
                   </div>
+                )}
+                <div className="tit-wrap">
+                  <strong>AI 종합 의견</strong>
                 </div>
-              )}
-              <div className="tit-wrap">
-                <strong>AI 종합 의견</strong>
+                {!confirmedInsightText && (
+                  <div className="create-board">
+                    <strong>AI가 실시된 심리검사 종합 의견을 생성할 준비가 되었습니다.</strong>
+                    <button className="type01 h40" type="button" onClick={handleAIGenerate}>
+                      <span>AI 생성하기</span>
+                    </button>
+                  </div>
+                )}
+                {confirmedInsightText && (
+                  <div className="txt-box">
+                    {serverInsightParsed ? (
+                      <>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.answerText}</div>
+                        <br />
+                        <strong>추천 방법</strong>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.feedbackText}</div>
+                      </>
+                    ) : (
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{confirmedInsightText}</div>
+                    )}
+                  </div>
+                )}
               </div>
-              {!confirmedInsightText && (
+            ) : (
+              <div className="total-opinion create">
+                <div className="tit-wrap">
+                  <strong>AI 종합 의견</strong>
+                </div>
                 <div className="create-board">
-                  <strong>AI가 실시된 심리검사 종합 의견을 생성할 준비가 되었습니다.</strong>
-                  <button className="type01 h40" type="button" onClick={handleAIGenerate}>
-                    <span>AI 생성하기</span>
-                  </button>
+                  <strong>AI가 심리검사 종합 의견을 생성/분석하고 있습니다.</strong>
+                  <strong>생성이 완료되면 결과를 확인할 수 있어요.</strong>
                 </div>
-              )}
-              {confirmedInsightText && (
-                <div className="txt-box">
-                  {serverInsightParsed ? (
-                    <>
-                      <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.answerText}</div>
-                      <br />
-                      <strong>추천 방법</strong>
-                      <div style={{ whiteSpace: 'pre-wrap' }}>{serverInsightParsed.feedbackText}</div>
-                    </>
-                  ) : (
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{confirmedInsightText}</div>
-                  )}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
             <SymptomChangePanel
               data={symptomData}
               onOpenSurveySendModal={onOpenSurveySendModal}

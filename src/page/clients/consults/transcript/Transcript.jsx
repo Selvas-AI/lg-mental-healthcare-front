@@ -50,7 +50,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     
     const sessionUploadState = audioUpload[sessionSeq];
     return sessionUploadState && 
-           (sessionUploadState.status === 'uploading' || sessionUploadState.status === 'processing');
+            (sessionUploadState.status === 'uploading' || sessionUploadState.status === 'processing');
   };
 
   // 녹취록 업로드 버튼 클릭 핸들러
@@ -59,7 +59,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
       setGlobalEditorConfirm({
         open: true,
         title: '업로드 진행 중',
-        message: '파일을 업로드하고 있습니다. 잠시만 기다려주세요.',
+        message: '파일을 업로드하고 있습니다. 잠시만 기다려주세요.<br/>(시간이 오래 걸리면 새로고침을 해주세요.)',
         confirmText: '확인',
       });
       return;
@@ -338,7 +338,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
                   setGlobalEditorConfirm({
                     open: true,
                     title: '업로드 진행 중',
-                    message: '파일을 업로드하고 있습니다. 잠시만 기다려주세요.',
+                    message: '파일을 업로드하고 있습니다. 잠시만 기다리세요.<br/>(시간이 오래 걸리면 새로고침을 해주세요.)',
                     confirmText: '확인',
                   });
                 } else {
@@ -369,6 +369,9 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
               <p className="empty-tit">녹취록을 업로드하고 있습니다.</p>
               <p className="empty-info">
                 서버에서 파일을 처리하고 있습니다. 잠시만 기다려주세요.
+              </p>
+              <p className="empty-info">
+                (시간이 오래 걸리면 새로고침을 해주세요.)
               </p>
             </>
           ) : (

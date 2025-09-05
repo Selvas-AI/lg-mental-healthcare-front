@@ -4,7 +4,7 @@ import './client_survey.scss'
 import PrivacyPolicy from './PrivacyPolicy'
 import SurveyForm from './SurveyForm'
 import SurveyModal from './SurveyModal'
-import { clientExamSet, clientExamTempSave, clientExamSave } from '../../api/apiCaller'
+import { clientExamSet, clientExamTempSave, clientExamSave, clientExamClientInfo } from '../../api/apiCaller'
 
 function ClientSurvey() {
   const location = useLocation()
@@ -14,7 +14,7 @@ function ClientSurvey() {
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState('start') // 'start', 'complete', 'incomplete', 'save', 'exit'
   const [hasIntermediateData, setHasIntermediateData] = useState(false)
-  const [userName, setUserName] = useState('홍길동') // 사용자 이름
+  const [userName, setUserName] = useState('-') // 사용자 이름
   const [examSetData, setExamSetData] = useState(null) // 검사 세트 데이터
   const [currentAssessmentIndex, setCurrentAssessmentIndex] = useState(0) // 현재 검사지 인덱스
   const [modalOverrideTitle, setModalOverrideTitle] = useState('')
@@ -148,14 +148,19 @@ function ClientSurvey() {
         return
       }
 
-      const response = await clientExamSet({ token })
-      setExamSetData(response.data)
+      // 검사 세트와 내담자 정보를 병렬로 조회
+      const [examSetRes, clientInfoRes] = await Promise.all([
+        clientExamSet({ token }),
+        clientExamClientInfo({ token })
+      ])
+
+      setExamSetData(examSetRes.data)
 
       // URL 파라미터 기반 초기 인덱스/스크롤 대상 설정
       const urlAssessmentIndex = getAssessmentIndexFromUrl()
       const urlQuestionSeq = getQuestionSeqFromUrl()
       const urlSetItemSeq = getSetItemSeqFromUrl()
-      const total = response.data?.itemList?.length ?? 0
+      const total = examSetRes.data?.itemList?.length ?? 0
 
       // console.log('[URL Params]', { urlAssessmentIndex, urlQuestionSeq, urlSetItemSeq, total })
 
@@ -163,29 +168,29 @@ function ClientSurvey() {
         // 우선 0-based로 시도
         let idx = Math.max(0, Math.min(total - 1, urlAssessmentIndex))
         // 0-based가 유효하지 않고(방어) 1-based로 해석 가능한 경우 보정
-        if (!response.data.itemList[idx] && response.data.itemList[urlAssessmentIndex - 1]) {
+        if (!examSetRes.data.itemList[idx] && examSetRes.data.itemList[urlAssessmentIndex - 1]) {
           idx = urlAssessmentIndex - 1
         }
         // console.log('[Init] currentAssessmentIndex by assessmentIndex =', idx)
         setCurrentAssessmentIndex(idx)
-      } else if (Number.isFinite(urlSetItemSeq) && Array.isArray(response.data?.itemList)) {
-        const foundBySet = response.data.itemList.findIndex(it => it.setItemSeq === urlSetItemSeq)
+      } else if (Number.isFinite(urlSetItemSeq) && Array.isArray(examSetRes.data?.itemList)) {
+        const foundBySet = examSetRes.data.itemList.findIndex(it => it.setItemSeq === urlSetItemSeq)
         if (foundBySet >= 0) {
           // console.log('[Init] currentAssessmentIndex by setItemSeq =', foundBySet)
           setCurrentAssessmentIndex(foundBySet)
         }
-      } else if (Number.isFinite(urlQuestionSeq) && Array.isArray(response.data?.itemList)) {
-        const found = response.data.itemList.findIndex(it => (it.assessmentInfo?.questions || []).some(q => q.questionSeq === urlQuestionSeq))
+      } else if (Number.isFinite(urlQuestionSeq) && Array.isArray(examSetRes.data?.itemList)) {
+        const found = examSetRes.data.itemList.findIndex(it => (it.assessmentInfo?.questions || []).some(q => q.questionSeq === urlQuestionSeq))
         if (found >= 0) {
           // console.log('[Init] currentAssessmentIndex by questionSeq =', found)
           setCurrentAssessmentIndex(found)
         }
-      } else if (Array.isArray(response.data?.itemList)) {
+      } else if (Array.isArray(examSetRes.data?.itemList)) {
         // URL 파라미터가 전혀 없을 때: 첫 미답변 문항이 포함된 검사지로 이동
         let defaultIndex = 0
         let firstUnansweredSeq = null
-        for (let i = 0; i < response.data.itemList.length; i++) {
-          const questions = response.data.itemList[i].assessmentInfo?.questions || []
+        for (let i = 0; i < examSetRes.data.itemList.length; i++) {
+          const questions = examSetRes.data.itemList[i].assessmentInfo?.questions || []
           const miss = questions.find(q => q.answerQuestionitemSeq === null || q.answerQuestionitemSeq === undefined)
           if (miss) {
             defaultIndex = i
@@ -204,13 +209,15 @@ function ClientSurvey() {
         setInitialScrollSeq(urlQuestionSeq)
       }
       
-      // 응답 데이터에서 사용자 이름 설정 (있는 경우)
-      if (response.data?.clientName) {
-        setUserName(response.data.clientName)
+      // 사용자 이름 설정: clientInfo 우선, 없으면 examSet 데이터 사용
+      const nameFromClientInfo = clientInfoRes?.data?.clientName
+      const nameFromExamSet = examSetRes?.data?.clientName
+      if (nameFromClientInfo || nameFromExamSet) {
+        setUserName(nameFromClientInfo || nameFromExamSet)
       }
       
       // 중간저장 데이터 확인 및 설정
-      checkAndSetIntermediateData(response.data)
+      checkAndSetIntermediateData(examSetRes.data)
     } catch (error) {
       console.error('clientExamSet 호출 실패:', error)
     }

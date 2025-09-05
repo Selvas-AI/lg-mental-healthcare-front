@@ -297,12 +297,14 @@ useEffect(() => {
     // 모든 텍스트 필드 타입 안전성 보장 (string이 아닐 경우 빈 문자열 처리)
     const safeMainProblem = typeof mainProblem === 'string' ? mainProblem : '';
     const safeSessionContent = typeof sessionContent === 'string' ? sessionContent : '';
+    const safeCounselorOpinion = typeof counselorOpinion === 'string' ? counselorOpinion : '';
     const safeObservation = typeof observation === 'string' ? observation : '';
     const safeGoal = typeof goal === 'string' ? goal : '';
     const safeNextPlan = typeof nextPlan === 'string' ? nextPlan : '';
     const textRequiredFields = [
       { value: safeMainProblem.trim(), name: '주호소 문제' },
-      { value: safeSessionContent.trim(), name: '상담기록' },
+      { value: safeSessionContent.trim(), name: '상담내용' },
+      { value: safeCounselorOpinion.trim(), name: '상담사 소견' },
       { value: safeObservation.trim(), name: '객관적 관찰' },
       { value: safeGoal.trim(), name: '상담 목표' },
       { value: safeNextPlan.trim(), name: '다음 상담 계획' }

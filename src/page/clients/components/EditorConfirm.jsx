@@ -29,7 +29,7 @@ function EditorConfirm({
           )}
         </div>
         <div className="modal-info">
-          {message.includes('<br />') ? (
+          {/\n|<br\s*\/?\>/i.test(message) ? (
             <p dangerouslySetInnerHTML={{ __html: message }} />
           ) : (
             <p>{message}</p>
