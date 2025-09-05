@@ -260,8 +260,8 @@ const PsychologicalTestDetail = ({
                 // 6) 질문 매핑 (questionitems 기반, SurveyForm 참고)
                 const mappedQuestions = [];
                 const qList = Array.isArray(targetItem?.questionList)
-                  ? targetItem.questionList
-                  : (Array.isArray(targetItem?.assessmentInfo?.questions) ? targetItem.assessmentInfo.questions : []);
+                    ? targetItem.questionList
+                    : (Array.isArray(targetItem?.assessmentInfo?.questions) ? targetItem.assessmentInfo.questions : []);
                 qList.forEach((q, idx) => {
                     const questionSeq = q?.questionSeq ?? q?.id ?? (idx + 1);
                     const questionText = q?.questionText || q?.question || q?.title || '';
@@ -329,15 +329,16 @@ const PsychologicalTestDetail = ({
                 <ul>
                     {question.questionitems.map((item, itemIndex) => (
                         <li key={item.questionItemSeq || itemIndex}>
-                            <div className="input-wrap radio type01">
+                            <div className="input-wrap radio type01" style={{ cursor: 'default' }}>
                                 <input
                                     id={`answer${itemIndex + 1}_q${question.questionSeq}`}
                                     type="radio"
                                     name={`question${question.questionSeq}`}
                                     checked={Number(question.selectedScore) === Number(item.itemScore)}
                                     readOnly
+                                    
                                 />
-                                <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`}>{item.itemScore}</label>
+                                <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`} style={{ cursor: 'default' }}>{item.itemScore}</label>
                             </div>
                             <span>{item.itemText}</span>
                         </li>
@@ -363,7 +364,7 @@ const PsychologicalTestDetail = ({
                             <ul>
                                 {question.questionitems.map((item, itemIndex) => (
                                     <li key={item.questionItemSeq || itemIndex}>
-                                        <div className="input-wrap radio type01">
+                                        <div className="input-wrap radio type01" style={{ cursor: 'default' }}>
                                             <input
                                                 id={`answer${itemIndex + 1}_q${question.questionSeq}`}
                                                 type="radio"
@@ -371,7 +372,7 @@ const PsychologicalTestDetail = ({
                                                 checked={Number(question.selectedScore) === Number(item.itemScore)}
                                                 readOnly
                                             />
-                                            <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`}>{item.itemScore}</label>
+                                            <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`} style={{ cursor: 'default' }}>{item.itemScore}</label>
                                         </div>
                                         <span>{item.itemText}</span>
                                     </li>
@@ -392,7 +393,7 @@ const PsychologicalTestDetail = ({
                 <ul>
                     {question.questionitems.map((item, itemIndex) => (
                         <li key={item.questionItemSeq || itemIndex}>
-                            <div className="input-wrap radio type01">
+                            <div className="input-wrap radio type01" style={{ cursor: 'default' }}>
                                 <input
                                     id={`answer${itemIndex + 1}_q${question.questionSeq}`}
                                     type="radio"
@@ -400,7 +401,7 @@ const PsychologicalTestDetail = ({
                                     checked={Number(question.selectedScore) === Number(item.itemScore)}
                                     readOnly
                                 />
-                                <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`}>{item.itemScore}</label>
+                                <label htmlFor={`answer${itemIndex + 1}_q${question.questionSeq}`} style={{ cursor: 'default' }}>{item.itemScore}</label>
                             </div>
                             <span>{item.itemText}</span>
                         </li>

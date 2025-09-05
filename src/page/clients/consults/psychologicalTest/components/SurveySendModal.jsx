@@ -417,6 +417,8 @@ function SurveySendModal({ onClose, modalOpen, sessiongroupSeq, nameToSeqMap = {
                           option.label
                         )
                       )}
+                      maxHeight={280}
+                      isSurveySendModal
                     />
                   </li>
                   <li>

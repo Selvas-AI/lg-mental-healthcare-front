@@ -91,6 +91,7 @@ function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess, showToas
 
   // 드래그 오버
   const handleDragOver = (e) => {
+    if (uploading) return; // 업로드 중에는 드래그 비활성화
     e.preventDefault();
     e.stopPropagation();
     setDragOver(true);
@@ -98,6 +99,7 @@ function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess, showToas
 
   // 드래그 리브
   const handleDragLeave = (e) => {
+    if (uploading) return; // 업로드 중에는 드래그 비활성화
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
@@ -105,6 +107,12 @@ function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess, showToas
 
   // 드롭
   const handleDrop = (e) => {
+    if (uploading) {
+      // 업로드 중에는 드롭도 무시
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
@@ -123,11 +131,13 @@ function UploadModal({ setShowUploadModal, sessionSeq, onUploadSuccess, showToas
           <button className="close-btn cursor-pointer" type="button" aria-label="닫기" onClick={handleCloseUploadModal}></button>
         </div>
         <div
-          className={`dropzone${dragOver ? ' dragover' : ''}`}
+          className={`dropzone${dragOver ? ' dragover' : ''}${uploading ? ' disabled' : ''}`}
           ref={dropzoneRef}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          aria-disabled={uploading}
+          style={uploading ? { pointerEvents: 'none', opacity: 0.6 } : undefined}
         >
           <label className="fake-upload-btn" htmlFor="fileInput">
             {uploading ? '업로드 중...' : '녹취록 업로드'}

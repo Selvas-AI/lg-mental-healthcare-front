@@ -31,6 +31,7 @@ const CustomSelect = ({
   getOptionLabel = (option) => option,
   initialScrollToValue,
   initialScrollOffset = -28,
+  isSurveySendModal = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
@@ -132,7 +133,7 @@ const CustomSelect = ({
         <ul 
           className="option-list" 
           style={{ 
-            maxHeight: isOpen ? Math.min(options.length * 40, maxHeight) : 0,
+            maxHeight: isOpen ? (isSurveySendModal ? maxHeight : Math.min(options.length * 40, maxHeight)) : 0,
             // overflow: 'hidden',
             overflow: isOpen ? 'auto' : 'hidden',
             transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
