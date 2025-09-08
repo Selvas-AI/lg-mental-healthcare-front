@@ -401,12 +401,24 @@ function TimelinePanel({ open, onClose, clientSeq, prefetchedTimeline = [] }) {
                     <div className="chart-wrap">
                       <EmergencyChart
                         values={reversedData.map(row => {
-                          // stressIndicatorsJson이 JSON 문자열인 경우 파싱하여 스트레스 레벨 추출
+                          // stressIndicatorsJson에서 stressDetail의 pass10 평균을 0~10 스케일로 변환
                           if (row.stressIndicatorsJson) {
                             try {
                               const stressData = JSON.parse(row.stressIndicatorsJson);
-                              // 스트레스 데이터에서 평균값이나 대표값 추출 (구조에 따라 조정 필요)
-                              return stressData.level || stressData.average || null;
+                              const details = stressData?.stressDetail;
+                              if (Array.isArray(details) && details.length > 0) {
+                                // pass10 값들의 평균 계산
+                                const pass10Values = details
+                                  .map(d => typeof d.pass10 === 'number' ? d.pass10 : Number(d.pass10) || 0)
+                                  .filter(v => v > 0);
+                                if (pass10Values.length > 0) {
+                                  const avgPass10 = pass10Values.reduce((sum, val) => sum + val, 0) / pass10Values.length;
+                                  // 0~10 스케일로 정규화 (pass10이 보통 0~30 범위라고 가정)
+                                  const normalized = Math.min(10, Math.max(0, (avgPass10 / 30) * 10));
+                                  return Math.round(normalized * 10) / 10; // 소수 1자리
+                                }
+                              }
+                              return null;
                             } catch (e) {
                               return null;
                             }
@@ -414,8 +426,8 @@ function TimelinePanel({ open, onClose, clientSeq, prefetchedTimeline = [] }) {
                           return null;
                         })}
                         labels={reversedData.map(row => `${row.sessionOrder || row.sessionNo}회기`)}
-                        min={1}
-                        max={4}
+                        min={0}
+                        max={10}
                         width={288}
                         height={180}
                       />
@@ -427,7 +439,20 @@ function TimelinePanel({ open, onClose, clientSeq, prefetchedTimeline = [] }) {
                           if (row.stressIndicatorsJson) {
                             try {
                               const stressData = JSON.parse(row.stressIndicatorsJson);
-                              return stressData.level ?? stressData.average ?? null;
+                              const details = stressData?.stressDetail;
+                              if (Array.isArray(details) && details.length > 0) {
+                                // pass10 값들의 평균 계산
+                                const pass10Values = details
+                                  .map(d => typeof d.pass10 === 'number' ? d.pass10 : Number(d.pass10) || 0)
+                                  .filter(v => v > 0);
+                                if (pass10Values.length > 0) {
+                                  const avgPass10 = pass10Values.reduce((sum, val) => sum + val, 0) / pass10Values.length;
+                                  // 0~10 스케일로 정규화
+                                  const normalized = Math.min(10, Math.max(0, (avgPass10 / 30) * 10));
+                                  return Math.round(normalized * 10) / 10;
+                                }
+                              }
+                              return null;
                             } catch (e) {
                               return null;
                             }

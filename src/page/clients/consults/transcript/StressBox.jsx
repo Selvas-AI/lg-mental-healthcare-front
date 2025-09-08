@@ -1,8 +1,7 @@
 import React, { useRef, useEffect } from "react";
-import TranscriptBox from "./TranscriptBox";
 import Chart from 'chart.js/auto';
 
-function StressBox({ data, labels, onAIGenerate }) {
+function StressBox({ data, labels, onAIGenerate, isAiAnalysis }) {
   const hasData = Array.isArray(data) && data.length > 0 && Array.isArray(labels) && labels.length > 0;
   const canvasRef = useRef(null);
 
@@ -18,6 +17,14 @@ function StressBox({ data, labels, onAIGenerate }) {
     const gradientFill = ctx.createLinearGradient(0, 0, 0, 111);
     gradientFill.addColorStop(0, 'rgba(49, 137, 255, 0.3)');
     gradientFill.addColorStop(1, 'rgba(49, 137, 255, 0.0)');
+
+    // Y축 동적 스케일: 최대값이 소수면 올림, 정수면 그대로 (최소 상한 10 유지)
+    const rawMax = Math.max(...data);
+    const normalizedMax = Number.isFinite(rawMax)
+      ? (Number.isInteger(rawMax) ? rawMax : Math.ceil(rawMax))
+      : 10;
+    const yMax = Math.max(10, normalizedMax);
+    const step = yMax <= 20 ? 2 : yMax <= 50 ? 5 : 10;
 
     const pluginShowMaxTooltip = {
       id: 'showMaxTooltip',
@@ -227,11 +234,11 @@ function StressBox({ data, labels, onAIGenerate }) {
           },
           y: {
             beginAtZero: true,
-            max: 10,
+            max: yMax,
             min: 0,
             ticks: {
               autoSkip: false,
-              stepSize: 2,
+              stepSize: step,
               padding: 10,
               font: { size: 14, family: 'Pretendard', weight: '500' },
               color: '#7A8A93'
@@ -258,14 +265,29 @@ function StressBox({ data, labels, onAIGenerate }) {
           </div>
         </div>
       ) : (
-        <div className="con-wrap">
-          <canvas
-            ref={canvasRef}
-            className="line-chart"
-            width="1040"
-            height="158"
-            style={{ position: 'relative' }}
-          />
+        <div className="stress box">
+          {!isAiAnalysis ? <div className="box-tit">
+            <strong>5. 스트레스 징후</strong>
+          </div> : null}
+          {isAiAnalysis ? (
+            <div className="con-wrap">
+              <canvas
+                ref={canvasRef}
+                className="line-chart"
+                width="1040"
+                height="158"
+                style={{ position: 'relative', marginTop: '1rem' }}
+              />
+            </div>
+          ) : (
+            <canvas
+              ref={canvasRef}
+              className="line-chart"
+              width="1040"
+              height="158"
+              style={{ position: 'relative', marginTop: '1rem' }}
+            />
+          )}
         </div>
       )}
     </>
