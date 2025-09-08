@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { currentSessionState } from '@/recoil';
-import { assessmentSetList, sessionList } from '@/api/apiCaller';
+import { assessmentSetList, sessionList, assessmentSetListWithItem } from '@/api/apiCaller';
 import emptyFace from '@/assets/images/common/empty_face.svg';
 
 // 동의서 더미 데이터 (실제 API가 없으므로 UI 유지용)
@@ -31,7 +31,7 @@ const statusOptions = [
   { value: 'completed', label: '작성 완료' }
 ];
 
-function DocumentBox() {
+function DocumentBox({ onOpenSurveySendModal, refreshKey }) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentSession = useRecoilValue(currentSessionState);
@@ -63,7 +63,7 @@ function DocumentBox() {
             currentGroupSessions.forEach((session, index) => {
               seqToOrderMap[String(session.sessionSeq)] = index + 1;
             });
-            console.log('seqToOrderMap:', seqToOrderMap);
+            // console.log('seqToOrderMap:', seqToOrderMap);
           }
         } catch (e) {
           console.warn('sessionList 조회 실패:', e);
@@ -72,13 +72,34 @@ function DocumentBox() {
         // 현재 내담자의 모든 검사세트 조회
         const response = await assessmentSetList(currentSession.clientSeq);
         if (response.code === 200 && response.data) {
-          console.log('검사세트 전체 데이터:', response.data);
+          // console.log('검사세트 전체 데이터:', response.data);
+          // 동일 회기그룹 항목만 대상으로 변환 수행
+          const sameGroupItems = response.data.filter(it => String(it?.sessiongroupSeq) === String(currentSession.sessiongroupSeq));
           
-          // PROG 타입만 필터링하여 순서 매핑
-          const progItems = response.data.filter(item => item.questionType === 'PROG');
+          // 동일 그룹 내 PROG 항목만 필터링 (fallback 순서 산출용)
+          const progItems = sameGroupItems.filter(item => item.questionType === 'PROG');
+          // PROG 항목 정렬: sessionNo 우선, 없으면 seqToOrderMap 기준, 둘 다 없으면 시간 기준(오래된 것 먼저)
+          const getTime = (it) => new Date(it.assignedUrlExpireTime || it.createdTime || it.createdAt || 0).getTime();
+          const getOrder = (it) => {
+            if (it.sessionNo != null) return Number(it.sessionNo);
+            if (it.sessionSeq != null) {
+              const k = String(it.sessionSeq);
+              const mapped = seqToOrderMap[k];
+              if (Number.isFinite(mapped)) return mapped;
+            }
+            return Infinity;
+          };
+          const progItemsOrdered = [...progItems].sort((a, b) => {
+            const ao = getOrder(a);
+            const bo = getOrder(b);
+            if (Number.isFinite(ao) && Number.isFinite(bo)) return ao - bo;
+            if (Number.isFinite(ao)) return -1;
+            if (Number.isFinite(bo)) return 1;
+            return getTime(a) - getTime(b);
+          });
           
-          // API 데이터를 문서 형태로 변환
-          const transformedData = response.data.map((item, index) => {
+          // API 데이터를 문서 형태로 변환 (동일 그룹만)
+          const transformedData = sameGroupItems.map((item, index) => {
             // questionType에 따른 문서명 생성
             let documentTitle = '검사지';
             let sessionLabel;
@@ -95,17 +116,17 @@ function DocumentBox() {
               const sessionNoFromSet = item.sessionNo ?? null;
               const orderFromMap = seqKey ? seqToOrderMap[seqKey] : null;
               
-              // PROG 타입에서 현재 항목의 순서 계산 (배열에서의 위치 + 1)
-              const progIndex = progItems.findIndex(progItem => progItem.setSeq === item.setSeq);
+              // PROG 타입에서 현재 항목의 순서 계산 (정렬된 배열에서의 위치 + 1)
+              const progIndex = progItemsOrdered.findIndex(progItem => progItem.setSeq === item.setSeq);
               const progFallbackOrder = progIndex >= 0 ? progIndex + 1 : 1;
               
               const finalSessionNo = sessionNoFromSet ?? orderFromMap ?? progFallbackOrder;
               sessionLabel = `${finalSessionNo}회기`;
               documentTitle = `${finalSessionNo}회기 검사지`;
-              console.log(`sessionSeq: ${item.sessionSeq}, orderFromMap: ${orderFromMap}, progFallbackOrder: ${progFallbackOrder}, finalSessionNo: ${finalSessionNo}`);
+              // console.log(`sessionSeq: ${item.sessionSeq}, orderFromMap: ${orderFromMap}, progFallbackOrder: ${progFallbackOrder}, finalSessionNo: ${finalSessionNo}`);
             } else {
-              // PROG 타입이지만 sessionSeq가 없는 경우
-              const progIndex = progItems.findIndex(progItem => progItem.setSeq === item.setSeq);
+              // PROG 타입이지만 sessionSeq가 없는 경우 (정렬된 동일그룹 리스트 기반)
+              const progIndex = progItemsOrdered.findIndex(progItem => progItem.setSeq === item.setSeq);
               const progFallbackOrder = progIndex >= 0 ? progIndex + 1 : 1;
               sessionLabel = `${progFallbackOrder}회기`;
               documentTitle = `${progFallbackOrder}회기 검사지`;
@@ -120,11 +141,12 @@ function DocumentBox() {
               isCompleted: !!item.submittedTime,
               setSeq: item.setSeq,
               questionType: item.questionType, // PRE/PROG/POST
-              sessiongroupSeq: item.sessiongroupSeq
+              sessiongroupSeq: item.sessiongroupSeq,
+              sessionSeq: item.sessionSeq
             };
           });
           
-          console.log('변환된 문서 데이터:', transformedData);
+          // console.log('변환된 문서 데이터:', transformedData);
           setAssessmentData(transformedData);
         }
       } catch (error) {
@@ -136,7 +158,7 @@ function DocumentBox() {
     };
 
     fetchAssessmentData();
-  }, [currentSession?.clientSeq, currentSession?.sessiongroupSeq]);
+  }, [currentSession?.clientSeq, currentSession?.sessiongroupSeq, refreshKey]);
 
   // 날짜 포맷팅 함수
   const formatDate = (dateStr) => {
@@ -195,30 +217,44 @@ function DocumentBox() {
   const handleResultView = (document) => {
     // 현재 스크롤 위치 저장
     const currentScrollY = window.scrollY;
-    
-    // 현재 URL에서 쿼리 파라미터 가져오기
     const currentQuery = new URLSearchParams(location.search);
     const clientId = currentQuery.get('clientId');
     const currentTab = currentQuery.get('tab') || 'document';
-    
-    // 상세 페이지로 이동 후 뒤로가기 시 현재 탭과 스크롤 위치로 돌아오도록 설정
+
+    // 문서 타입 분기: 검사지는 세션 통합 결과 페이지로 이동
+    if (document.type === '검사지') {
+      const query = new URLSearchParams();
+      if (clientId) query.set('clientId', clientId);
+      if (document.sessionSeq != null) query.set('sessionSeq', String(document.sessionSeq));
+      query.set('returnTab', currentTab);
+      query.set('scrollY', String(currentScrollY));
+      navigate(`/clients/consults/sessionAssessments?${query.toString()}`);
+      return;
+    }
+
+    // 그 외(동의서 등)는 기존 상세 경로 유지
     const detailQuery = new URLSearchParams();
     if (clientId) detailQuery.set('clientId', clientId);
     detailQuery.set('returnTab', currentTab);
-    detailQuery.set('scrollY', currentScrollY.toString());
-    
-    // 검사지인 경우 setSeq 사용, 동의서인 경우 documentId 사용
-    if (document.type === '검사지' && document.setSeq) {
-      detailQuery.set('setSeq', document.setSeq.toString());
-    } else {
-      detailQuery.set('documentId', document.id.toString());
-    }
-    
+    detailQuery.set('scrollY', String(currentScrollY));
+    detailQuery.set('documentId', document.id.toString());
     navigate(`/clients/consults/psychologicalTestDetail?${detailQuery.toString()}`);
   };
 
   const handleDocumentSend = () => {
-    console.log('문서 발송 클릭');
+    // PsychologicalTest에서 사용하는 동일 모달 오픈 핸들러 재사용
+    if (typeof onOpenSurveySendModal === 'function') {
+      onOpenSurveySendModal();
+      return;
+    }
+    // 안전 폴백: survey 탭으로 이동
+    try {
+      const params = new URLSearchParams(location.search);
+      params.set('tab', 'survey');
+      navigate(`${location.pathname}?${params.toString()}`);
+    } catch (_) {
+      console.log('문서 발송 클릭');
+    }
   };
 
   const getSelectedStatusLabel = () => {
@@ -362,24 +398,34 @@ function DocumentBox() {
               </tr>
             </thead>
             <tbody>
-              {filteredDocuments.map((document) => (
-                <tr key={document.id}>
-                  <td>{document.type}</td>
-                  <td>{document.title}</td>
-                  <td>{document.submitDate}</td>
-                  <td>{document.status}</td>
-                  <td>
-                    <button 
-                      className="type12 h40" 
-                      type="button" 
-                      disabled={!document.isCompleted}
-                      onClick={() => handleResultView(document)}
-                    >
-                      결과보기
-                    </button>
+              {filteredDocuments.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="con-wrap empty" style={{boxShadow: 'none', border: 'none', minHeight: '400px' }}>
+                      <p className="empty-info">선택한 조건에 해당하는 문서가 없습니다.</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredDocuments.map((document) => (
+                  <tr key={document.id}>
+                    <td>{document.type}</td>
+                    <td>{document.title}</td>
+                    <td>{document.submitDate}</td>
+                    <td>{document.status}</td>
+                    <td>
+                      <button 
+                        className="type12 h40" 
+                        type="button" 
+                        disabled={!document.isCompleted}
+                        onClick={() => handleResultView(document)}
+                      >
+                        결과보기
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
