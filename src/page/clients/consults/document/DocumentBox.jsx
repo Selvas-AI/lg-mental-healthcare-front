@@ -225,6 +225,10 @@ function DocumentBox({ onOpenSurveySendModal, refreshKey }) {
     if (document.type === '검사지') {
       const query = new URLSearchParams();
       if (clientId) query.set('clientId', clientId);
+      // PRE/POST 식별을 위해 questionType 전달, 그룹 스코프 유지를 위해 sessiongroupSeq 전달
+      if (document.questionType) query.set('questionType', String(document.questionType));
+      if (document.sessiongroupSeq != null) query.set('sessiongroupSeq', String(document.sessiongroupSeq));
+      // PROG의 경우 회기 단위 조회를 위해 sessionSeq도 함께 전달
       if (document.sessionSeq != null) query.set('sessionSeq', String(document.sessionSeq));
       query.set('returnTab', currentTab);
       query.set('scrollY', String(currentScrollY));
