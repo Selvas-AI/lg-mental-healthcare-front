@@ -43,8 +43,14 @@ function maskValue(label, value) {
     case '직업':
       return '*'.repeat(value.length);
     case '생년월일':
-      if (!value) return '19**.**.**';
-      return value.replace(/\d{4}\.\d{2}\.\d{2}/, '19**.**.**').replace(/\(.*?\)/, '(만 **세)');
+      if (!value) return '**.**.**';
+      // 'YYYY.MM.DD' 형식에서 연도 앞 두자리만 유지하고 나머지 마스킹: nn**.**.**
+      if (/^\d{4}\.\d{2}\.\d{2}$/.test(value)) {
+        const nn = value.slice(0, 2);
+        return `${nn}**.**.**`;
+      }
+      // 예상 형식이 아닐 경우 안전한 기본값 반환
+      return '**.**.**';
     case '주소': {
       if (!value) return '****';
       const parts = value.trim().split(/\s+/);
@@ -207,17 +213,17 @@ function formatPhoneNumber(phone) {
                   <th>연락처</th>
                   <td>{formatPhoneNumber(phone)}</td>
                   <th>주소</th>
-                  <td>{address}</td>
+                  <td>{address || '없음'}</td>
                 </tr>
                 <tr>
                   <th>생년월일</th>
-                  <td>{birth}</td>
+                  <td>{birth || '없음'}</td>
                   <th>이메일</th>
-                  <td>{email}</td>
+                  <td>{email || '없음'}</td>
                 </tr>
                 <tr>
                   <th>성별</th>
-                  <td>{gender}</td>
+                  <td>{gender || '없음'}</td>
                   <th rowSpan={2}>보호자</th>
                   <td rowSpan={2}>
                     {guardian.length === 0 ? '없음' : guardian.map((g, idx) => (
@@ -227,13 +233,13 @@ function formatPhoneNumber(phone) {
                 </tr>
                 <tr>
                   <th>직업</th>
-                  <td>{job}</td>
+                  <td>{job || '없음'}</td>
                 </tr>
                 <tr>
                   <th>메모</th>
                   <td colSpan={3}>
                     <div className="memo-wrap">
-                      <p className="memo">{memo}</p>
+                      <p className="memo">{memo || '없음'}</p>
                       <a className="edit-btn cursor-pointer" onClick={handleEditMemo}>수정</a>
                     </div>
                   </td>

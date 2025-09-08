@@ -181,6 +181,33 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     }
   };
 
+  // 스트레스 지표 JSON(stressDetail)을 차트용으로 변환 (라벨= startSec 기반)
+  const buildStressChart = (raw) => {
+    const obj = parseJsonSafely(raw);
+    const details = obj?.stressDetail;
+    if (!Array.isArray(details) || details.length === 0) {
+      return { data: [], labels: [] };
+    }
+    // 시작 시간(startSec) 기준으로 타임시리즈 구성
+    const points = details.map((d) => {
+      const start = Number(d.startSec) || 0;
+      const value = typeof d.pass10 === 'number' ? d.pass10 : Number(d.pass10) || 0;
+      return { t: Math.max(0, start), v: value };
+    }).sort((a, b) => a.t - b.t);
+
+    const toLabel = (sec) => {
+      const s = Math.max(0, Math.floor(sec));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+    };
+
+    return {
+      data: points.map(p => Math.round(p.v * 100) / 100),
+      labels: points.map(p => toLabel(p.t)),
+    };
+  };
+
   // AiTranscriptPanel의 extractTextParts 로직과 동일: 요약 JSON에서 텍스트만 추출
   const extractTextParts = (value) => {
     if (!value) return { answer: '', feedback: '' };
@@ -213,7 +240,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
 
   useEffect(() => {
     const keywordParsed = parseJsonSafely(sessionMngData?.keywordAnalysisJson);
-    // const stressParsed = parseJsonSafely(sessionMngData?.stressIndicatorsJson); // TODO: 추후 활성화 예정
+    const stressParsed = parseJsonSafely(sessionMngData?.stressIndicatorsJson);
 
     const hasKeyword = (() => {
       if (!keywordParsed) return false;
@@ -222,18 +249,17 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
       return true; // 객체가 비어있지 않으면 true로 간주
     })();
 
-    // const hasStress = (() => {
-    //   if (!stressParsed) return false;
-    //   if (Array.isArray(stressParsed?.data)) return stressParsed.data.length > 0;
-    //   return true;
-    // })(); // TODO: 추후 활성화 예정
+    const hasStress = (() => {
+      if (!stressParsed) return false;
+      if (Array.isArray(stressParsed?.stressDetail)) return stressParsed.stressDetail.length > 0;
+      return false;
+    })();
 
     setDataPresence({
       hasCounselingSummaryAi: !!sessionMngData?.counselingSummaryAi,
       hasConcernTopicAi:       !!sessionMngData?.concernTopicAi,
       hasKeywordAnalysis:      hasKeyword,
-      // hasStressIndicators:     hasStress, // TODO: 추후 활성화 예정
-      hasStressIndicators:     false,
+      hasStressIndicators:     hasStress,
     });
   }, [sessionMngData]);
 
@@ -251,7 +277,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     const keywordData = parseJsonSafely(sessionMngData.keywordAnalysisJson);
     // 서버 저장값은 사용하지 않고, 프론트 계산값 사용
     const frequencyData = localFrequency;
-    const stressData = parseJsonSafely(sessionMngData.stressIndicatorsJson);
+    const stressData = buildStressChart(sessionMngData.stressIndicatorsJson);
     
     return {
       // AI 생성 상담요약 또는 수동 입력 상담요약

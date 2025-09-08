@@ -71,13 +71,30 @@ function SymptomBarChart({ values = [], labels = [], min = 0, max, className = '
         clip: false,
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false }
+          tooltip: {
+            enabled: true,
+            displayColors: false,
+            callbacks: {
+              label: (context) => `${context.parsed.y}점`,
+              title: (items) => (items && items.length ? items[0].label : '')
+            },
+            backgroundColor: '#fff',
+            borderColor: '#1C1D1E',
+            borderWidth: 1,
+            titleColor: '#7A8A93',
+            titleFont: { family: 'Pretendard', size: 12, weight: 600 },
+            bodyColor: '#3B3C3E',
+            bodyFont: { family: 'Pretendard', size: 14, weight: 600 },
+            padding: 8
+          }
         },
         interaction: {
-          mode: null
+          mode: 'nearest',
+          intersect: false
         },
         hover: {
-          mode: null
+          mode: 'nearest',
+          intersect: false
         },
         layout: {
           padding: {

@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from "date-fns/locale";
 import CustomSelect from '@/components/CustomSelect';
+import useEscClose from '@/hooks/useEscClose';
 
 const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate, minDate, minDateTime }) => {
   const [selectedRecord, setSelectedRecord] = useState("");
@@ -20,6 +21,9 @@ const RecordSelectModal = ({ open, onClose, onSave, initialSessionDate, minDate,
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}.${month}.${day}`;
   };
+
+  // ESC 키로 모달 닫기
+  useEscClose(open, onClose);
 
   // 30분 단위로 24시간 전체 시간 옵션 생성
   const generateTimeOptions = () => {

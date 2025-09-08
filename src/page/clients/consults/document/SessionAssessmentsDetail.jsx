@@ -213,7 +213,9 @@ function SessionAssessmentsDetail() {
   useEffect(() => {
     const clientId = searchParams.get('clientId');
     const sessionSeqParam = searchParams.get('sessionSeq');
-    if (!clientId || !sessionSeqParam) {
+    const qtParam = String(searchParams.get('questionType') || '').toUpperCase();
+    const groupParam = searchParams.get('sessiongroupSeq');
+    if (!clientId) {
       setLoading(false);
       return;
     }
@@ -221,7 +223,8 @@ function SessionAssessmentsDetail() {
     (async () => {
       try {
         const clientSeqNum = parseInt(clientId, 10);
-        const sessionSeqNum = parseInt(sessionSeqParam, 10);
+        const hasSession = sessionSeqParam != null && sessionSeqParam !== '';
+        const sessionSeqNum = hasSession ? parseInt(sessionSeqParam, 10) : null;
 
         // 1) 클라이언트 기본 정보
         try {
@@ -238,31 +241,50 @@ function SessionAssessmentsDetail() {
           }));
         } catch {}
 
-        // 2) 세션 라벨/일자
-        try {
-          const sf = await sessionFind(clientSeqNum, sessionSeqNum);
-          const s = sf?.data || {};
-          const qt = String(s?.questionType || '').toUpperCase();
-          let sessionLabel = '';
-          if (qt === 'PRE') sessionLabel = '사전 문진';
-          else if (qt === 'POST') sessionLabel = '사후 문진';
-          else if (Number.isFinite(Number(s?.sessionNo))) sessionLabel = `${s.sessionNo}회기`;
-          const sessionDate = formatDateDot(s?.sessionDate || s?.createdTime);
-          setHeaderInfo(prev => ({ ...prev, sessionLabel, sessionDate }));
-        } catch {}
-
-        // 3) 검사세트 목록 중 해당 세션의 제출 완료 세트만 필터링
+        // 2) 헤더 라벨/일자 & 세트 추리기
         const as = await assessmentSetList(clientSeqNum);
         const allSets = Array.isArray(as?.data) ? as.data : [];
-        const setsForSession = allSets.filter(it => String(it?.sessionSeq) === String(sessionSeqNum) && !!it?.submittedTime);
-        if (setsForSession.length === 0) {
+
+        let targetSets = [];
+        if (hasSession && Number.isFinite(sessionSeqNum)) {
+          // PROG: 해당 세션 제출 완료 세트
+          try {
+            const sf = await sessionFind(clientSeqNum, sessionSeqNum);
+            const s = sf?.data || {};
+            const qt = String(s?.questionType || '').toUpperCase();
+            let sessionLabel = '';
+            if (qt === 'PRE') sessionLabel = '사전 문진';
+            else if (qt === 'POST') sessionLabel = '사후 문진';
+            else if (Number.isFinite(Number(s?.sessionNo))) sessionLabel = `${s.sessionNo}회기`;
+            const sessionDate = formatDateDot(s?.sessionDate || s?.createdTime);
+            setHeaderInfo(prev => ({ ...prev, sessionLabel, sessionDate }));
+          } catch {}
+          targetSets = allSets.filter(it => String(it?.sessionSeq) === String(sessionSeqNum) && !!it?.submittedTime);
+        } else if (qtParam === 'PRE' || qtParam === 'POST') {
+          // PRE/POST: 타입 기준 제출 완료 세트, 같은 그룹만 제한(있을 시)
+          let filtered = allSets.filter(it => String(it?.questionType).toUpperCase() === qtParam && !!it?.submittedTime);
+          if (groupParam != null && groupParam !== '') {
+            filtered = filtered.filter(it => String(it?.sessiongroupSeq) === String(groupParam));
+          }
+          targetSets = filtered;
+          // 헤더 라벨/일자 설정: 타입 라벨과 가장 최근 제출/생성일
+          const label = qtParam === 'PRE' ? '사전 문진' : '사후 문진';
+          const latest = [...filtered].sort((a,b) => new Date(b.submittedTime || b.createdTime || b.createdAt || 0) - new Date(a.submittedTime || a.createdTime || a.createdAt || 0))[0];
+          const sessionDate = formatDateDot(latest?.submittedTime || latest?.createdTime || latest?.createdAt);
+          setHeaderInfo(prev => ({ ...prev, sessionLabel: label, sessionDate }));
+        } else {
+          // 방어: 세션도 없고 타입도 없으면 빈 결과
+          targetSets = [];
+        }
+
+        if (targetSets.length === 0) {
           setCards([]);
           return;
         }
 
-        // 4) 각 세트 상세 결과 조회 후 카드로 변환
+        // 3) 각 세트 상세 결과 조회 후 카드로 변환
         const detailed = await Promise.all(
-          setsForSession.map(async (s) => {
+          targetSets.map(async (s) => {
             try {
               const res = await assessmentSetResult(s?.setSeq ?? s?.assessmentSetSeq ?? s?.id);
               const payload = res?.data ?? {};
@@ -278,7 +300,7 @@ function SessionAssessmentsDetail() {
           })
         );
 
-        // 5) 렌더용 카드 데이터 구성
+        // 4) 렌더용 카드 데이터 구성
         const cardsData = detailed.map(set => {
           // 각 세트에서 대표 아이템(첫 번째)로 요약 구성, 모든 아이템을 질문표로 렌더
           const first = set.itemList?.[0];
@@ -321,6 +343,7 @@ function SessionAssessmentsDetail() {
               assessmentName: String(it?.assessmentInfo?.assessmentName || ''),
               associatedDisorder: it?.assessmentInfo?.associatedDisorder || '',
               clientNotice: it?.assessmentInfo?.clientNotice || '',
+              basicFlag: it?.assessmentInfo?.basicFlag,
               questionList: mapped
             });
           });
@@ -425,7 +448,7 @@ function SessionAssessmentsDetail() {
                   <div className="list-wrap">
                     <ul>
                       {qset.questionList && qset.questionList.length > 0 ? (
-                        qset.questionList.map((q, i) => renderQuestion(q, i, `${card.key}_${idx}_`))
+                        qset.questionList.map((q, i) => renderQuestion(q, i, `${card.key}_${idx}_`, { basicFlag: qset.basicFlag }))
                       ) : (
                           <li>표시할 문항이 없습니다.</li>
                         )}
