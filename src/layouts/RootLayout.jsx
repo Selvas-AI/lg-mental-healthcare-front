@@ -67,7 +67,10 @@ const RootLayout = () => {
   useEffect(() => {
     const handler = (e) => {
       const t = e?.detail?.title || '';
-      if (location.pathname.startsWith('/clients/consults/psychologicalTestDetail')) {
+      if (
+        location.pathname.startsWith('/clients/consults/psychologicalTestDetail') ||
+        location.pathname.startsWith('/clients/consults/sessionAssessments')
+      ) {
         setDynamicTitle(t);
       }
     };
@@ -83,6 +86,7 @@ const RootLayout = () => {
     // 특정 경로에서는 스크롤 이동하지 않음
     const excludePaths = [
       '/clients/consults/psychologicalTestDetail', // 심리검사 상세
+      '/clients/consults/sessionAssessments',      // 세션 통합 검사 결과
     ];
     
     const shouldScrollToTop = !excludePaths.some(path => location.pathname.startsWith(path));
@@ -97,7 +101,10 @@ const RootLayout = () => {
   const pageClass = (() => {
     if (location.pathname.startsWith("/clients/recordings")) return "recordings";
     if (location.pathname.startsWith("/clients/consults/detail")) return "notes gray-bg";
-    if (location.pathname.startsWith("/clients/consults/psychologicalTestDetail")) return "survey-detail gray-bg";
+    if (
+      location.pathname.startsWith("/clients/consults/psychologicalTestDetail") ||
+      location.pathname.startsWith("/clients/consults/sessionAssessments")
+    ) return "survey-detail gray-bg";
     if (location.pathname.startsWith("/clients/consults")) return "consults";
     if (location.pathname.startsWith("/clients/sessions")) return "sessions";
     if (location.pathname.startsWith("/clients")) return "clients";
@@ -143,6 +150,7 @@ const RootLayout = () => {
       '/clients/recordings': sessionNumber ? `${sessionNumber}회기 녹취록` : '녹취록',
       '/clients/consults/detail': '3회기 상담일지',
       '/clients/consults/psychologicalTestDetail': dynamicTitle || 'PHQ-9 우울 검사 결과',
+      '/clients/consults/sessionAssessments': dynamicTitle || '세션 통합 검사 결과',
     };
     return pathTitleMap[location.pathname] || '';
   };
