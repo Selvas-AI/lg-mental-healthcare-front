@@ -20,6 +20,12 @@ function SessionTable({ clientId, sessionData, summaryBySessionSeq = {} }) {
       url = `/clients/consults?clientId=${clientId}`;
       if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
       url += `&tab=survey`;
+    } else if (todoText === '상담일지 작성' || todoText === '상담일지 상세') {
+      // 상담일지 상세 페이지로 이동 (CounselLog.navigateToCounselDetail 기준)
+      const params = new URLSearchParams();
+      params.set('clientId', clientId);
+      if (sessionSeq) params.set('sessionSeq', sessionSeq);
+      url = `/clients/consults/detail?${params.toString()}`;
     } else if (todoText === '사례개념화 최초 작성') {
       url = `/clients/consults/detail?clientId=${clientId}`;
       if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;

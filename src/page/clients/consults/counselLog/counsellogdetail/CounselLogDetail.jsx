@@ -1,4 +1,4 @@
-import { sessionFind, sessionNoteFind, sessionNoteUpdate } from '@/api/apiCaller';
+import { sessionFind, sessionNoteFind, sessionNoteUpdate, sessionList } from '@/api/apiCaller';
 import AiPanelCommon from '@/components/AiPanelCommon';
 import ToastPop from '@/components/ToastPop';
 import Header from '@/layouts/Header';
@@ -460,12 +460,21 @@ useEffect(() => {
     });
   };
 
+  // 세션 목록 상태 추가
+  const [sessionList_data, setSessionListData] = useState([]);
+
   // URL 파라미터로부터 세션 데이터 로딩 (새로고침 대응)
   useEffect(() => {
     const fetchSessionData = async () => {
       if (sessionSeq && clientId) {
-        // 새로고침 시에는 항상 세션 데이터를 다시 가져옴
         try {
+          // 1. 세션 목록 먼저 조회 (sessionOrder 정보 등을 위해)
+          const listResponse = await sessionList(clientId);
+          if (listResponse.code === 200 && Array.isArray(listResponse.data)) {
+            setSessionListData(listResponse.data);
+          }
+
+          // 2. 현재 세션 상세 정보 조회
           const response = await sessionFind(clientId, sessionSeq);
           if (response.code === 200 && response.data) {
             setCurrentSession(response.data);
@@ -482,33 +491,93 @@ useEffect(() => {
     fetchSessionData();
   }, [sessionSeq, clientId]);
 
+  // 이전 회기의 추가증상 선기입 함수
+  const loadPreviousCustomSymptoms = async () => {
+    try {
+      if (!clientId || !currentSession?.sessionSeq || !sessionList_data.length) {
+        return;
+      }
+
+      // 1. 이미 로드된 세션 목록 사용
+      // 2. 현재 회기의 직전 회기 찾기 (sessionOrder 기준)
+      const currentOrder = currentSession.sessionOrder || 0;
+      const prevSession = sessionList_data
+        .filter(s => (s.sessionOrder || 0) < currentOrder)
+        .sort((a, b) => (b.sessionOrder || 0) - (a.sessionOrder || 0))[0];
+
+      if (!prevSession) {
+        return; // 직전 회기가 없음
+      }
+
+      // 3. 직전 회기의 상담일지 조회
+      const noteRes = await sessionNoteFind(prevSession.sessionSeq);
+      if (noteRes.code !== 200 || !noteRes.data) {
+        return;
+      }
+
+      const noteData = noteRes.data;
+      const customSymptomsFromPrev = [];
+
+      // 4. symptom01~04Active/Name 확인하여 추가증상 배열 생성
+      for (let i = 1; i <= 4; i++) {
+        const activeKey = `symptom0${i}Active`;
+        const nameKey = `symptom0${i}Name`;
+        
+        if (noteData[activeKey] && noteData[nameKey]?.trim()) {
+          const newId = `prev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          const symptom = {
+            id: newId,
+            name: noteData[nameKey].trim(),
+            editing: false,
+            error: false,
+            score: undefined // 점수는 초기화
+          };
+          customSymptomsFromPrev.push(symptom);
+        }
+      }
+
+      // 5. 추가증상이 있으면 SymptomTable에 렌더링
+      if (customSymptomsFromPrev.length > 0) {
+        setCustomSymptoms(customSymptomsFromPrev);
+      }
+    } catch (error) {
+      console.error('이전 회기 추가증상 로드 오류:', error);
+    }
+  };
+
   // 상담일지 데이터 로딩 (전역 상태 우선 확인, 없을 때만 API 호출)
   useEffect(() => {
     const fetchSessionNoteData = async () => {
       if (currentSession?.sessionSeq) {
         // 1. 전역 상태에서 해당 sessionSeq의 데이터가 있는지 확인
         if (sessionNote?.data && String(sessionNote.sessionSeq) === String(currentSession.sessionSeq)) {
-          // console.log('전역 상태에서 데이터 로드 성공:', sessionNote.data);
           mapSessionNoteToState(sessionNote.data);
+          // 상담일지가 있어도 이전 회기 추가증상 로드 시도
+          await loadPreviousCustomSymptoms();
           return;
         }
 
         // 2. 전역 상태에 없으면 API 호출
         try {
           const response = await sessionNoteFind(currentSession.sessionSeq);
+          
           if (response.code === 200 && response.data) {
-            // console.log('API 호출로 데이터 로드 성공:', response.data);
             setSessionNote({
               sessionSeq: String(currentSession.sessionSeq),
               data: response.data,
               updatedAt: Date.now(),
             });
             mapSessionNoteToState(response.data);
+            // 상담일지가 있어도 이전 회기 추가증상 로드 시도
+            await loadPreviousCustomSymptoms();
           } else {
-            console.error('상담일지 조회 실패:', response.message);
+            // 현재 회기의 상담일지가 없으면 이전 회기 추가증상 선기입
+            await loadPreviousCustomSymptoms();
           }
         } catch (error) {
-          console.error('상담일지 조회 오류:', error);
+          console.error('❌ 상담일지 조회 오류:', error);
+          // API 오류 시에도 이전 회기 추가증상 선기입 시도
+          await loadPreviousCustomSymptoms();
         }
       } else {
         // currentSession이 없으면 초기화
@@ -525,6 +594,7 @@ useEffect(() => {
           adhd: null,
           ptsd: null,
         });
+        setCustomSymptoms([]);
         setMainProblem('');
         setSessionContent('');
         setCounselorOpinion('');
@@ -537,7 +607,7 @@ useEffect(() => {
     };
 
     fetchSessionNoteData();
-  }, [currentSession, sessionNote]);
+  }, [currentSession, sessionNote, sessionList_data]);
 
   // 스크롤 이벤트
   useEffect(() => {

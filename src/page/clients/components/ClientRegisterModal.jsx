@@ -44,6 +44,14 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     display: 'block',
   });
 
+  // 연락처 입력 정규화: 숫자만 허용, 010은 11자리, 011은 10자리
+  const normalizePhone = (v) => {
+    const digits = (v || '').replace(/\D/g, '');
+    if (digits.startsWith('011')) return digits.slice(0, 10);
+    if (digits.startsWith('010')) return digits.slice(0, 11);
+    return digits.slice(0, 11);
+  };
+
   const handleInput = e => {
     setMemo(e.target.innerText);
   };
@@ -74,8 +82,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
       setForm(f => ({ ...f, emailDomain: value }));
       setSelectedEmailDomain(''); // select-box 선택 상태 초기화
     } else if (id === 'phoneNumber') {
-      // 연락처: 숫자만 허용, 최대 11자리(010 11자리, 011 10자리)
-      const digits = (value || '').replace(/\D/g, '').slice(0, 11);
+      // 연락처: 숫자만 허용, 010=11자리, 011=10자리
+      const digits = normalizePhone(value);
       setForm(f => ({ ...f, phoneNumber: digits }));
     } else {
       setForm(f => ({ ...f, [id]: value }));
@@ -141,15 +149,17 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
   }, [open, initialData]);
 
   useEffect(() => {
-    function handleClick(e) {
+    // pointerdown 단계에서 외부 클릭 감지 (React onClick보다 먼저 실행)
+    function handlePointerDown(e) {
       if (!e.target.closest('.select-box')) {
-        setOpenGuardianSelect([]);
+        const len = Array.isArray(form.guardians) ? form.guardians.length : 0;
+        setOpenGuardianSelect(Array(len).fill(false));
         setOpenEmailSelect(false);
       }
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [form.guardians]);
 
 
   // 메모 초기값 세팅 (editorRef + memo state 동기화)
@@ -248,14 +258,49 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
     }
     // 저장 시 editorRef에서 memo 읽기
     const memo = editorRef.current ? editorRef.current.innerText : '';
-    const safeForm = {
+    // 보호자 정보 검증/정제
+    let cleanedGuardians = [];
+    if (Array.isArray(form.guardians)) {
+      for (const g of form.guardians) {
+        if (!g || typeof g !== 'object') continue;
+        const rel = (g.guardianRelation || '').trim();
+        const name = (g.guardianName || '').trim();
+        const contact = (g.guardianContact || '').replace(/\D/g, '');
+        const allEmpty = !rel && !name && !contact;
+        if (allEmpty) {
+          // 완전 빈 행은 무시
+          continue;
+        }
+        const allFilled = !!rel && !!name && !!contact;
+        if (!allFilled) {
+          // 일부만 입력된 경우 저장 중단
+          setToastMessage('보호자 정보를 확인해 주세요.');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+          return;
+        }
+        // 모두 입력됨: 연락처 형식 검증(내담자와 동일 규칙)
+        if (!isValidPhone(contact)) {
+          setToastMessage('보호자 연락처 형식을 확인해 주세요.');
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+          return;
+        }
+        cleanedGuardians.push({ guardianRelation: rel, guardianName: name, guardianContact: contact });
+      }
+    }
+
+    // 기본 폼 구성
+    let safeForm = {
       ...form,
       memo,
-      // 최소 1개 보장하여 전송
-      guardians: Array.isArray(form.guardians) && form.guardians.length > 0 && form.guardians.every(g => typeof g === 'object')
-        ? form.guardians
-        : [{ guardianRelation: '', guardianName: '', guardianContact: '' }]
     };
+    // guardians는 유효 행이 있을 때만 포함
+    if (cleanedGuardians.length > 0) {
+      safeForm.guardians = cleanedGuardians;
+    } else {
+      delete safeForm.guardians;
+    }
     // onSave 결과를 기다려 실패 메시지를 모달 내부 토스트로 노출
     try {
       const result = await onSave(safeForm);
@@ -348,7 +393,14 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                 <li>
                   <label className="necessary" htmlFor="phoneNumber">연락처</label>
                   <div className="input-wrap">
-                    <input id="phoneNumber" value={form.phoneNumber || ""} onChange={handleFormChange} type="number" placeholder="- 없이 숫자만 입력" />
+                    <input
+                      id="phoneNumber"
+                      value={form.phoneNumber || ""}
+                      onChange={handleFormChange}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="- 없이 숫자만 입력"
+                    />
                   </div>
                 </li>
               </ul>
@@ -385,12 +437,14 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                             e.stopPropagation();
                             setOpenEmailSelect(open => !open);
                           }}
+                          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         >
                           {selectedEmailDomain || '선택'}
                         </button>
                         <ul ref={emailOptionListRef}
                           className={`option-list${openEmailSelect ? ' open' : ''}`}
-                          style={dropdownStyle(openEmailSelect)}>
+                          style={dropdownStyle(openEmailSelect)}
+                          onPointerDown={(e) => { e.stopPropagation(); }}>
                           {["naver.com","gmail.com","daum.net"].map(opt => (
                             <li key={opt} className={selectedEmailDomain === opt ? 'on' : ''}>
                               <a href="#" onClick={e => {
@@ -429,15 +483,21 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setOpenGuardianSelect(prev => prev.map((v, i) => i === idx ? !v : false));
+                                setOpenGuardianSelect(prev => {
+                                  const len = Array.isArray(form.guardians) ? form.guardians.length : 0;
+                                  const base = prev.length === len ? prev : Array(len).fill(false);
+                                  return base.map((v, i) => i === idx ? !v : false);
+                                });
                               }}
+                              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             >
                               {guardian.guardianRelation || '선택'}
                             </button>
                               <ul 
                                 ref={el => guardianOptionListRefs.current[idx] = el}
                                 className={`option-list${openGuardianSelect[idx] ? ' open' : ''}`}
-                                style={dropdownStyle(openGuardianSelect[idx])}>
+                                style={dropdownStyle(openGuardianSelect[idx])}
+                                onPointerDown={(e) => { e.stopPropagation(); }}>
                                   {["부","모","조부","조모","형(오빠)","누나(언니)","동생","선생님","사회복지사","담당자","기타"].map(opt => (
                                     <li key={opt} className={guardian.guardianRelation === opt ? 'on' : ''}>
                                       <a href="#" onClick={e => {
@@ -458,7 +518,18 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                             <input id={`guardian${indexStr}`} value={guardian.guardianName || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], guardianName: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="보호자 이름" />
                           </div>
                           <div className="input-wrap">
-                            <input id={`guardianPhone${indexStr}`} value={guardian.guardianContact || ""} onChange={e => setForm(f => {const arr = [...f.guardians]; arr[idx] = { ...arr[idx], guardianContact: e.target.value }; return {...f, guardians: arr};})} type="text" placeholder="연락처 ( - 없이 숫자만 입력 )" />
+                            <input
+                              id={`guardianPhone${indexStr}`}
+                              value={guardian.guardianContact || ""}
+                              onChange={e => setForm(f => {
+                                const arr = [...f.guardians];
+                                arr[idx] = { ...arr[idx], guardianContact: normalizePhone(e.target.value) };
+                                return { ...f, guardians: arr };
+                              })}
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="연락처 ( - 없이 숫자만 입력 )"
+                            />
                           </div>
                           {/* 최소 1명은 남도록, 1명일 때는 삭제버튼 비활성화 */}
                           <button

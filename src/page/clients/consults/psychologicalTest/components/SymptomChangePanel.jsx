@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SymptomResult from './SymptomResult';
 
 function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const targetIdRef = useRef(null);
 
   // 데이터가 없으면 렌더링하지 않음
   const navigationItems = Array.isArray(data) ? data.map(item => ({ id: item.id, label: item.caption })) : [];
@@ -12,13 +14,26 @@ function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const elementId = entry.target.id;
-            const index = navigationItems.findIndex(item => item.id === elementId);
-            if (index !== -1) {
-              setSelectedIndex(index);
+          if (!entry.isIntersecting) return;
+
+          const elementId = entry.target.id;
+          const index = navigationItems.findIndex(item => item.id === elementId);
+          if (index === -1) return;
+
+          // 네비게이팅 중에는 목표 섹션이 중앙에 왔을 때만 선택 반영
+          if (isNavigating) {
+            if (targetIdRef.current && elementId !== targetIdRef.current) {
+              return; // 목표가 아니면 무시
             }
+            // 목표 섹션 도달: 선택 반영 후 락 해제
+            setSelectedIndex(index);
+            setIsNavigating(false);
+            targetIdRef.current = null;
+            return;
           }
+
+          // 평상시(수동 스크롤)에는 관찰된 섹션으로 선택 반영
+          setSelectedIndex(index);
         });
       },
       {
@@ -39,7 +54,7 @@ function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
     return () => {
       observer.disconnect();
     };
-  }, [navigationItems]);
+  }, [navigationItems, isNavigating]);
 
   // 데이터 없으면 훅 호출 이후에 렌더링 중단
   if (!Array.isArray(data) || data.length === 0) {
@@ -61,8 +76,13 @@ function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
               <a
                 className={`cursor-pointer${selectedIndex === idx ? ' on' : ''}`}
                 onClick={() => {
-                  setSelectedIndex(idx);
-                  document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' });
+                  // 클릭 시에는 스크롤만 수행하고, 실제 선택 반영은 IntersectionObserver가 담당
+                  setIsNavigating(true);
+                  targetIdRef.current = item.id;
+                  document.getElementById(item.id)?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                  });
                 }}
               >
                 {item.label}

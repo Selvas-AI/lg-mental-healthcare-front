@@ -52,9 +52,10 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
       result = clients;
     } else {
       result = clients.filter(client => {
-        if (!client || !client.clientName) return false;
+        if (!client) return false;
         const clientName = client.clientName || '';
-        return clientName.includes(keyword);
+        const nickname = client.clientNickname || client.nickname || '';
+        return clientName.includes(keyword) || nickname.includes(keyword);
       });
     }
     // 검색 결과도 현재 정렬 순서에 따라 정렬
