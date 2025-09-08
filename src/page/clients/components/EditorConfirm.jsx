@@ -1,4 +1,5 @@
 import React from 'react'
+import useEscClose from '@/hooks/useEscClose';
 
 function EditorConfirm({ 
   open = false,
@@ -11,6 +12,10 @@ function EditorConfirm({
   onClose,
   className = ''
 }) {
+
+  // ESC 키로 모달 닫기: enabled 플래그로만 제어
+  useEscClose(open, onClose);
+
   if (!open) return null;
 
   return (

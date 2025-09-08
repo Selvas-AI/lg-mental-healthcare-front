@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import ToastPop from "@/components/ToastPop";
+import useEscClose from '@/hooks/useEscClose';
 
 function ClientRegisterModal({ open, onClose, onSave, mode = "register", initialData = null }) {
   const [openGuardianSelect, setOpenGuardianSelect] = useState([]);
@@ -10,6 +11,8 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
   const guardianOptionListRefs = useRef([]);
   const [guardianListHeights, setGuardianListHeights] = useState([]);
   const editorRef = useRef(null);
+  // ESC 키로 모달 닫기
+  useEscClose(open, onClose);
   const [memo, setMemo] = useState(initialData?.memo || "");
   const maxLength = 500;
   const isOver = memo.length > maxLength;

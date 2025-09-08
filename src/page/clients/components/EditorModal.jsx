@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import useEscClose from '@/hooks/useEscClose';
 
 function EditorModal({
   open = true,
@@ -22,6 +23,9 @@ function EditorModal({
     }
     setValue(initialValue || '');
   }, [initialValue, open]);
+
+  // ESC 키로 모달 닫기
+  useEscClose(open, onClose);
 
   if (!open) return null;
 
