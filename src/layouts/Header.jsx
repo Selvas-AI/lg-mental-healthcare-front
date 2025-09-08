@@ -8,7 +8,7 @@ function Header({ scroll, title, fold, rightActions }) {
   const location = useLocation();
   const navigate = useNavigate();
   const hideBackBtnPaths = ["/home","/schedule","/clients","/document","/mypage","/support"]; // 뒤로가기 버튼 미노출
-  const hideSwitchBtnPaths = ["/clients/recordings","/clients/consults/detail","/clients/consults/psychologicalTestDetail"]; // 개인정보 보호 버튼 미노출
+  const hideSwitchBtnPaths = ["/clients/recordings","/clients/consults/detail","/clients/consults/psychologicalTestDetail","/clients/consults/sessionAssessments"]; // 개인정보 보호 버튼 미노출
 
   const fadeStyle = useMemo(() => ({
     opacity: scroll ? 1 : 0,
@@ -23,7 +23,7 @@ function Header({ scroll, title, fold, rightActions }) {
       <div className="inner">
         <div className="left">
           {!hideBackBtnPaths.includes(location.pathname) && (
-            <button className="back-btn" type="button" aria-label="뒤로가기" onClick={() => navigate(-1)} style={location.pathname === "/clients/consults/psychologicalTestDetail" ? fadeStyle : {}}></button>
+            <button className="back-btn" type="button" aria-label="뒤로가기" onClick={() => navigate(-1)} style={location.pathname === "/clients/consults/psychologicalTestDetail" || location.pathname === "/clients/consults/sessionAssessments" ? fadeStyle : {}}></button>
           )}
           {title && (
             <strong className="page-title" style={fadeStyle}>{title}</strong>
