@@ -4,7 +4,7 @@ import ToastPop from '@/components/ToastPop';
 import Header from '@/layouts/Header';
 import { currentSessionState, foldState, sessionNoteState, supportPanelState } from '@/recoil';
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { currentRiskOptions, pastRiskOptions, riskFactorOptions, riskScaleOptions, symptomList } from './components/counselLogOptions';
 import CounselLogStep from './components/CounselLogStep';
@@ -20,6 +20,7 @@ import './notes.scss';
 
 function CounselLogDetail() {
   const location = useLocation();
+  const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const clientId = query.get('clientId');
   const sessionSeq = query.get('sessionSeq');
@@ -396,7 +397,6 @@ useEffect(() => {
       const response = await sessionNoteUpdate(notePayload);
       
       if (response.code === 200) {
-        showToastMessage('상담일지가 저장되었습니다.');
         // console.log('저장 성공:', response);
         // 저장 성공 시 Recoil 캐시를 최신 값으로 업데이트하여 영속 상태 유지
         if (currentSession?.sessionSeq) {
@@ -409,6 +409,12 @@ useEffect(() => {
             updatedAt: Date.now(),
           });
         }
+        // 저장 성공 후 이전 경로(consults)로 이동
+        const params = new URLSearchParams();
+        if (clientId) params.set('clientId', clientId);
+        if (sessionSeq) params.set('sessionSeq', sessionSeq);
+        params.set('toast', '상담일지가 저장되었습니다.');
+        navigate(`/clients/consults?${params.toString()}`);
       } else {
         showToastMessage('저장에 실패했습니다: ' + (response.message || '알 수 없는 오류'));
         console.error('저장 실패:', response);
