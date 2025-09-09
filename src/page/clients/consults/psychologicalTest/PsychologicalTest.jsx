@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import emptyFace from '@/assets/images/common/empty_face.svg';
@@ -32,6 +32,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
   const [symptomData, setSymptomData] = useState(null); // 증상별 변화 데이터
   const setGlobalEditorConfirm = useSetRecoilState(editorConfirmState);
   const location = useLocation();
+  const scrollRestoredRef = useRef(false);
 
   // 카테고리 매핑 정보
   const ASSESSMENT_CATEGORY_MAP = {
@@ -489,6 +490,47 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
       }
     })();
   }, [location.search, refreshKey, localRefreshKey, currentSession]);
+
+  // 상세에서 돌아올 때 스크롤 위치 복원: 쿼리 파라미터 scrollY 사용
+  useEffect(() => {
+    if (scrollRestoredRef.current) return;
+    const query = new URLSearchParams(location.search);
+    const scrollYParam = query.get('scrollY');
+    let y = scrollYParam != null ? parseInt(scrollYParam, 10) : NaN;
+    // 쿼리에 없으면 sessionStorage에서 복원 시도
+    if (!Number.isFinite(y)) {
+      try {
+        const saved = sessionStorage.getItem('psychologicalTest_scrollY');
+        if (saved != null) y = parseInt(saved, 10);
+      } catch {}
+    }
+    // 데이터 렌더링이 완료된 후 한 번만 복원
+    if (Number.isFinite(y) && Array.isArray(symptomData) && symptomData.length > 0) {
+      scrollRestoredRef.current = true;
+      // 레이아웃에 따라 약간의 딜레이 후 스크롤 적용
+      setTimeout(() => {
+        window.scrollTo({ top: y, left: 0, behavior: 'auto' });
+        // URL 정리: scrollY 파라미터 제거
+        try {
+          const cleaned = new URLSearchParams(location.search);
+          cleaned.delete('scrollY');
+          const newUrl = `${location.pathname}?${cleaned.toString()}`;
+          window.history.replaceState({}, '', newUrl);
+          // sessionStorage 정리
+          sessionStorage.removeItem('psychologicalTest_scrollY');
+        } catch {}
+      }, 0);
+    }
+  }, [location.search, symptomData]);
+
+  // 페이지 이탈 시(언마운트) 다음 페이지로 스크롤이 이어지지 않도록 초기화
+  useEffect(() => {
+    return () => {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      } catch {}
+    };
+  }, []);
 
   const handleCopyUrl = () => {
     showToastMessage?.('심리 검사지 전송 링크가 복사 되었습니다.');

@@ -96,18 +96,8 @@ const PsychologicalTestDetail = ({
         if (onBackClick) {
             onBackClick();
         } else {
-            // returnTab 파라미터로 올바른 탭으로 돌아가기
-            const clientId = searchParams.get('clientId');
-            const returnTab = searchParams.get('returnTab') || 'counsel';
-            const scrollY = searchParams.get('scrollY');
-            const targetRow = searchParams.get('targetRow');
-            
-            const backQuery = new URLSearchParams();
-            if (clientId) backQuery.set('clientId', clientId);
-            backQuery.set('tab', returnTab);
-            if (scrollY) backQuery.set('restoreScrollY', scrollY);
-            if (targetRow) backQuery.set('targetRow', targetRow);
-            navigate(`/clients/consults?${backQuery.toString()}`, { replace: true });
+            // 브라우저 뒤로가기와 동일하게 동작 (히스토리로 복귀)
+            navigate(-1);
         }
     };
 
