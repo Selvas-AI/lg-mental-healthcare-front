@@ -43,6 +43,15 @@ function Consults() {
   const [editOpen, setEditOpen] = useState(false);
   const setAudioUploadState = useSetRecoilState(audioUploadState);
 
+  // 탭 이동 시 최상단으로 스크롤 
+  useLayoutEffect(() => {
+    if (!tabParam) return;
+    // window 및 문서 루트에 대해 스크롤 초기화
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [tabParam]);
+
   // URL 파라미터 영속화 키
   const LS_CLIENT_ID_KEY = 'lastClientId';
   const LS_SESSION_SEQ_KEY = 'lastSessionSeq';
