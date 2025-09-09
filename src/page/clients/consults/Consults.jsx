@@ -256,6 +256,19 @@ function Consults() {
     fetchClientData();
   }, [clientId, client, setClients]);
   
+  // 쿼리 파라미터로 전달된 toast 메시지 표시 후 정리
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const toast = params.get('toast');
+    if (toast) {
+      showToastMessage(toast);
+      // URL에서 toast 파라미터 제거 (새 엔트리 생성 없이 정리)
+      params.delete('toast');
+      const cleanUrl = `${location.pathname}?${params.toString()}`;
+      window.history.replaceState(window.history.state, '', cleanUrl);
+    }
+  }, [location.search]);
+  
   // 스크롤 위치 복원 처리
   useLayoutEffect(() => {
     const restoreScrollY = query.get('restoreScrollY');
