@@ -169,7 +169,7 @@ function ClientsTable({ onSelectClient, selectedClientId, memoClient, setMemoCli
       url = `/clients/consults?clientId=${clientId}`;
       if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
       url += `&tab=survey`;
-    } else if (todoText === '사례개념화 최초 작성') {
+    } else if (todoText === '사례개념화 최초 작성' || todoText === '상담일지 작성') {
       url = `/clients/consults/detail?clientId=${clientId}`;
       if (sessionSeq) url += `&sessionSeq=${sessionSeq}`;
     }
