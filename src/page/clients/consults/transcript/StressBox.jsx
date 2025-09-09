@@ -14,16 +14,21 @@ function StressBox({ data, labels, onAIGenerate, isAiAnalysis }) {
     const ctx = canvas.getContext('2d');
     const maxIndex = data.indexOf(Math.max(...data));
     const pointRadiusArray = data.map((_, i) => i === maxIndex ? 5 : 0);
-    const gradientFill = ctx.createLinearGradient(0, 0, 0, 111);
-    gradientFill.addColorStop(0, 'rgba(49, 137, 255, 0.3)');
-    gradientFill.addColorStop(1, 'rgba(49, 137, 255, 0.0)');
 
-    // Y축 동적 스케일: 최대값이 소수면 올림, 정수면 그대로 (최소 상한 10 유지)
+    // Y축 동적 스케일: 최대값 기본 로직 유지 + 5단위 스냅, 최소값은 데이터 기반 5단위 스냅
     const rawMax = Math.max(...data);
     const normalizedMax = Number.isFinite(rawMax)
       ? (Number.isInteger(rawMax) ? rawMax : Math.ceil(rawMax))
       : 10;
-    const yMax = Math.max(10, normalizedMax);
+    let yMax = Math.max(10, normalizedMax);
+    // 최대값 5단위 올림 스냅
+    yMax = Math.ceil(yMax / 5) * 5;
+    // 최소값 5단위 내림 스냅
+    const rawMin = Math.min(...data);
+    let yMin = Number.isFinite(rawMin) ? Math.floor(rawMin / 5) * 5 : 0;
+    // 동일값인 경우 최소 범위 보장
+    if (yMax === yMin) yMax = yMin + 5;
+    // 눈금 간격(step): 최대값이 20 이하이면 2단위, 50 이하이면 5단위, 그 이상이면 10단위
     const step = yMax <= 20 ? 2 : yMax <= 50 ? 5 : 10;
 
     const pluginShowMaxTooltip = {
@@ -145,10 +150,18 @@ function StressBox({ data, labels, onAIGenerate, isAiAnalysis }) {
         datasets: [{
           label: '스트레스 징후',
           data,
-          fill: true,
-          backgroundColor: gradientFill,
+          fill: { target: 'start' },
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return null; // 초기 레이아웃 전에는 chartArea가 없음
+            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(1, 'rgba(49, 137, 255, 0.00)');
+            gradient.addColorStop(0, 'rgba(49, 137, 255, 0.50)');
+            return gradient;
+          },
           borderColor: '#3189FF',
-          borderWidth: 2,
+          borderWidth: 1.5,
           tension: 0.3,
           pointRadius: pointRadiusArray,
           pointHoverRadius: 5,
@@ -233,9 +246,8 @@ function StressBox({ data, labels, onAIGenerate, isAiAnalysis }) {
             display: false,
           },
           y: {
-            beginAtZero: true,
             max: yMax,
-            min: 0,
+            min: yMin,
             ticks: {
               autoSkip: false,
               stepSize: step,

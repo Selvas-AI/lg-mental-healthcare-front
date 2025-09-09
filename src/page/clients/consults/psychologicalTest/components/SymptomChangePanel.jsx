@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import SymptomResult from './SymptomResult';
 
 function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
   const targetIdRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   // 데이터가 없으면 렌더링하지 않음
-  const navigationItems = Array.isArray(data) ? data.map(item => ({ id: item.id, label: item.caption })) : [];
+  const navigationItems = useMemo(() => (
+    Array.isArray(data) ? data.map(item => ({ id: item.id, label: item.caption })) : []
+  ), [data]);
 
   // 스크롤 위치에 따른 selectedIndex 자동 업데이트
   useEffect(() => {
@@ -37,6 +40,7 @@ function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
         });
       },
       {
+        // 실제 스크롤이 윈도우에서 일어나는 경우가 많으므로 viewport 기준으로 관찰
         root: null,
         rootMargin: '-50% 0px -50% 0px', // 요소가 화면 중앙에 올 때 트리거
         threshold: 0
@@ -69,8 +73,10 @@ function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
           <button className="type05" type="button" onClick={onOpenSurveySendModal}>심리 검사지 전송</button>
         )} */}
       </div>
-      <div className="move-control">
-        <ul>
+      {/* 로컬 스크롤 컨테이너 */}
+      <div className="changes-scroll" ref={scrollContainerRef}>
+        <div className="move-control">
+          <ul>
           {navigationItems.map((item, idx) => (
             <li key={item.id}>
               <a
@@ -89,13 +95,14 @@ function SymptomChangePanel({ data, onOpenSurveySendModal, hideSendButton }) {
               </a>
             </li>
           ))}
-        </ul>
-      </div>
-      {/* 증상별 변화 알아보기 */}
-      <div className="sticky-area">
-        {data.map(d => (
-          <SymptomResult key={d.id} {...d} />
-        ))}
+          </ul>
+        </div>
+        {/* 증상별 변화 알아보기 */}
+        <div className="sticky-area">
+          {data.map(d => (
+            <SymptomResult key={d.id} {...d} />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -44,8 +44,9 @@
         width: calc(100% - 7.6rem);
         transition: all .3s;
     }
-    header {
-        background: linear-gradient(90deg, #E5F5EC 0%, #F2F7F6 53.45%, #F4F8F8 100%);
+    header { // 헤더 배경 제거
+        // background: linear-gradient(90deg, #E5F5EC 0%, #F2F7F6 53.45%, #F4F8F8 100%);
+        background: transparent !important;
     }
     &.gray-bg {
         background: linear-gradient(0deg, #EEF4F4 0%, #EEF4F4 100%), #F4F8F8;
@@ -53,14 +54,16 @@
             content: none;
         }
         header {
-            background: #EEF4F4;
+            background: #EEF4F4 !important;
         }
     }
     main {
         position: relative;
         width: calc(100% - 18rem);
-        min-height: calc(100vh - 8rem);
-        margin-top: 8rem;
+        // min-height: calc(100vh - 8rem);
+        min-height: calc(100vh) !important;
+        margin-top: 0 !important;
+        padding-top: 8rem;
         margin-left: 18rem;
         transition: all .3s;
         > .inner {
@@ -85,6 +88,7 @@ header {
     &.scroll {
         border-bottom: 1px solid #DCEBE3;
         backdrop-filter: blur(7px);
+        background: linear-gradient(90deg, #E5F5EC 0%, #F2F7F6 53.45%, #F4F8F8 100%) !important;
     }
     &.on {
         left: 7.6rem;

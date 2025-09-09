@@ -15,6 +15,10 @@ const SymptomResult = ({ id, title, caption, canvas, table }) => {
     const handleDetailClick = (row) => {
         // 현재 스크롤 위치 저장
         const currentScrollY = window.scrollY;
+        try {
+            // 목록 페이지 복원을 위해 세션 스토리지에 저장
+            sessionStorage.setItem('psychologicalTest_scrollY', String(currentScrollY));
+        } catch {}
 
         // 현재 URL에서 쿼리 파라미터 가져오기
         const currentQuery = new URLSearchParams(location.search);
