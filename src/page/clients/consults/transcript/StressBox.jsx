@@ -23,15 +23,15 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
       : -1;
     const pointRadiusArray = data.map((v, i) => (i === maxIndex ? 5 : 0));
 
-    // Y축 동적 스케일(0.5 단위): 최소값 0.5 내림, 최대값 0.5 올림
+    // Y축 동적 스케일(정수 단위): 최소값 정수 내림, 최대값 정수 올림
     const rawMax = numericValues.length ? Math.max(...numericValues) : NaN;
     const rawMin = numericValues.length ? Math.min(...numericValues) : NaN;
-    let yMax = Number.isFinite(rawMax) ? Math.ceil(rawMax * 2) / 2 : 10; // 0.5 올림
-    let yMin = Number.isFinite(rawMin) ? Math.floor(rawMin * 2) / 2 : 0;  // 0.5 내림
-    // 동일값인 경우 최소 범위 보장(0.5)
-    if (yMax === yMin) yMax = yMin + 0.5;
-    // 눈금 간격: 0.5 단위
-    const step = 0.5;
+    let yMax = Number.isFinite(rawMax) ? Math.ceil(rawMax) : 10; // 정수 올림
+    let yMin = Number.isFinite(rawMin) ? Math.floor(rawMin) : 0;  // 정수 내림
+    // 동일값인 경우 최소 범위 보장(1)
+    if (yMax === yMin) yMax = yMin + 1;
+    // 눈금 간격: 1 단위
+    const step = 1;
 
     const pluginShowMaxTooltip = {
       id: 'showMaxTooltip',
@@ -206,7 +206,8 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
         }]
       },
       options: {
-        responsive: false,
+        responsive: true,
+        maintainAspectRatio: false,
         elements: {
           point: { radius: 0 }
         },
@@ -291,7 +292,7 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
               color: '#7A8A93',
               callback: function(value) {
                 const num = Number(value);
-                return Number.isFinite(num) ? num.toFixed(1) : value;
+                return Number.isFinite(num) ? Math.round(num).toString() : value;
               }
             },
             grid: { color: '#DCE4E7' },
@@ -316,7 +317,7 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
           </div>
         </div>
       ) : (
-        <div className="stress box">
+        <div className="stress box" style={{maxHeight: '256px'}}>
           {!isAiAnalysis ? <div className="box-tit">
             <strong>5. 스트레스 징후</strong>
           </div> : null}
@@ -331,13 +332,13 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
               />
             </div>
           ) : (
-            <canvas
-              ref={canvasRef}
-              className="line-chart"
-              width="1040"
-              height="158"
-              style={{ position: 'relative', marginTop: '1rem' }}
-            />
+            <div style={{ height: '168px' }}>
+              <canvas
+                ref={canvasRef}
+                className="line-chart"
+                style={{ position: 'relative', marginTop: '1rem', width: '100%', height: '100%' }}
+              />
+            </div>
           )}
         </div>
       )}
