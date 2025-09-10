@@ -21,6 +21,7 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
     const maxIndex = numericValues.length
       ? numericIndices[numericValues.indexOf(Math.max(...numericValues))]
       : -1;
+    // 버킷 기준: 최대값 버킷(maxIndex)을 강조
     const pointRadiusArray = data.map((v, i) => (i === maxIndex ? 5 : 0));
 
     // Y축 동적 스케일(정수 단위): 최소값 정수 내림, 최대값 정수 올림
@@ -38,13 +39,8 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
       afterDatasetsDraw(chart) {
         const { ctx } = chart;
         const meta = chart.getDatasetMeta(0);
-        const ds = chart.data.datasets[0].data;
-        // 숫자 요소만 고려하여 최대값 인덱스 계산
-        const nIdx = ds.map((v, i) => (typeof v === 'number' && Number.isFinite(v) ? i : null)).filter(i => i !== null);
-        if (!nIdx.length) return;
-        const nVals = nIdx.map(i => ds[i]);
-        const maxIndexLocal = nIdx[nVals.indexOf(Math.max(...nVals))];
-        const point = meta.data[maxIndexLocal];
+        // 버킷 기준: 최대값 버킷 위치에 배지 표시
+        const point = meta.data[maxIndex];
         if (!point) return;
         const { x, y } = point.getProps(['x', 'y'], true);
         ctx.save();
@@ -71,16 +67,8 @@ function StressBox({ data, labels, peakSec, onAIGenerate, isAiAnalysis }) {
         ctx.strokeStyle = '#3467AA';
         ctx.stroke();
         const label = chart.data.labels[maxIndex];
-        // peakSec이 전달되면 정확한 최고 시각(mm분 ss초)을 사용
-        let text;
-        if (typeof peakSec === 'number' && Number.isFinite(peakSec)) {
-          const sec = Math.max(0, Math.round(peakSec));
-          const mm = Math.floor(sec / 60);
-          const ss = sec % 60;
-          text = `최고 ${mm}:${ss}`;
-        } else {
-          text = `최고 ${label}`;
-        }
+        // 텍스트도 버킷 범위 라벨 사용
+        const text = `최고 ${label}`;
         ctx.font = 'bold 14px Pretendard';
         const paddingX = 8;
         const paddingY = 4;

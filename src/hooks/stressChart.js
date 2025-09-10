@@ -52,21 +52,18 @@ export function buildStressChartBuckets(raw, bucketSizeSeconds = 180, options = 
   const labels = [];
   let lastValue = null; // forward-fill을 위한 최근 값 저장
 
-  // 전체 세그먼트 중 최고값 시점(중간 지점)을 peakSec으로 계산
+  // 전체 세그먼트 중 pass10 최대값의 "시작 시각"(초)을 peakSec으로 설정
   let peakSec = null;
   if (segments.length > 0) {
     let maxVal = -Infinity;
     let peakStart = 0;
-    let peakEnd = 0;
     for (const s of segments) {
       if (s.val > maxVal) {
         maxVal = s.val;
         peakStart = s.start;
-        peakEnd = s.end;
       }
     }
-    const mid = (peakStart + peakEnd) / 2;
-    peakSec = Math.max(0, Math.round(mid));
+    peakSec = Math.max(0, Math.round(peakStart));
   }
 
   for (let i = 0; i < bucketCount; i++) {
