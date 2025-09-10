@@ -11,6 +11,7 @@ import AiAnalysis from "./AiAnalysis";
 import AiTranscriptPanel from "./AiTranscriptPanel";
 import { audioDownload, transcriptFind, audioFind, sessionFind, sessionMngFind, sessionMngUpdate } from '@/api/apiCaller';
 import { useLocation } from 'react-router-dom';
+import { buildStressChartBuckets } from '@/hooks/stressChart';
 
 function Recordings() {
   const location = useLocation();
@@ -126,7 +127,9 @@ function Recordings() {
                   frequencyData = JSON.parse(mngData.utteranceFrequencyJson);
                 }
                 if (mngData.stressIndicatorsJson) {
-                  stressData = JSON.parse(mngData.stressIndicatorsJson);
+                  const parsed = JSON.parse(mngData.stressIndicatorsJson);
+                  // 3분 버킷 평균으로 변환
+                  stressData = buildStressChartBuckets(parsed, 180, { forwardFill: true, labelRange: true });
                 }
               } catch (parseError) {
                 console.error('JSON 파싱 오류:', parseError);
@@ -137,11 +140,14 @@ function Recordings() {
                 ...prev,
                 summary: mngData.counselingSummaryText ?? prev.summary ?? '',
                 issue: mngData.concernTopicText ?? prev.issue ?? '',
+                // 표시용 스트레스 차트 데이터도 함께 반영
+                stress: stressData,
                 rawMngData: {
                   ...mngData,
                   parsedKeyword: keywordData,
                   parsedFrequency: frequencyData,
-                  parsedStress: stressData
+                  // 원본 JSON은 그대로 두고, 차트 변환 결과는 별도 키로 보관 가능
+                  parsedStress: mngData.stressIndicatorsJson || null
                 }
               }));
               // 재조회한 데이터 구조 반환
@@ -498,7 +504,13 @@ function Recordings() {
           next.frequency = stepData || { counselor: { minutes: 0 }, client: { minutes: 0 } };
           break;
         case 'stress':
-          next.stress = stepData || { data: [], labels: [] };
+          // stepData가 원본(raw)일 수도, 이미 {data, labels}일 수도 있어 정규화
+          if (stepData && (Array.isArray(stepData.data) && Array.isArray(stepData.labels))) {
+            next.stress = stepData;
+          } else {
+            // raw 객체/문자열로 가정하고 변환 시도
+            next.stress = buildStressChartBuckets(stepData, 180, { forwardFill: true, labelRange: true });
+          }
           break;
         default:
           break;

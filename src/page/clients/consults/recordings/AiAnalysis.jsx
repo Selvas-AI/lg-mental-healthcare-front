@@ -4,6 +4,7 @@ import KeywordBubblePack from './../transcript/KeywordBubblePack';
 import FrequencyBox from './../transcript/FrequencyBox';
 import StressBox from './../transcript/StressBox';
 import CustomTextarea from '@/components/CustomTextarea';
+import { buildStressChartBuckets } from '@/hooks/stressChart';
 
 function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeIssue }) {
   const [editSummary, setEditSummary] = useState(false);
@@ -13,39 +14,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeI
   const [issueEditorOpen, setIssueEditorOpen] = useState(!!AiSummaryData?.issue);
   const keywordData = AiSummaryData?.rawMngData?.parsedKeyword ?? AiSummaryData?.keyword;
 
-  // 안전 JSON 파서
-  const parseJsonSafely = (input) => {
-    try {
-      if (input == null) return null;
-      if (typeof input === 'object') return input;
-      if (typeof input !== 'string') return null;
-      const trimmed = input.trim();
-      if (!trimmed) return null;
-      const normalized = trimmed.replace(/,(\s*[}\]])/g, '$1');
-      return JSON.parse(normalized);
-    } catch (_) {
-      return null;
-    }
-  };
-
-  // stressDetail -> {data, labels} (라벨 = startSec 기반)
-  const buildStressChart = (raw) => {
-    const obj = parseJsonSafely(raw);
-    const details = obj?.stressDetail;
-    if (!Array.isArray(details) || details.length === 0) return { data: [], labels: [] };
-    const points = details.map((d) => {
-      const s = Number(d.startSec) || 0;
-      const v = typeof d.pass10 === 'number' ? d.pass10 : Number(d.pass10) || 0;
-      return { t: Math.max(0, s), v };
-    }).sort((a, b) => a.t - b.t);
-    const toLabel = (sec) => {
-      const s = Math.max(0, Math.floor(sec));
-      const m = Math.floor(s / 60);
-      const r = s % 60;
-      return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
-    };
-    return { data: points.map(p => Math.round(p.v * 100) / 100), labels: points.map(p => toLabel(p.t)) };
-  };
+  // 로컬 변환기는 제거하고 공용 유틸을 사용합니다.
 
   // 외부 데이터로 요약/고민주제가 도착하면 에디터를 표시 상태로 유지
   useEffect(() => {
@@ -150,24 +119,27 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeI
             )}
             {/* 스트레스 징후 */}
             {(() => {
-              // Transcript와 동일한 우선순위로 원본 JSON을 찾음
-              const rawJson = (
-                AiSummaryData?.stressIndicatorsJson ||
-                AiSummaryData?.rawMngData?.stressIndicatorsJson ||
-                null
-              );
-              // raw JSON이 없고 parsedStress가 객체로 들어온 경우 보조 처리
+              // 우선순위:
+              // 1) 이미 변환된 데이터가 상태에 있는 경우 그대로 사용
+              // 2) 원본 JSON이 있다면 3분 버킷 평균으로 변환
+              // 3) parsedStress 보조 키가 있다면 변환
               let stressChart = { data: [], labels: [] };
-              if (rawJson) {
-                stressChart = buildStressChart(rawJson);
-              } else if (AiSummaryData?.rawMngData?.parsedStress) {
-                // parsedStress가 배열 또는 {stressDetail: []} 형태 모두 지원
-                const parsed = AiSummaryData.rawMngData.parsedStress;
-                const obj = Array.isArray(parsed) ? { stressDetail: parsed } : parsed;
-                stressChart = buildStressChart(obj);
-              } else if (Array.isArray(AiSummaryData?.stress?.data)) {
-                // 레거시 포맷 대비
+
+              if (AiSummaryData?.stress && Array.isArray(AiSummaryData.stress.data) && AiSummaryData.stress.data.length > 0) {
                 stressChart = AiSummaryData.stress;
+              } else {
+                const rawJson = (
+                  AiSummaryData?.stressIndicatorsJson ||
+                  AiSummaryData?.rawMngData?.stressIndicatorsJson ||
+                  null
+                );
+                if (rawJson) {
+                  stressChart = buildStressChartBuckets(rawJson, 180, { forwardFill: true, labelRange: true });
+                } else if (AiSummaryData?.rawMngData?.parsedStress) {
+                  const parsed = AiSummaryData.rawMngData.parsedStress;
+                  const obj = Array.isArray(parsed) ? { stressDetail: parsed } : parsed;
+                  stressChart = buildStressChartBuckets(obj, 180, { forwardFill: true, labelRange: true });
+                }
               }
 
               return Array.isArray(stressChart?.data) && stressChart.data.length > 0 ? (
@@ -175,7 +147,7 @@ function AiAnalysis({ onAiCreateClick, AiSummaryData, onChangeSummary, onChangeI
                   <div className="box-tit">
                     <strong>5. 스트레스 징후</strong>
                   </div>
-                  <StressBox data={stressChart.data} labels={stressChart.labels} isAiAnalysis={true}/>
+                  <StressBox data={stressChart.data} labels={stressChart.labels} peakSec={stressChart.peakSec} isAiAnalysis={true}/>
                 </div>
               ) : (
                 <div className="stress box">

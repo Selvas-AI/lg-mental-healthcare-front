@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { buildStressChartBuckets } from '@/hooks/stressChart';
 import emptyFace from "@/assets/images/common/empty_face.svg";
 
 // import KeywordBox from "./KeywordBox";
@@ -181,32 +182,8 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     }
   };
 
-  // 스트레스 지표 JSON(stressDetail)을 차트용으로 변환 (라벨= startSec 기반)
-  const buildStressChart = (raw) => {
-    const obj = parseJsonSafely(raw);
-    const details = obj?.stressDetail;
-    if (!Array.isArray(details) || details.length === 0) {
-      return { data: [], labels: [] };
-    }
-    // 시작 시간(startSec) 기준으로 타임시리즈 구성
-    const points = details.map((d) => {
-      const start = Number(d.startSec) || 0;
-      const value = typeof d.pass10 === 'number' ? d.pass10 : Number(d.pass10) || 0;
-      return { t: Math.max(0, start), v: value };
-    }).sort((a, b) => a.t - b.t);
-
-    const toLabel = (sec) => {
-      const s = Math.max(0, Math.floor(sec));
-      const m = Math.floor(s / 60);
-      const r = s % 60;
-      return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
-    };
-
-    return {
-      data: points.map(p => Math.round(p.v * 100) / 100),
-      labels: points.map(p => toLabel(p.t)),
-    };
-  };
+  // 스트레스 지표 JSON(stressDetail)을 3분(180s) 버킷 평균으로 변환 (공용 유틸 사용)
+  const buildStressChart = (raw) => buildStressChartBuckets(raw, 180, { forwardFill: true, labelRange: true });
 
   // AiTranscriptPanel의 extractTextParts 로직과 동일: 요약 JSON에서 텍스트만 추출
   const extractTextParts = (value) => {
@@ -513,6 +490,7 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
             <StressBox
               data={transcriptData?.stress?.data}
               labels={transcriptData?.stress?.labels}
+              peakSec={transcriptData?.stress?.peakSec}
               onAIGenerate={handleAIGenerate}
             />
           </div>
