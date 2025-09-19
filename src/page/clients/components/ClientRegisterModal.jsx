@@ -381,11 +381,11 @@ function ClientRegisterModal({ open, onClose, onSave, mode = "register", initial
                   <span className="input-tit necessary">성별</span>
                   <div className="input-cont">
                     <div className="input-wrap radio">
-                      <input id="male" type="radio" name="gender" value="male" checked={form.gender === "male"} onChange={e => setForm({ ...form, gender: e.target.value })} />
+                      <input id="male" type="radio" name="gender" value="M" checked={form.gender === "M"} onChange={e => setForm({ ...form, gender: e.target.value })} />
                       <label htmlFor="male">남성</label>
                     </div>
                     <div className="input-wrap radio">
-                      <input id="female" type="radio" name="gender" value="female" checked={form.gender === "female"} onChange={e => setForm({ ...form, gender: e.target.value })} />
+                      <input id="female" type="radio" name="gender" value="F" checked={form.gender === "F"} onChange={e => setForm({ ...form, gender: e.target.value })} />
                       <label htmlFor="female">여성</label>
                     </div>
                   </div>
