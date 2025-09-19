@@ -13,7 +13,7 @@
   width: 100%;
 }
 
-.logo {
+.download-page .logo {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -22,12 +22,12 @@
   margin-bottom: 60px;
 }
 
-.logo .img-logo {
+.download-page .logo .img-logo {
   width: 7.4rem;
   height: 7.4rem;
 }
 
-.logo .txt-logo {
+.download-page .logo .txt-logo {
   width: 8.9rem;
   height: 2.8rem;
 }
@@ -37,7 +37,7 @@
   text-align: center;
 }
 
-.download-btn {
+.download-page .download-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,33 +53,33 @@
   margin-bottom: 15px;
 }
 
-.android-btn {
+.download-page .android-btn {
   background: #34a853;
   color: white;
 }
 
-.android-btn:hover {
+.download-page .android-btn:hover {
   background: #2d8f47;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(52, 168, 83, 0.3);
 }
 
-.ios-btn {
+.download-page .ios-btn {
   background: #007aff;
   color: white;
 }
 
-.ios-btn.disabled {
+.download-page .ios-btn.disabled {
   background: #cccccc;
   color: #666666;
   cursor: not-allowed;
 }
 
-.platform-icon {
+.download-page .platform-icon {
   flex-shrink: 0;
 }
 
-.usage-text {
+.download-page .usage-text {
   color: #666666;
   font-size: 1.6rem;
   line-height: 1.4;
