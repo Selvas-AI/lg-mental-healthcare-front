@@ -246,7 +246,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
         const obj = JSON.parse(s);
         return {
           answerText: obj?.llm_answer ?? '',
-          feedbackText: obj?.llm_feedback ?? '',
+          feedbackText: '', // llm_feedback은 추후 사용 예정
         };
       } catch {
         // 순수 텍스트로 온 경우 llm_answer로 간주
@@ -256,7 +256,7 @@ function PsychologicalTest({ onOpenSurveySendModal, refreshKey, showToastMessage
     // 객체로 온 경우
     return {
       answerText: data?.llm_answer ?? '',
-      feedbackText: data?.llm_feedback ?? '',
+      feedbackText: '', // llm_feedback은 추후 사용 예정
     };
   }, [aiOverallInsight]);
 

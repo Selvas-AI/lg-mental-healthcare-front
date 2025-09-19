@@ -15,8 +15,8 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
     // JSON 문자열인지 시도
     try {
       const obj = JSON.parse(value);
-      if (typeof obj === 'object' && (obj.llm_answer || obj.llm_feedback)) {
-        return { answer: obj.llm_answer || '', feedback: obj.llm_feedback || '' };
+      if (typeof obj === 'object' && obj.llm_answer) {
+        return { answer: obj.llm_answer || '', feedback: '' }; // llm_feedback은 추후 사용 예정
       }
       // 파싱 성공했지만 원하는 구조가 아니면 원래 문자열 반환
       return { answer: value, feedback: '' };
@@ -27,8 +27,9 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
   }
   if (typeof value === 'object') {
     const answer = value.llm_answer || '';
-    const feedback = value.llm_feedback || '';
-    if (answer || feedback) return { answer, feedback };
+    // llm_feedback은 추후 사용 예정
+    // const feedback = value.llm_feedback || '';
+    if (answer) return { answer, feedback: '' };
   }
   return { answer: '', feedback: '' };
 };
@@ -74,14 +75,14 @@ function AiTranscriptPanel({ open, onClose, status = "creating", AiSummaryData, 
       switch (panelType) {
         case "summary": {
           const src = AiSummaryData.rawMngData?.counselingSummaryAi || AiSummaryData.summary || AiSummaryData.rawMngData?.counselingSummaryText || '';
-          const { answer, feedback } = extractTextParts(src);
-          stepData = [answer, feedback].filter(Boolean).join('\n\n');
+          const { answer } = extractTextParts(src);
+          stepData = answer; // llm_answer만 사용
           break;
         }
         case "issue": {
           const src = AiSummaryData.rawMngData?.concernTopicAi || AiSummaryData.issue || AiSummaryData.rawMngData?.concernTopicText || '';
-          const { answer, feedback } = extractTextParts(src);
-          stepData = [answer, feedback].filter(Boolean).join('\n\n');
+          const { answer } = extractTextParts(src);
+          stepData = answer; // llm_answer만 사용
           break;
         }
         default:

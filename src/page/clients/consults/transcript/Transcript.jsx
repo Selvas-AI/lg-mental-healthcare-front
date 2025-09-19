@@ -191,8 +191,8 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     if (typeof value === 'string') {
       try {
         const obj = JSON.parse(value);
-        if (typeof obj === 'object' && (obj.llm_answer || obj.llm_feedback)) {
-          return { answer: obj.llm_answer || '', feedback: obj.llm_feedback || '' };
+        if (typeof obj === 'object' && obj.llm_answer) {
+          return { answer: obj.llm_answer || '', feedback: '' }; // llm_feedback은 추후 사용 예정
         }
         return { answer: value, feedback: '' };
       } catch {
@@ -201,8 +201,9 @@ function Transcript({ setShowUploadModal, sessionMngData, sessionData, audioData
     }
     if (typeof value === 'object') {
       const answer = value.llm_answer || '';
-      const feedback = value.llm_feedback || '';
-      if (answer || feedback) return { answer, feedback };
+      // llm_feedback은 추후 사용 예정
+      // const feedback = value.llm_feedback || '';
+      if (answer) return { answer, feedback: '' };
     }
     return { answer: '', feedback: '' };
   };
