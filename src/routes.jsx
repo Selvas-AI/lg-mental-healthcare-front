@@ -17,6 +17,7 @@ import CounselLogDetail from "./page/clients/consults/counselLog/counsellogdetai
 import PsychologicalTestDetail from "./page/clients/consults/psychologicalTest/components/PsychologicalTestDetail.jsx";
 import SessionAssessmentsDetail from "./page/clients/consults/document/SessionAssessmentsDetail.jsx";
 import ClientSurvey from "./page/client-survey/ClientSurvey.jsx";
+import Download from "./page/download/Download.jsx";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,11 @@ const router = createBrowserRouter([
   {
     path: "/client-survey",
     element: <ClientSurvey />,
+  },
+  // APK 다운로드 페이지 (로그인 불필요)
+  {
+    path: "/download",
+    element: <Download />,
   },
   {
     path: "/",
