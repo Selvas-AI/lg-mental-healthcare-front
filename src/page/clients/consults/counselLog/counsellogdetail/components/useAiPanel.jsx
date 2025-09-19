@@ -26,12 +26,14 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
                 <div className="ai-answer" style={{ whiteSpace: 'pre-wrap' }}>
                   {aiGeneratedData.mainProblem.llm_answer}
                 </div>
+                {/* llm_feedback은 추후 사용 예정
                 <br/>
                 {aiGeneratedData.mainProblem.llm_feedback && (
                   <div className="ai-feedback" style={{ whiteSpace: 'pre-wrap' }}>
                     {aiGeneratedData.mainProblem.llm_feedback}
                   </div>
                 )}
+                */}
               </div>
             </div>
           );
@@ -54,12 +56,14 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
                 <div className="ai-answer" style={{ whiteSpace: 'pre-wrap' }}>
                   {aiGeneratedData.sessionContent.llm_answer}
                 </div>
+                {/* llm_feedback은 추후 사용 예정
                 <br/>
                 {aiGeneratedData.sessionContent.llm_feedback && (
                   <div className="ai-feedback" style={{ whiteSpace: 'pre-wrap' }}>
                     {aiGeneratedData.sessionContent.llm_feedback}
                   </div>
                 )}
+                */}
               </div>
             </div>
           );
@@ -82,10 +86,12 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
                 <div className="ai-answer">
                   {aiGeneratedData.nextPlan.llm_answer}
                 </div>
+                {/* llm_feedback은 추후 사용 예정
                 <br/>
                 {aiGeneratedData.nextPlan.llm_feedback && (
                   <div>{aiGeneratedData.nextPlan.llm_feedback}</div>
                 )}
+                */}
               </div>
             </div>
           );
@@ -114,29 +120,32 @@ export const useAiPanel = (sessionSeq, showToastMessage) => {
   // AI 패널 확정하기 콜백
   const handleAiConfirm = (setNextPlan, setMainProblem, setSessionContent) => {
     if (aiPanelKey === 'nextPlan' && aiGeneratedData.nextPlan?.llm_answer) {
-      // 다음 상담 계획 텍스트를 nextPlan 상태에 반영 (llm_feedback도 포함)
+      // 다음 상담 계획 텍스트를 nextPlan 상태에 반영 (llm_answer만 사용)
       let content = aiGeneratedData.nextPlan.llm_answer;
-      if (aiGeneratedData.nextPlan.llm_feedback) {
-        content += '\n' + aiGeneratedData.nextPlan.llm_feedback;
-      }
+      // llm_feedback은 추후 사용 예정
+      // if (aiGeneratedData.nextPlan.llm_feedback) {
+      //   content += '\n' + aiGeneratedData.nextPlan.llm_feedback;
+      // }
       setNextPlan(content);
       showToastMessage('AI 생성 내용이 반영되었습니다.');
       handleClosePanel();
     } else if (aiPanelKey === 'mainProblem' && aiGeneratedData.mainProblem?.llm_answer) {
-      // 주호소 문제 텍스트를 mainProblem 상태에 반영 (llm_feedback도 포함)
+      // 주호소 문제 텍스트를 mainProblem 상태에 반영 (llm_answer만 사용)
       let content = aiGeneratedData.mainProblem.llm_answer;
-      if (aiGeneratedData.mainProblem.llm_feedback) {
-        content += '\n' + aiGeneratedData.mainProblem.llm_feedback;
-      }
+      // llm_feedback은 추후 사용 예정
+      // if (aiGeneratedData.mainProblem.llm_feedback) {
+      //   content += '\n' + aiGeneratedData.mainProblem.llm_feedback;
+      // }
       setMainProblem(content);
       showToastMessage('AI 생성 내용이 반영되었습니다.');
       handleClosePanel();
     } else if (aiPanelKey === 'sessionContent' && aiGeneratedData.sessionContent?.llm_answer) {
-      // 상담내용 텍스트를 sessionContent 상태에 반영 (llm_feedback도 포함)
+      // 상담내용 텍스트를 sessionContent 상태에 반영 (llm_answer만 사용)
       let content = aiGeneratedData.sessionContent.llm_answer;
-      if (aiGeneratedData.sessionContent.llm_feedback) {
-        content += '\n' + aiGeneratedData.sessionContent.llm_feedback;
-      }
+      // llm_feedback은 추후 사용 예정
+      // if (aiGeneratedData.sessionContent.llm_feedback) {
+      //   content += '\n' + aiGeneratedData.sessionContent.llm_feedback;
+      // }
       setSessionContent(content);
       showToastMessage('AI 생성 내용이 반영되었습니다.');
       handleClosePanel();

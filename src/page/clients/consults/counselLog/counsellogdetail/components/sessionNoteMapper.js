@@ -112,9 +112,10 @@ export const mapSessionNoteToState = (data, setters) => {
     if (data.nextSessionPlanAi) {
       try {
         const parsedData = JSON.parse(data.nextSessionPlanAi);
-        if (parsedData.llm_answer || parsedData.llm_feedback) {
+        if (parsedData.llm_answer) {
           aiData.nextPlan = parsedData;
         }
+        // llm_feedback은 추후 사용 예정
       } catch (error) {
         console.error('nextSessionPlanAi 파싱 오류:', error);
       }
@@ -124,9 +125,10 @@ export const mapSessionNoteToState = (data, setters) => {
     if (data.chiefComplaintAi) {
       try {
         const parsedData = JSON.parse(data.chiefComplaintAi);
-        if (parsedData.llm_answer || parsedData.llm_feedback) {
+        if (parsedData.llm_answer) {
           aiData.mainProblem = parsedData;
         }
+        // llm_feedback은 추후 사용 예정
       } catch (error) {
         console.error('chiefComplaintAi 파싱 오류:', error);
       }
@@ -136,9 +138,10 @@ export const mapSessionNoteToState = (data, setters) => {
     if (data.sessionSummaryAi) {
       try {
         const parsedData = JSON.parse(data.sessionSummaryAi);
-        if (parsedData.llm_answer || parsedData.llm_feedback) {
+        if (parsedData.llm_answer) {
           aiData.sessionContent = parsedData;
         }
+        // llm_feedback은 추후 사용 예정
       } catch (error) {
         console.error('sessionSummaryAi 파싱 오류:', error);
       }
