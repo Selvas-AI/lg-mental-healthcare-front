@@ -7,7 +7,7 @@ import txtLogo from '@/assets/images/onshim.svg';
 const Download = () => {
   const handleAndroidDownload = () => {
     // public 폴더에 APK 파일 저장 (프론트에서만 물리파일로 관리)
-    const apkUrl = './onshim-app.apk'; 
+    const apkUrl = './app-onshim-20250922104100.apk'; 
     const link = document.createElement('a');
     link.href = apkUrl;
     link.download = 'onshim-app.apk';
