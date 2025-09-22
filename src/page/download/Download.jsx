@@ -5,15 +5,27 @@ import txtLogo from '@/assets/images/onshim.svg';
 
 // APK 파일 다운로드 페이지
 const Download = () => {
-  const handleAndroidDownload = () => {
-    // public 폴더에 APK 파일 저장 (프론트에서만 물리파일로 관리)
-    const apkUrl = './app-onshim-20250922104100.apk'; 
-    const link = document.createElement('a');
-    link.href = apkUrl;
-    link.download = 'onshim-app.apk';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleAndroidDownload = async () => {
+    try {
+      // 환경변수에서 APK 다운로드 URL 가져오기 (HTTPS 사용)
+      const apkUrl = process.env.REACT_APP_APK_DOWNLOAD_URL || 'https://43.202.89.215/app-onshim-20250922104100.apk';
+      
+      // HTTPS 프로토콜 확인
+      if (!apkUrl.startsWith('https://')) {
+        console.warn('보안 경고: HTTPS 연결을 사용하는 것을 권장합니다.');
+      }
+      
+      const link = document.createElement('a');
+      link.href = apkUrl;
+      link.download = 'onshim-app.apk';
+      link.rel = 'noopener noreferrer'; // 보안 강화
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('APK 다운로드 중 오류 발생:', error);
+      alert('다운로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
