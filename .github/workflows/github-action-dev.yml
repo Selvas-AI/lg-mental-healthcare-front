@@ -26,7 +26,7 @@ jobs:
     - name: Build Docker image
       run: |
         docker build \
-          --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+          --build-arg GITHUB_TOKEN=${{ secrets.SECRET_GITHUB_TOKEN }} \
           -t ghcr.io/selvas-ai/lg-mental-healthcare/front/dev:latest .
 
     - name: Push Docker image

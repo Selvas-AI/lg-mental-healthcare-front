@@ -4,20 +4,22 @@ WORKDIR /app
 COPY . .
 RUN npm install && npm run build
 
-# APK 파일 다운로드 (GitHub API 사용)
+# APK 파일 다운로드 (간단한 curl 방식)
 ARG GITHUB_TOKEN
-RUN apk add --no-cache curl jq && \
-    if [ -n "$GITHUB_TOKEN" ]; then \
-        ASSET_ID=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-                   "https://api.github.com/repos/Selvas-AI/lg-mental-healthcare-front/releases/tags/v1.0.0-apk" \
-                   | jq -r '.assets[] | select(.name=="app-onshim-20250922104100.apk") | .id') && \
-        curl -L -H "Authorization: Bearer $GITHUB_TOKEN" \
-             -H "Accept: application/octet-stream" \
-             -o /app/dist/app-onshim-20250922104100.apk \
-             "https://api.github.com/repos/Selvas-AI/lg-mental-healthcare-front/releases/assets/$ASSET_ID"; \
-    else \
-        curl -L -o /app/dist/app-onshim-20250922104100.apk \
-             "https://github.com/Selvas-AI/lg-mental-healthcare-front/releases/download/v1.0.0-apk/app-onshim-20250922104100.apk"; \
+RUN apk add --no-cache curl && \
+    echo "APK 파일 다운로드 시작..." && \
+    curl -L \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+         -o /app/dist/app-onshim-20250922104100.apk \
+         "https://github.com/Selvas-AI/lg-mental-healthcare-front/releases/download/v1.0.0-apk/app-onshim-20250922104100.apk" && \
+    echo "다운로드 완료. 파일 크기 확인:" && \
+    ls -lh /app/dist/app-onshim-20250922104100.apk && \
+    FILE_SIZE=$(stat -c%s /app/dist/app-onshim-20250922104100.apk) && \
+    echo "파일 크기: $FILE_SIZE bytes" && \
+    if [ "$FILE_SIZE" -lt 1000000 ]; then \
+        echo "파일이 너무 작습니다. 다운로드 실패로 판단됩니다." && \
+        cat /app/dist/app-onshim-20250922104100.apk && \
+        exit 1; \
     fi
 
 # 실제 서비스 단계
