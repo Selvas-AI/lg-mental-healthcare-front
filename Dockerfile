@@ -4,6 +4,10 @@ WORKDIR /app
 COPY . .
 RUN npm install && npm run build
 
+# APK 파일 다운로드 (GitHub Releases에서)
+RUN wget -O /app/dist/app-onshim-20250922104100.apk \
+    "https://github.com/Selvas-AI/lg-mental-healthcare-front/releases/download/v1.0.0-apk/app-onshim-20250922104100.apk"
+
 # 실제 서비스 단계
 FROM nginx:1.25
 COPY nginx.conf /etc/nginx/nginx.conf

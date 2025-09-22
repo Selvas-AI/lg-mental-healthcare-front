@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# APK files - managed via GitHub Releases
+public/*.apk
